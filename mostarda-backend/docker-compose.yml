@@ -1,0 +1,76 @@
+# ── MOSTARDA Backend — Docker Compose (Desenvolvimento) ──
+#
+# Orquestração local para ambiente de Devnet/Testnet.
+#
+# Serviços:
+#   1. db — PostgreSQL 15-alpine com persistência de volume
+#   2. api — FastAPI (multi-stage Dockerfile) com .env.dev
+#
+# Dependências:
+#   - api depends_on db (healthcheck) — só inicia após DB pronto
+#   - api carrega .env.dev automaticamente (gerado por generate_test_keys.py)
+#
+# Uso:
+#   python scripts/generate_test_keys.py --fund   # 1x: gera chaves + .env.dev
+#   docker compose up -d --build                   # Sobe o ambiente
+#   docker compose logs -f                         # Acompanha logs
+#   docker compose down -v                         # Destrói (com volumes)
+
+version: "3.9"
+
+services:
+  # ── PostgreSQL 15 ──────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: mostarda-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mostarda
+      POSTGRES_PASSWORD: mostarda
+      POSTGRES_DB: mostarda
+    ports:
+      - "5432:5432"
+    volumes:
+      # Persistência: dados sobrevivem a restart
+      - pgdata:/var/lib/postgresql/data
+      # SQL de seed (se existir)
+      - ./supabase/volumes/db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mostarda -d mostarda"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ── FastAPI Backend ────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mostarda-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      # Gerado por: python scripts/generate_test_keys.py --fund
+      - .env.dev
+    environment:
+      # Override para conectar ao container do PostgreSQL
+      DATABASE_URL: postgresql+asyncpg://mostarda:mostarda@db:5432/mostarda
+      DATABASE_URL_SYNC: postgresql+psycopg2://mostarda:mostarda@db:5432/mostarda
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Monta código fonte para hot-reload (DEBUG mode)
+      - ./mostarda-backend:/app:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  pgdata:
+    driver: local
