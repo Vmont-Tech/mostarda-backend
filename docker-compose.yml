@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:15.6
+    container_name: mostarda-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mostarda
+    volumes:
+      - ./supabase/volumes/db/init:/docker-entrypoint-initdb.d
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  rest:
+    image: postgrest/postgrest:v12.2.3
+    container_name: mostarda-rest
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      PGRST_DB_URI: postgres://postgres:postgres@db:5432/mostarda
+      PGRST_DB_SCHEMA: public,api
+      PGRST_DB_ANON_ROLE: postgres
+      PGRST_JWT_SECRET: super-secret-jwt-token-com-pelo-menos-32-caracteres
+      PGRST_OPENAPI_SERVER_PROXY_URI: http://localhost:3001
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  pgdata:
