@@ -1,18 +1,11 @@
 #!/usr/bin/env python3
 """MOSTARDA Media Player — Edge Device Agent.
 
-Smart TV / Fire Stick / ZEROONE Mini PC.
-Capabilities:
-  - Video playback with offline cache
-  - WiFi probe request sniffing (anonymous audience count via scapy)
-  - Google MediaPipe face detection (attention tracking)
-  - Heartbeat/telemetry to backend
-
 Usage:
   python main.py                    # Full mode
-  python main.py --sniffer-only     # Only WiFi audience
-  python main.py --face-only        # Only face detection
-  python main.py --player-only      # Only video playback
+  python main.py --sniffer-only
+  python main.py --face-only
+  python main.py --player-only
 """
 
 import argparse
@@ -44,30 +37,26 @@ def main():
     signal.signal(signal.SIGTERM, handler)
 
     threads = []
+    sensors = {}  # Shared references for heartbeat wiring
 
     # Heartbeat (always on)
     from telemetry.heartbeat import HeartbeatSender
     hb = HeartbeatSender(stop)
-    t = threading.Thread(target=hb.run, daemon=True)
-    t.start()
-    threads.append(t)
+    threads.append(threading.Thread(target=hb.run, daemon=True))
 
     # Player
     if not args.sniffer_only and not args.face_only:
         from player.core import MediaPlayer
         p = MediaPlayer(stop)
-        t = threading.Thread(target=p.run, daemon=True)
-        t.start()
-        threads.append(t)
+        threads.append(threading.Thread(target=p.run, daemon=True))
 
     # WiFi Sniffer
     if not args.player_only and not args.face_only:
         try:
             from telemetry.wifi_sniffer import WiFiSniffer
-            s = WiFiSniffer(stop)
-            t = threading.Thread(target=s.run, daemon=True)
-            t.start()
-            threads.append(t)
+            sniffer = WiFiSniffer(stop)
+            threads.append(threading.Thread(target=sniffer.run, daemon=True))
+            sensors["wifi"] = sniffer  # ← WIRED: heartbeat reads live metrics
         except ImportError as e:
             logger.warning(f"WiFi sniffer unavailable: {e}")
 
@@ -75,13 +64,22 @@ def main():
     if not args.player_only and not args.sniffer_only:
         try:
             from telemetry.face_detection import FaceDetector
-            d = FaceDetector(stop)
-            t = threading.Thread(target=d.run, daemon=True)
-            t.start()
-            threads.append(t)
+            detector = FaceDetector(stop)
+            threads.append(threading.Thread(target=detector.run, daemon=True))
+            sensors["face"] = detector  # ← WIRED: heartbeat reads live metrics
         except ImportError as e:
             logger.warning(f"Face detection unavailable: {e}")
 
+    # Connect sensors to heartbeat
+    hb.wifi_sensor = sensors.get("wifi")
+    hb.face_sensor = sensors.get("face")
+    logger.info(
+        f"🔌 Telemetry wired: wifi={'✅' if hb.wifi_sensor else '❌'} "
+        f"face={'✅' if hb.face_sensor else '❌'}"
+    )
+
+    for t in threads:
+        t.start()
     for t in threads:
         t.join()
 
