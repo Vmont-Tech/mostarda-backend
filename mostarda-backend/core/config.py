@@ -1,10 +1,17 @@
 """Centralized configuration from environment variables.
 
 Todos os settings documentados e com defaults seguros.
+
+SECURITY (B1 fix):
+- If DEBUG=False and SECRET_KEY is the default string, raises RuntimeError
+  at import time, preventing accidental production deployment with weak keys
 """
 
 from pydantic_settings import BaseSettings
 from typing import Optional
+
+
+_DEFAULT_SECRET_KEY = "change-me-to-random-32-char-min"
 
 
 class Settings(BaseSettings):
@@ -12,7 +19,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "mostarda-backend"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
-    SECRET_KEY: str = "change-me-to-random-32-char-min"
+    SECRET_KEY: str = _DEFAULT_SECRET_KEY
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
@@ -28,15 +35,11 @@ class Settings(BaseSettings):
     PSAV_STABLECOIN: str = "BRLX"
 
     # ── Settlement Cycles ───────────────────────────────────
-    # Off-ramp: weekly (7 days) for sellers/influencers
-    #           monthly (30 days) for space owners/tv owners/platform
     SETTLEMENT_WEEKLY_DAYS: int = 7
     SETTLEMENT_MONTHLY_DAYS: int = 30
 
-    # ── Blockchain Fee Threshold ────────────────────────────
-    # Max fee in XLM before triggering Solana fallback
+    # ── Blockchain ──────────────────────────────────────────
     BLOCKCHAIN_FEE_THRESHOLD_XLM: float = 0.001
-    # Circuit breaker cooldown in seconds before retrying Stellar
     BLOCKCHAIN_CIRCUIT_COOLDOWN_SECONDS: int = 300
 
     # ── Stellar (Primary) ───────────────────────────────────
@@ -59,7 +62,25 @@ class Settings(BaseSettings):
     AUDIENCE_CONFIDENCE_THRESHOLD: float = 0.5
     PROXIMITY_RSSI_THRESHOLD: int = -70
 
+    # ── Rate Limiting ───────────────────────────────────────
+    RATE_LIMIT_WINDOW: int = 60
+    RATE_LIMIT_MAX_ATTEMPTS: int = 10
+
     model_config = {"env_file": ".env", "case_sensitive": True}
 
 
 settings = Settings()
+
+
+# ── SECURITY GUARD (B1 fix) ───────────────────────────
+# If deploying to production without changing SECRET_KEY,
+# the system refuses to boot. This prevents the #1 cause
+# of JWT forgery in FastAPI applications.
+if not settings.DEBUG and settings.SECRET_KEY == _DEFAULT_SECRET_KEY:
+    raise RuntimeError(
+        "🚨 SECURITY: SECRET_KEY is still the default value "
+        "('change-me-to-random-32-char-min'). This is INSECURE for production. "
+        "Generate a strong random key:\n"
+        "  python -c \"import secrets; print(secrets.token_urlsafe(32))\"\n"
+        "Then set SECRET_KEY in .env or environment variables."
+    )
