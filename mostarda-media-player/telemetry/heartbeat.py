@@ -1,19 +1,28 @@
-"""Heartbeat sender — periodic device status to backend."""
+"""Heartbeat sender — periodic device status to backend.
+
+Receives wired references to WiFiSniffer and FaceDetector instances
+from main.py so that .send() transmits REAL telemetry, not None.
+"""
 
 import json
 import time
 import urllib.request
+from typing import Optional
 from loguru import logger
 from config import settings
 
 
 class HeartbeatSender:
-    """Periodic heartbeat with system metrics + audience data."""
+    """Periodic heartbeat with system metrics + live audience data.
+
+    wifi_sensor and face_sensor are wired by main.py after the
+    respective detector threads are started.
+    """
 
     def __init__(self, stop_event):
         self.stop_event = stop_event
-        self.wifi = None
-        self.face = None
+        self.wifi_sensor: Optional[object] = None  # Wired by main.py
+        self.face_sensor: Optional[object] = None  # Wired by main.py
 
     def _system(self) -> dict:
         try:
@@ -29,10 +38,12 @@ class HeartbeatSender:
             "timestamp": int(time.time() * 1000),
             "system": self._system(),
         }
-        if self.wifi:
-            payload["wifi"] = self.wifi.get_metrics()
-        if self.face:
-            payload["face"] = self.face.get_metrics()
+
+        # Pull LIVE metrics from wired sensors (not None)
+        if self.wifi_sensor is not None:
+            payload["wifi"] = self.wifi_sensor.get_metrics()
+        if self.face_sensor is not None:
+            payload["face"] = self.face_sensor.get_metrics()
 
         try:
             data = json.dumps(payload).encode()
