@@ -26,7 +26,7 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 
 - **Responsabilidade:** inventário físico — **TV**, **Venue**, Dono da TV, Dono do espaço, seguro do hardware.
 - **Pertence:** cadastro e identidade (`TV ID`), vínculo TV↔Venue↔proprietários, atributos de contexto do Venue, estado comercial (ativa, suspensa, em manutenção), elegibilidade da TV para receber Slots, contrato de seguro da TV.
-- **NÃO pertence:** software embarcado e fila local (Edge Runtime), saúde em tempo real (Telemetry), preço do inventário (Pricing Engine), pagamento ao parceiro (Settlement).
+- **NÃO pertence:** software embarcado e fila local (Edge Runtime), saúde em tempo real (Telemetry), preço do inventário (Pricing Engine), pagamento ao parceiro (Settlement) ou fundo/cobertura/sinistro (Insurance).
 - **Conversa com:** Campaign Management, Pricing Engine, Edge Runtime, Telemetry, Settlement, Marketplace.
 - **Proprietário:** Cloud.
 
@@ -64,8 +64,8 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 
 ## 7. Settlement
 
-- **Responsabilidade:** liquidação — consolidar Evidences válidas em ciclos e disparar **Split Payment** via **Asaas**.
-- **Pertence:** ciclo de liquidação, memória de cálculo do split, retenções (Fundo de Seguro), disputas financeiras, reconciliação de webhooks, notas fiscais.
+- **Responsabilidade:** liquidação — consolidar Evidences válidas em ciclos e disparar **Split Payment** via **Asaas** segundo o split canônico 30/20/20/20/10.
+- **Pertence:** ciclo de liquidação, memória de cálculo do split, taxas, impostos e retenções explícitas, disputas financeiras, reconciliação de webhooks, notas fiscais. Fundo, cobertura e sinistro pertencem a Insurance.
 - **NÃO pertence:** validade da Evidence (Evidence Ledger), preço (Pricing Engine), rails de pagamento (Asaas), qualquer trilha de valor em blockchain.
 - **Conversa com:** Evidence Ledger, Quantum Integration (confirmação de ancoragem), TV Network, Influencer Network, User Identity, Notifications, Analytics; externamente **apenas** com Asaas via Adapter.
 - **Proprietário:** Cloud (regras) / Asaas (execução financeira).
@@ -112,8 +112,8 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 
 ## 13. Marketplace
 
-- **Responsabilidade:** vitrine e contratação — oferta de inventário, pacotes, produtos e serviços do ecossistema.
-- **Pertence:** catálogo, disponibilidade publicada, propostas, checkout de contratação, regras de vitrine.
+- **Responsabilidade:** fronteira comercial com quatro subdomínios separados: **Marketplace Ads** (campanhas/inventário), **Marketplace Influencers** (criadores), **Marketplace TV Owners** (TVs/parceiros) e **Marketplace Rentals** (aluguel futuro).
+- **Pertence:** cada subdomínio possui catálogo, disponibilidade publicada, propostas, checkout de contratação e regras de vitrine próprios; propostas nunca misturam tipos de oferta.
 - **NÃO pertence:** reserva efetiva de Slot (Campaign Management), preço final (Pricing Engine), cobrança (Settlement).
 - **Conversa com:** Campaign Management, TV Network, Pricing Engine, Influencer Network, CRM, User Identity.
 - **Proprietário:** Cloud.
@@ -135,6 +135,14 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 - **Proprietário:** Cloud.
 
 ---
+
+## 16. Insurance
+
+- **Responsabilidade:** fundo, apólice, prêmio/mensalidade, reserva, cobertura, sinistro, reparo, reposição e liquidação de seguro.
+- **Pertence:** os Aggregates definidos em [`INSURANCE.md`](./INSURANCE.md), inclusive saldo e histórico append-only do fundo.
+- **NÃO pertence:** identidade/elegibilidade da TV (TV Network), pagamento de campanha (Settlement), saúde bruta do dispositivo (Telemetry) ou prova de exibição (Evidence Ledger).
+- **Conversa com:** TV Network, Telemetry, Settlement, Notifications e User Identity, sempre por contratos/eventos.
+- **Proprietário:** Cloud.
 
 ## Mapa de contexto (resumo)
 

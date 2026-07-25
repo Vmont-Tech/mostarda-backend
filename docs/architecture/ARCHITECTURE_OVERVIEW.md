@@ -85,7 +85,15 @@ Conjunto de agentes especializados (validação de vídeo, recomendação de TVs
 3. Edge emite **Playback Event** assinado localmente.
 4. Backend valida e materializa a **Evidence** no **Evidence Ledger**.
 5. Hash da Evidence é ancorado no **Quantum Registry** / blockchain institucional.
-6. Settlement consolida Evidences válidas do ciclo.
-7. **Asaas** executa o **Split Payment** entre os participantes elegíveis.
+6. Settlement consolida Evidences válidas do ciclo, explicita impostos/taxas/retenções e aplica o split arquitetural fixo: **30% Mostarda, 20% Proprietário da TV, 20% Proprietário do Local, 20% Vendedor responsável, 10% Influenciador**.
+7. **Asaas** executa o **Split Payment** entre os participantes elegíveis e Settlement reconcilia o resultado.
 
 Qualquer falha de integridade em (3)/(4)/(5) **bloqueia** (6) e (7).
+
+## Contratos reforçados no Architecture Review Gate
+
+- Seguro é domínio próprio (`Insurance`), não atributo da TV; o fundo e a reserva não são saldo de campanha.
+- QR é emitido e resolvido no Cloud/Quantum; Edge somente o renderiza. Quantum nunca conversa com Edge, nunca conhece campanhas, anunciantes, preços ou pessoas e registra somente hashes/documentos oficiais permitidos.
+- Facets são plugins pequenos inspirados no Diamond, independentes e hot-swappable. Seus Assets são políticas, capacidades, perfis e pipelines — não somente estado de execução.
+- Marketplace separa Ads, Influencers, TV Owners e Rentals futuro. Grão é um produto com memória consentida e explicabilidade.
+- O plano de crescimento e a cadeia TV → MiniPC → Display → Player → Edge estão definidos em `domain/SCALABILITY.md` e `domain/TV_EDGE_MODEL.md`.

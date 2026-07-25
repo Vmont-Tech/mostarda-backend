@@ -1,8 +1,8 @@
-# ASSETS (Estado por Facet) — Mostarda
+# ASSETS (Conhecimento e estado por Facet) — Mostarda
 
-Cada **Facet** possui **Assets**: unidades nomeadas de estado sob sua responsabilidade.
+Cada **Facet** possui **Assets**: unidades nomeadas de conhecimento, configuração, política, capacidade e estado sob sua responsabilidade. Um Asset descreve como uma capacidade opera; estado de runtime é somente um dos seus tipos.
 
-> Nota terminológica: **Asset** neste documento significa *unidade de estado de uma Facet*. O termo **Asset** do [`DOMAIN_DICTIONARY.md`](./DOMAIN_DICTIONARY.md) (arquivo de mídia de uma Campaign) é referido aqui sempre como **Creative Asset** para evitar ambiguidade.
+> Nota terminológica: **Asset** neste documento significa ativo interno de uma Facet. O termo do [`DOMAIN_DICTIONARY.md`](./DOMAIN_DICTIONARY.md) para arquivo de mídia de Campaign é sempre **Creative Asset**. Os dois conceitos não são intercambiáveis.
 
 Campos de cada Asset:
 
@@ -12,6 +12,32 @@ Campos de cada Asset:
 - **Dono** — proprietário único (ver [`OWNERSHIP.md`](./OWNERSHIP.md)).
 - **Persistência** — volátil (memória), local (disco do Edge), durável (Cloud), append-only (Ledger), externa (Quantum/Asaas).
 - **Criticidade** — **Crítica** (bloqueia dinheiro/prova), **Alta** (bloqueia operação), **Média** (degrada experiência), **Baixa** (informativa).
+
+## Classes de Asset
+
+| Classe | Exemplos | Regra |
+| --- | --- | --- |
+| Política | `PlaybackPolicy`, `DynamicPricingPolicy`, `FallbackPolicy` | Versão imutável; explica decisões históricas. |
+| Capacidade | `SupportedFormats`, `RenderingCapabilities`, `OutputMode` | Declarada pelo dispositivo/Facet e validada pelo container. |
+| Perfil | `OutputProfiles`, `SchedulingProfile`, `MarketRegion` | Configuração declarativa aplicada por versão. |
+| Pipeline | `VideoPipeline`, `EvidencePipeline` | Contrato observável e reversível. |
+| Estado operacional | fila, posição, health e cache | Transitório/local; nunca substitui a fonte de verdade Cloud. |
+| Evidência/auditoria | versão aplicada, hash, trilha de cálculo | Append-only quando afeta dinheiro, prova ou disputa. |
+
+## Assets de referência obrigatórios
+
+| Facet | Assets de capacidade, além de runtime quando necessário |
+| --- | --- |
+| Playback | `PlaybackPolicy`, `SupportedFormats`, `OverlayCapabilities`, `RenderingCapabilities`, `OutputProfiles`, `SchedulingProfile`, `FallbackPolicy`, `VideoPipeline` |
+| Pricing | `PricingRules`, `DynamicPricingPolicy`, `PeakHours`, `DemandCurve`, `PricingVersion`, `MarketRegion`, `FloorCeilingPolicy`, `PricingAuditTrail` |
+| Evidence | `EvidenceSchema`, `ValidationPolicy`, `SignaturePolicy`, `AnchoringPolicy`, `RetentionPolicy`, `DisputePolicy` |
+| QR | `QrResolutionPolicy`, `QrTemplate`, `QrLifetimePolicy`, `QrRenderingProfile`, `AttributionPolicy` |
+| NFC | `TagBindingPolicy`, `PublicResolutionPolicy`, `InteractionRetentionPolicy`, `IntegrityPolicy` |
+| Health Monitoring | `HealthThresholds`, `RecoveryPolicy`, `AlertRoutingPolicy`, `ResourceBudget` |
+| Maintenance | `UpdatePolicy`, `ReleaseChannel`, `RollbackPolicy`, `MaintenanceWindowPolicy` |
+| Local AI | `ModelManifest`, `InferencePolicy`, `OfflinePolicy`, `ModelCachePolicy`, `RollbackPolicy` |
+
+Esses Assets são configurações assinadas da Facet. Eles não autorizam o Edge a alterar regras de preço, split, elegibilidade ou liquidação.
 
 ---
 

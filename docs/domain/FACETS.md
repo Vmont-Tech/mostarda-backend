@@ -2,12 +2,19 @@
 
 Inspirado conceitualmente no **Diamond Standard (EIP-2535)**: a TV é um container estável (o "diamond") e cada **Capability** é composta por **Facets** — módulos substituíveis e versionáveis independentemente, sem trocar a identidade da TV (`TV ID`).
 
+## Contrato arquitetural
+
+Cada Facet é uma capacidade pequena, independente, isolada, substituível, versionável e hot-swappable. Ela não é um módulo de produto nem um Bounded Context: a TV/Cloud é o container estável inspirado no Diamond (EIP-2535), e a Facet é o plugin de capacidade desse container.
+
+Uma Facet declara `FacetId`, versão semântica, contrato de entrada/saída, schema e compatibilidade de Assets, requisitos de recurso, telemetria, assinatura e estratégia de rollback. A ativação exige verificação de assinatura e health gate; em falha, o Player Supervisor retorna à última versão saudável. Facets nunca compartilham estado, banco, cache ou chamadas diretas: colaboram exclusivamente por contratos declarativos, eventos ou Assets explicitamente publicados pelo container.
+
 ## Regras
 
-1. Uma Facet tem **responsabilidade única** e é substituível sem quebrar a Capability.
-2. Facets **não** compartilham estado diretamente: cada Facet é dona dos seus **Assets** (ver [`ASSETS.md`](./ASSETS.md)).
+1. Uma Facet tem **responsabilidade única** e é substituível sem quebrar a Capability ou a identidade `TV ID`.
+2. Facets **não** compartilham estado diretamente: cada Facet é dona dos seus **Assets de capacidade** (ver [`ASSETS.md`](./ASSETS.md)). Estado de runtime é somente uma categoria de Asset, não sua definição.
 3. Nenhuma Facet introduz vocabulário fora de [`DOMAIN_DICTIONARY.md`](./DOMAIN_DICTIONARY.md).
 4. Facet no Edge nunca decide regra de negócio (ADR-002).
+5. Nenhuma Facet pode depender diretamente de outra; o container resolve contratos versionados e garante compatibilidade.
 
 ---
 

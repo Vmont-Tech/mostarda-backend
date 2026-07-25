@@ -14,7 +14,7 @@ Cada Aggregate tem **uma raiz**, protege **invariantes** e é a única porta de 
 ## TV Aggregate — contexto TV Network
 
 - **Root:** `TV` (identidade `TVIdentifier`)
-- **Entidades internas:** Device (mini PC), Screen, DeclaredCapability, InsurancePolicy, TagBinding
+- **Entidades internas:** Device (mini PC), Screen, DeclaredCapability, TagBinding. `InsurancePolicy` é Aggregate do contexto Insurance; TV mantém apenas referência de cobertura.
 - **Value Objects:** `TVIdentifier`, `GeoLocation` (via Venue), `DeviceHealth`, `TimeSlot` (operação/manutenção)
 - **Invariantes:** toda TV pertence a **um** Dono da TV e está em **um** Venue; `TV ID` imutável e não reutilizável; só recebe Slots compatíveis com suas Capabilities declaradas; TV suspensa não recebe Slot.
 - **Eventos:** `TvRegistered`, `TvProvisioned`, `TvActivated`, `TvSuspended`, `TvReactivated`, `TvDecommissioned`, `TvAssignedToVenue`, `TvOwnershipTransferred`, `InsurancePolicyAttached`, `NfcTagLinked`.
@@ -47,16 +47,16 @@ Cada Aggregate tem **uma raiz**, protege **invariantes** e é a única porta de 
 
 - **Root:** `Evidence`
 - **Entidades internas:** ValidationRecord, AnchoringRecord, DisputeRecord
-- **Value Objects:** `TVIdentifier`, `CampaignIdentifier`, `SlotIdentifier`, `EvidenceHash`, `DeviceSignature`, `Money` (valor cobrado), `PlaybackDuration`, `AssetReference`, `AnchoringReceipt`
-- **Invariantes:** representa exatamente **15s** de exibição; campos obrigatórios do ADR-003 sempre presentes; assinatura válida é condição para `VALID`; unicidade por Slot executado; **append-only** — correção apenas por `EvidenceReversed`; sem status `VALID` + ancoragem confirmada não há liquidação.
+- **Value Objects:** `TVIdentifier`, `CampaignIdentifier`, `SlotIdentifier`, `EvidenceHash`, `DeviceSignature`, `Money` (calculado, final e efetivamente cobrado), `PlaybackDuration`, `AssetReference`, `AnchoringReceipt`, `PricingPolicyVersion`, `PricingAlgorithmVersion`, `SplitPolicyVersion`, `TaxBreakdown`, `SplitShare`.
+- **Invariantes:** representa exatamente **15s** de exibição; campos obrigatórios do ADR-003 sempre presentes; contém preço calculado, final e cobrado, preço dinâmico/fatores, impostos, split aplicado, percentuais, versões de política/algoritmo, timestamp, TV, Slot, Campaign, playback, telemetria, hash, documento associado e Quantum Anchor; assinatura válida é condição para `VALID`; unicidade por Slot executado; **append-only** — correção apenas por `EvidenceReversed`; sem status `VALID` + ancoragem confirmada não há liquidação.
 - **Eventos:** `EvidenceGenerated`, `EvidenceValidated`, `EvidenceRejected`, `EvidenceDuplicateDetected`, `EvidenceHashed`, `EvidenceRegistered`, `EvidenceDisputed`, `EvidenceDisputeResolved`, `EvidenceReversed`, `LedgerSnapshotAnchored`.
 
 ## Settlement Aggregate — contexto Settlement
 
 - **Root:** `Settlement` (por `SettlementCycle` e participante pagador/recebedor)
 - **Entidades internas:** SplitLine, Payout, Invoice, Charge, SettlementDispute
-- **Value Objects:** `SettlementCycle`, `Money`, `SplitShare`
-- **Invariantes:** consome apenas Evidences `VALID` e ancoradas; soma das `SplitShare` = valor líquido; ciclo fechado é imutável; falha de ancoragem ou disputa aberta bloqueia execução; nenhuma trilha de valor em blockchain.
+- **Value Objects:** `SettlementCycle`, `Money`, `SplitShare`, `SplitPolicyVersion`, `Retention`, `TaxBreakdown`, `AsaasFee`.
+- **Invariantes:** consome apenas Evidences `VALID` e ancoradas; após taxas, impostos e retenções explícitas, o valor líquido distribuível é dividido exatamente em **30% Mostarda, 20% Proprietário da TV, 20% Proprietário do Local, 20% Vendedor responsável e 10% Influenciador**; soma das cinco `SplitShare` = valor líquido distribuível; ausência de beneficiário elegível bloqueia a linha, nunca redistribui percentual; ciclo fechado é imutável; falha de ancoragem ou disputa aberta bloqueia execução; nenhuma trilha de valor em blockchain. Ver [`REVENUE_ARCHITECTURE.md`](./REVENUE_ARCHITECTURE.md).
 - **Eventos:** `SettlementCycleOpened`, `SettlementCycleClosed`, `SettlementAuthorized`, `SettlementBlocked`, `SplitCalculated`, `SettlementExecuted`, `PayoutConfirmed`, `PayoutFailed`, `InvoiceIssued`, `ChargeRegistered`, `ChargePaid`, `ChargeOverdue`, `InsuranceFundCredited`, `SettlementDisputeOpened`, `SettlementDisputeResolved`.
 
 ## Influencer Aggregate — contexto Influencer Network
@@ -67,13 +67,12 @@ Cada Aggregate tem **uma raiz**, protege **invariantes** e é a única porta de 
 - **Invariantes:** só é elegível a Split com contrato ativo; percentual acordado imutável dentro do contrato vigente; encerramento não afeta Splits já executados.
 - **Eventos:** `InfluencerRegistered`, `InfluencerContractSigned`, `InfluencerAttachedToCampaign`, `InfluencerShareDefined`, `InfluencerContractTerminated`.
 
-## Marketplace Aggregate — contexto Marketplace
+## Marketplace Aggregates — contexto Marketplace
 
-- **Root:** `Offer`
-- **Entidades internas:** Proposal, AvailabilityWindow, PackageItem
-- **Value Objects:** `Money`, `TimeSlot`, `TVIdentifier`
-- **Invariantes:** oferta publicada só expõe inventário elegível; proposta aceita gera pedido de reserva ao Campaign Management (nunca reserva direto); preço exibido é sempre cotação do Pricing Engine.
-- **Eventos:** `OfferPublished`, `OfferUnpublished`, `ProposalCreated`, `ProposalAccepted`, `ProposalRejected`, `InventoryReserved`.
+- **Roots:** `AdsOffer`, `InfluencerOffer`, `TvOwnerOffer` e, no futuro, `RentalOffer`; cada root possui `Proposal`, `AvailabilityWindow` e `PackageItem` do próprio tipo.
+- **Value Objects:** `Money`, `TimeSlot`, `TVIdentifier`, `OfferType`.
+- **Invariantes:** ofertas e propostas não misturam tipos; oferta publicada só expõe inventário/elegibilidade do seu subdomínio; proposta aceita gera pedido ao contexto proprietário (Campaign Management, Influencer Network ou TV Network), nunca reserva direto; preço exibido é sempre cotação do Pricing Engine quando houver preço dinâmico.
+- **Eventos:** `AdsOfferPublished`, `InfluencerOfferPublished`, `TvOwnerOfferPublished`, `RentalOfferPublished`, `ProposalCreated`, `ProposalAccepted`, `ProposalRejected`, `InventoryReserved`.
 
 ## User Aggregate — contexto User Identity
 
