@@ -9,6 +9,9 @@ Esta é a documentação oficial de engenharia do backend da Mostarda. Ela é a 
 | `product/`        | Visão de produto, missão, ecossistema, modelo econômico.                            |
 | `architecture/`   | Visão arquitetural geral (Cloud, Edge, Canvas, IA, Quantum, Asaas, Blockchain).     |
 | `domain/`         | Dicionário de domínio (DDD) — vocabulário oficial da plataforma.                    |
+| `domain/REVENUE_ARCHITECTURE.md` | Contrato econômico: split, retenções, conciliação e exceções. |
+| `domain/INSURANCE.md` | Fundo de seguro, apólices, reservas, sinistros e reposições. |
+| `domain/TV_EDGE_MODEL.md` | Operação TV/Edge, recuperação e observabilidade. |
 | `adr/`            | Architecture Decision Records — decisões arquiteturais versionadas.                 |
 | `events/`         | Catálogo de eventos de domínio e contratos.                                         |
 | `api/`            | Contratos de APIs (REST/gRPC/webhooks).                                             |

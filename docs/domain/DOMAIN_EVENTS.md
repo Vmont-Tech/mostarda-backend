@@ -102,7 +102,7 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `InvoiceIssued` | Nota fiscal emitida. |
 | `ChargeRegistered` | Cobrança do Advertiser registrada. |
 | `ChargePaid` / `ChargeOverdue` | Estado da cobrança. |
-| `InsuranceFundCredited` | Retenção ao Fundo de Seguro. |
+| `InsuranceFundCredited` | Crédito explícito ao Fundo de Seguro; não é sexta linha de split. |
 | `SettlementDisputeOpened` / `SettlementDisputeResolved` | Disputa financeira. |
 
 ## Quantum Integration (produtor: Cloud Adapter / Quantum)
@@ -228,6 +228,17 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `OfferPublished` / `OfferUnpublished` | Vitrine de inventário. |
 | `ProposalCreated` / `ProposalAccepted` / `ProposalRejected` | Negociação. |
 | `InventoryReserved` | Reserva encaminhada ao Campaign Management. |
+
+## Insurance
+
+| Evento | Significado |
+| --- | --- |
+| `InsurancePolicyIssued` / `InsurancePolicyCancelled` | Emissão ou encerramento da cobertura. |
+| `InsurancePremiumDue` / `InsurancePremiumPaid` / `InsurancePremiumOverdue` | Ciclo de mensalidade e adimplência. |
+| `InsuranceReserveCreated` / `InsuranceReserveReleased` | Reserva financeira criada ou liberada. |
+| `InsuranceClaimFiled` / `InsuranceClaimApproved` / `InsuranceClaimDenied` | Ciclo do sinistro. |
+| `InsuranceRepairAuthorized` / `InsuranceReplacementAuthorized` | Decisão operacional para reparar ou substituir. |
+| `InsuranceSettlementExecuted` | Saída do fundo reconciliada. |
 
 ## Notifications
 
