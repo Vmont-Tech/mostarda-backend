@@ -54,3 +54,10 @@ Cada TV do ecossistema Mostarda possui um mini PC executando o software **Edge**
 **Negativas**
 - Necessidade de disciplina para não “empurrar” lógica ao Edge por conveniência.
 - Sincronização offline exige tratamento cuidadoso de duplicidade e ordem.
+
+## Complemento (2026-07-25) — TV como Container de Capabilities
+
+A TV é modelada como **Container de Capabilities** (ver [`docs/domain/CAPABILITIES.md`](../domain/CAPABILITIES.md)),
+cada Capability composta por **Facets** substituíveis ([`FACETS.md`](../domain/FACETS.md)), inspiradas
+conceitualmente no Diamond Standard (EIP-2535). O Backend só envia trabalho compatível com as
+Capabilities declaradas no provisionamento. As Facets do Edge continuam proibidas de conter regra de negócio.

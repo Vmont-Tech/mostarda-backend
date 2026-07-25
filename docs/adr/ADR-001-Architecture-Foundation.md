@@ -48,3 +48,11 @@ Separação estrita entre **domínio**, **casos de uso**, **adaptadores** e **in
 **Mitigações**
 - Templates de módulo e ADRs por contexto.
 - Linter/arquitetura test para impedir dependência ilegal entre camadas.
+
+## Complemento (2026-07-25) — Modelo de domínio oficial
+
+Os bounded contexts citados nesta decisão são detalhados, de forma normativa, em
+[`docs/domain/BOUNDED_CONTEXTS.md`](../domain/BOUNDED_CONTEXTS.md). O modelo estratégico completo
+(Capabilities, Facets, Assets, Ownership, Domain Events, Value Objects, Aggregates, Worlds e
+Domain Principles) vive em `docs/domain/` e é a **fonte única da verdade** para qualquer
+implementação futura. Nenhum código pode contrariar esses documentos.

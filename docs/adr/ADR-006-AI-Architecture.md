@@ -60,3 +60,8 @@ Adotamos uma arquitetura de **múltiplos agentes especializados**, coordenados p
 **Mitigações**
 - Painel interno de execução de agentes.
 - Limites por Campaign/usuário e circuit breakers no AI Core.
+
+## Complemento (2026-07-25) — AiExecution Aggregate
+
+Explicabilidade é invariante do `AiExecution` Aggregate ([`AGGREGATES.md`](../domain/AGGREGATES.md)):
+nenhuma execução conclui sem `ExplanationRecord`. IA recomenda; o contexto dono decide.

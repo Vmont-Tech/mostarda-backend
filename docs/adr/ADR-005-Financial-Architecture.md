@@ -51,3 +51,8 @@ Adotamos **Asaas** como provedor financeiro oficial.
 **Mitigações**
 - Adapter estrito com testes de contrato.
 - Monitoramento de SLA e reconciliação diária.
+
+## Complemento (2026-07-25) — Settlement Aggregate
+
+Regras de ciclo, `SplitShare` e bloqueios estão em [`AGGREGATES.md`](../domain/AGGREGATES.md) e
+[`VALUE_OBJECTS.md`](../domain/VALUE_OBJECTS.md). Asaas nunca conhece blockchain.

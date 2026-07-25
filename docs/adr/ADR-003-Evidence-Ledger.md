@@ -64,3 +64,10 @@ Regra inegociável: **qualquer erro na evidência impede liquidação financeira
 **Mitigações**
 - Alertas específicos por tipo de invalidação.
 - Ferramenta interna de reprocessamento com trilha de auditoria.
+
+## Complemento (2026-07-25) — Modelo de domínio
+
+O Evidence Aggregate, seus Value Objects (`EvidenceHash`, `DeviceSignature`, `PricingQuote`,
+`AnchoringReceipt`) e o catálogo completo de eventos estão em
+[`AGGREGATES.md`](../domain/AGGREGATES.md), [`VALUE_OBJECTS.md`](../domain/VALUE_OBJECTS.md) e
+[`DOMAIN_EVENTS.md`](../domain/DOMAIN_EVENTS.md).

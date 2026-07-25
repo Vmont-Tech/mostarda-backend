@@ -47,3 +47,9 @@ O Backend expõe um **Quantum Adapter** (Anti-Corruption Layer) que:
 **Mitigações**
 - Fila de ancoragem com retry e alerta de SLA.
 - Evidence é válida internamente antes da ancoragem; ancoragem apenas confere prova pública.
+
+## Complemento (2026-07-25) — Propriedade e fronteira
+
+Propriedade dos dados de NFC/QR e do registro de hash está formalizada em
+[`OWNERSHIP.md`](../domain/OWNERSHIP.md). Quantum **nunca** conhece Campaign, preço ou dados pessoais
+([`DOMAIN_PRINCIPLES.md`](../domain/DOMAIN_PRINCIPLES.md)).
