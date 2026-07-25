@@ -39,6 +39,8 @@ Campos de cada Asset:
 
 Esses Assets são configurações assinadas da Facet. Eles não autorizam o Edge a alterar regras de preço, split, elegibilidade ou liquidação.
 
+Para cada Asset, a Facet declara também o **Service** que o consome, a **Policy** versionada que limita seu uso e os **Events** emitidos em sua mudança. Exemplo: `ModelManifest` é consumido pelo `InferenceService`, limitado por `InferencePolicy`/`PolicyVersion` e produz `EdgeInferenceCompleted` ou `EdgeInferenceDegraded`. Isso preserva Assets como microdomínio de capacidade, não como mero armazenamento.
+
 ---
 
 ## Playback

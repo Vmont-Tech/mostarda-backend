@@ -78,3 +78,15 @@ Identificador imutável da regra de distribuição aplicada a uma Evidence e a u
 
 ## Facet Asset
 Ativo interno de uma Facet: política, capacidade, perfil, pipeline, estado operacional ou trilha de auditoria. Não é um Creative Asset.
+
+## Canonical Evidence Package
+Representação canônica, independente de formato, de uma prova oficial preparada pelo Cloud. É a origem do hash ancorado pelo Quantum; PDF, JSON, CBOR ou Protobuf são somente transportes.
+
+## Desired State
+Estado versionado que Cloud declara para uma TV/Edge: configuração e versões que devem estar vigentes.
+
+## Current State
+Estado observado e reportado pelo Edge, incluindo configuração, versões, saúde e divergências em relação ao Desired State.
+
+## Split Share Status
+Estado individual de uma parcela: `READY`, `BLOCKED`, `UNCLAIMED`, `PAID` ou `FAILED`.

@@ -19,3 +19,5 @@ Fonte única da verdade do modelo de domínio. Ordem de leitura:
 15. [`GRAO.md`](./GRAO.md) — produto de inteligência pessoal
 16. [`INSTITUTIONAL_DOMAIN.md`](./INSTITUTIONAL_DOMAIN.md) — mundos físico, digital e institucional
 17. [`SCALABILITY.md`](./SCALABILITY.md) — escala de 100 a 1.000.000 de TVs
+18. [`DOMAIN_EVOLUTION.md`](./DOMAIN_EVOLUTION.md) — expansão futura sem rigidez de domínio
+19. [`SYSTEM_INVARIANTS.md`](./SYSTEM_INVARIANTS.md) — regras não negociáveis da plataforma
