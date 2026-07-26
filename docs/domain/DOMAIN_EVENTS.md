@@ -22,6 +22,16 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `PlaybackRecovered` | Retomada após falha. |
 | `PlaybackFailed` | Falha definitiva; não gera Evidence válida. |
 | `PlaybackQueueExhausted` | Fila local sem Slots disponíveis. |
+| `FrameDropDetected` | Degradação de frames durante uma sessão de reprodução. |
+
+## TV Capability (produtor: Edge / Cloud)
+
+| Evento | Significado |
+| --- | --- |
+| `CapabilityDeclared` / `CapabilityActivated` | Capability instalada foi declarada ou ativada. |
+| `CapabilityDegraded` / `CapabilityRecovered` | Capability perdeu ou recuperou condição operacional. |
+| `FacetInstalled` / `FacetSwapped` | Facet instalada ou substituída sob contrato versionado. |
+| `CapabilityPolicyApplied` | Política da Capability aplicada. |
 
 ## Campaign (produtor: Cloud / Campaign Management; alguns no Edge)
 
@@ -173,6 +183,10 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `OverlayApplied` / `OverlayRemoved` / `OverlayRenderFailed` | Composição de camadas. |
 | `QrRendered` / `QrRenderFailed` | Renderização do QR. |
 | `ScheduleApplied` / `ScheduleConflictDetected` / `ScheduleDrifted` | Agenda de execução. |
+| `CompositionApplied` | Composição Canvas versionada aplicada. |
+| `LayerRenderFailed` / `SafeAreaViolationDetected` | Falha de layer ou violação visual detectada. |
+| `EmergencyLayerActivated` | Layer de emergência ganhou prioridade. |
+| `EmergencyBroadcastStarted` / `EmergencyBroadcastEnded` | Transmissão de emergência iniciou ou terminou. |
 
 ## AI Orchestration (produtor: Cloud / AI)
 

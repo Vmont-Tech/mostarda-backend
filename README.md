@@ -15,6 +15,7 @@ Toda a documentação vive em [`/docs`](./docs). Comece por:
 - [`docs/product/GO_TO_MARKET.md`](./docs/product/GO_TO_MARKET.md) — estratégia do piloto e liquidez inicial
 - [`docs/architecture/ARCHITECTURE_OVERVIEW.md`](./docs/architecture/ARCHITECTURE_OVERVIEW.md)
 - [`docs/domain/DOMAIN_DICTIONARY.md`](./docs/domain/DOMAIN_DICTIONARY.md)
+- [`docs/execution/`](./docs/execution) — modelo comportamental: Commands, Events, State Machines e Sagas
 - [`docs/adr/`](./docs/adr) — Architecture Decision Records
 
 ## Princípios não-negociáveis
