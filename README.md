@@ -8,6 +8,7 @@ Fase atual: **fundação e documentação**. Nenhum código de aplicação foi i
 
 Toda a documentação vive em [`/docs`](./docs). Comece por:
 
+- [`docs/specification/PLATFORM_SPECIFICATION.md`](./docs/specification/PLATFORM_SPECIFICATION.md) — documento-mestre oficial em revisão
 - [`docs/README.md`](./docs/README.md) — índice geral
 - [`docs/product/VISION.md`](./docs/product/VISION.md)
 - [`docs/product/PRODUCT_BIBLE.md`](./docs/product/PRODUCT_BIBLE.md)

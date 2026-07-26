@@ -2,10 +2,13 @@
 
 Esta é a documentação oficial de engenharia do backend da Mostarda. Ela é a fonte da verdade para decisões técnicas, contratos de domínio e integrações.
 
+A candidata a fonte normativa primária é [`specification/PLATFORM_SPECIFICATION.md`](./specification/PLATFORM_SPECIFICATION.md), atualmente em revisão. Após seu aceite, os demais documentos detalharão e derivarão suas regras conforme a matriz de rastreabilidade.
+
 ## Como esta documentação é organizada
 
 | Pasta             | Finalidade                                                                          |
 | ----------------- | ----------------------------------------------------------------------------------- |
+| `specification/`  | Documento-mestre, decisões, rastreabilidade e governança de consistência.           |
 | `product/`        | Visão de produto, missão, ecossistema, modelo econômico.                            |
 | `architecture/`   | Visão arquitetural geral (Cloud, Edge, Canvas, IA, Quantum, Asaas, Blockchain).     |
 | `domain/`         | Dicionário de domínio (DDD) — vocabulário oficial da plataforma.                    |
@@ -30,17 +33,15 @@ Esta é a documentação oficial de engenharia do backend da Mostarda. Ela é a 
 
 ## Como ler
 
-1. Comece por `product/VISION.md`, `product/PRODUCT_BIBLE.md` e `product/BUSINESS_FOUNDATION.md` para entender o **porquê**, o modelo de negócio e seus princípios.
-2. Leia `product/GO_TO_MARKET.md` para entender a estratégia de liquidez do piloto.
-3. Leia `domain/DOMAIN_DICTIONARY.md` para dominar o **vocabulário**.
-4. Leia `architecture/ARCHITECTURE_OVERVIEW.md` para ver o **quadro geral**.
-5. Leia `execution/COMMANDS.md`, `execution/STATE_MACHINES.md` e `execution/SAGAS.md` para entender **como o domínio se comporta**.
-6. Leia `financial/FINANCIAL_ARCHITECTURE.md` para entender os fluxos de entrada e saída de dinheiro.
-7. Leia `tv-network/TV_NETWORK_ARCHITECTURE.md` para entender a operação da infraestrutura física.
-8. Consulte `adr/` para entender **por que decidimos assim**.
+1. Comece por `specification/PLATFORM_SPECIFICATION.md` para conhecer o contrato integral vigente.
+2. Use `specification/TRACEABILITY.md` para localizar os documentos derivados de cada regra.
+3. Leia `product/` para o negócio, `domain/` para o modelo e `execution/` para o comportamento.
+4. Leia `financial/` e `tv-network/` para os contextos estruturais especializados.
+5. Consulte `adr/` para entender **por que decidimos assim**.
 
 ## Regras da documentação
 
 - Toda mudança arquitetural relevante gera um **novo ADR** (nunca edita um ADR aceito — cria-se um novo que o supersede).
+- Toda decisão muda primeiro na especificação; depois são sincronizados o registro, a rastreabilidade e os documentos derivados.
 - Termos de domínio **só existem** se estiverem no dicionário.
 - Qualquer nova integração externa gera pasta própria em `docs/`.
