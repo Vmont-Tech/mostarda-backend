@@ -40,7 +40,7 @@ Cada Aggregate tem **uma raiz**, protege **invariantes** e é a única porta de 
 - **Root:** `Campaign` (identidade `CampaignIdentifier`)
 - **Entidades internas:** CreativeAsset, TargetingRule, BudgetAllocation
 - **Value Objects:** `Money`, `TimeSlot`, `AssetReference`, `PlaybackWindow`
-- **Invariantes:** toda Campaign pertence a **um** Advertiser; só gera Slot com pelo menos um Creative Asset aprovado; não veicula fora da janela; orçamento consumido nunca excede o contratado; pausa impede nova alocação sem revogar Slots já executados.
+- **Invariantes:** toda Campaign pertence a **um** Advertiser; só gera Slot com pelo menos um Creative Asset aprovado; não veicula fora da janela; Contract Value registra o contrato, mas reserva/consumo financeiro nunca excedem o `AvailableBudget` do CampaignBudget; pausa impede nova alocação sem revogar Slots já executados.
 - **Eventos:** `CampaignCreated`, `CampaignScheduled`, `CampaignStarted`, `CampaignPaused`, `CampaignResumed`, `CampaignCompleted`, `CampaignExpired`, `CampaignBudgetExhausted`, `CreativeAssetUploaded`, `CreativeAssetApproved`, `CreativeAssetRejected`.
 
 ## Slot Aggregate — contexto Campaign Management
@@ -62,10 +62,16 @@ Cada Aggregate tem **uma raiz**, protege **invariantes** e é a única porta de 
 ## Settlement Aggregate — contexto Settlement
 
 - **Root:** `Settlement` (por `SettlementCycle` e participante pagador/recebedor)
-- **Entidades internas:** SplitLine, Payout, Invoice, Charge, SettlementDispute
+- **Entidades internas:** SplitLine, FinancialRight, Invoice, Charge, SettlementDispute
 - **Value Objects:** `SettlementCycle`, `Money`, `SplitShare`, `SplitShareStatus`, `SplitPolicyVersion`, `SettlementPolicyVersion`, `TaxPolicyVersion`, `Retention`, `TaxBreakdown`, `AsaasFee`.
-- **Invariantes:** consome apenas Evidences `VALID` e ancoradas; após taxas, impostos e retenções explícitas, o valor líquido distribuível é dividido exatamente em **30% Mostarda, 20% Proprietário da TV, 20% Proprietário do Local, 20% Vendedor responsável e 10% Influenciador**; soma das cinco `SplitShare` = valor líquido distribuível; cada parcela possui status próprio `READY`/`BLOCKED`/`UNCLAIMED`/`PAID`/`FAILED`; ausência de beneficiário não redistribui percentual nem bloqueia as demais parcelas; ciclo fechado é imutável; falha de ancoragem ou disputa da Evidence bloqueia as parcelas afetadas; nenhuma trilha de valor em blockchain. Ver [`REVENUE_ARCHITECTURE.md`](./REVENUE_ARCHITECTURE.md).
-- **Eventos:** `SettlementCycleOpened`, `SettlementCycleClosed`, `SettlementAuthorized`, `SettlementBlocked`, `SplitCalculated`, `SettlementExecuted`, `PayoutConfirmed`, `PayoutFailed`, `InvoiceIssued`, `ChargeRegistered`, `ChargePaid`, `ChargeOverdue`, `InsuranceFundCredited`, `SettlementDisputeOpened`, `SettlementDisputeResolved`.
+- **Invariantes:** consome apenas Evidences `VALID` e ancoradas; após taxas, impostos e retenções explícitas, o valor líquido distribuível é dividido exatamente em **30% Mostarda, 20% Proprietário da TV, 20% Proprietário do Local, 20% Vendedor responsável e 10% Influenciador**; soma das cinco `SplitShare` = valor líquido distribuível; cada parcela possui status próprio `READY`/`BLOCKED`/`UNCLAIMED`/`CREDITED`; ausência de beneficiário não redistribui percentual nem bloqueia as demais parcelas; `CREDITED` cria direito para Financial Platform, não pagamento; ciclo fechado é imutável; falha de ancoragem ou disputa da Evidence bloqueia as parcelas afetadas; nenhuma trilha de valor em blockchain. Ver [`REVENUE_ARCHITECTURE.md`](./REVENUE_ARCHITECTURE.md).
+- **Eventos:** `SettlementCycleOpened`, `SettlementCycleClosed`, `SettlementAuthorized`, `SettlementBlocked`, `SplitCalculated`, `SettlementExecuted`, `PartnerCreditRequested`, `InvoiceIssued`, `ChargeRegistered`, `ChargePaid`, `ChargeOverdue`, `InsuranceFundCredited`, `SettlementDisputeOpened`, `SettlementDisputeResolved`.
+
+## Financial Platform Aggregates — contexto Financial Platform
+
+- **Roots:** `PartnerAccount`, `PartnerLedger`, `PartnerWallet`, `Withdrawal`, `WithdrawalBatch`, `CampaignBudget`, `PaymentLedger`, `FinancialPolicy`, `WithdrawalPolicy`.
+- **Invariantes:** PartnerLedger e PaymentLedger são append-only; Wallet é projeção do PartnerLedger; CampaignBudget só aumenta por pagamento compensado e só consome AvailableBudget; Withdrawal sempre aplica WithdrawalPolicy; chargebacks e recuperações são novos lançamentos; Settlement apenas origina direitos.
+- **Eventos:** catálogo em [`../financial/FINANCIAL_EVENTS.md`](../financial/FINANCIAL_EVENTS.md).
 
 ## Influencer Aggregate — contexto Influencer Network
 

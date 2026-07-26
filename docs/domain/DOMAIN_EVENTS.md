@@ -106,9 +106,8 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `SettlementAuthorized` | Evidences válidas e ancoradas liberam liquidação. |
 | `SettlementBlocked` | Bloqueada por falha de evidência ou ancoragem. |
 | `SplitCalculated` | Memória de cálculo do split gerada. |
-| `SettlementExecuted` | Split enviado ao Asaas. |
-| `PayoutConfirmed` | Repasse confirmado pelo Asaas. |
-| `PayoutFailed` | Falha de repasse. |
+| `SettlementExecuted` | Direitos financeiros do ciclo foram calculados e encaminhados ao Financial Platform. |
+| `PartnerCreditRequested` | Crédito de parceiro solicitado a partir de uma SplitShare. |
 | `InvoiceIssued` | Nota fiscal emitida. |
 | `ChargeRegistered` | Cobrança do Advertiser registrada. |
 | `ChargePaid` / `ChargeOverdue` | Estado da cobrança. |
@@ -255,6 +254,19 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `InsuranceRepairAuthorized` / `InsuranceReplacementAuthorized` | Decisão operacional para reparar ou substituir. |
 | `InsuranceSettlementExecuted` | Saída do fundo reconciliada. |
 
+## Financial Platform
+
+| Evento | Significado |
+| --- | --- |
+| `PaymentReceived` / `PaymentCompensated` | Pagamento reconhecido ou confirmado para crédito de orçamento. |
+| `PaymentCancelled` / `PaymentDisputed` / `PaymentOverdue` | Pagamento sem disponibilidade financeira. |
+| `CampaignBudgetIncreased` / `CampaignBudgetConsumed` / `CampaignBudgetDepleted` | Alteração de orçamento disponível. |
+| `PartnerCreditRequested` / `PartnerCredited` | Direito do Settlement encaminhado e creditado no Ledger. |
+| `PartnerBalanceAvailable` / `PartnerBalanceBlocked` | Saldo de carteira derivado. |
+| `WithdrawalRequested` / `WithdrawalApproved` / `WithdrawalExecuted` / `WithdrawalFailed` | Ciclo de saque. |
+| `NegativeBalanceCreated` / `NegativeBalanceRecovered` | Débito compensatório e recuperação. |
+| `FinancialPolicyChanged` | Nova versão de política financeira. |
+
 ## Notifications
 
 | Evento | Significado |
@@ -280,7 +292,7 @@ PlaybackFinished → PlaybackEventSigned → PlaybackEventSubmitted
    → EvidenceGenerated → EvidenceValidated → EvidenceHashed
    → AnchoringRequested → AnchoringConfirmed → EvidenceRegistered
    → SettlementCycleClosed → SettlementAuthorized → SplitCalculated
-   → SettlementExecuted → PayoutConfirmed
+   → SettlementExecuted → PartnerCreditRequested → PartnerCredited
 ```
 
-Qualquer falha na cadeia produz `EvidenceRejected`, `EvidenceDisputed`, `AnchoringFailed` ou `SettlementBlocked` — e **nenhum** repasse ocorre.
+Qualquer falha na cadeia produz `EvidenceRejected`, `EvidenceDisputed`, `AnchoringFailed` ou `SettlementBlocked` — e nenhum direito financeiro é emitido. Saque é fluxo posterior, governado pelo Financial Platform.

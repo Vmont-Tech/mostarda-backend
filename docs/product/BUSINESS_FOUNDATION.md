@@ -31,7 +31,7 @@ Produto, onboarding, convites, indicação, incentivos e automações comerciais
 
 ## 6. Modelo comercial e cobrança
 
-Modelo **SaaS + Marketplace**: o anunciante compra Campaigns; a Campaign compra Slots; o Slot compra tempo de tela; cada exibição comprovada gera Evidence Record; a prova elegível gera Settlement; Settlement gera Split; Split gera pagamento.
+Modelo **SaaS + Marketplace**: o anunciante compra Campaigns; pagamento compensado cria Available Budget; a Campaign compra Slots; cada exibição comprovada gera Evidence Record; a prova elegível gera Settlement; Settlement gera direito financeiro; Financial Platform governa carteira e saque.
 
 Cobrança é exclusivamente pelo Asaas, via PIX, cartão e boleto; assinaturas são futuras. Não há blockchain financeira, token ou criptomoeda.
 

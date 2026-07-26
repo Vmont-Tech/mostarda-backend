@@ -102,3 +102,18 @@ Componente do Edge que coleta, assina, armazena offline e reporta fatos de playb
 
 ## TV Capability
 Aggregate que representa uma capacidade instalada em uma TV, com estado, versão, owner, health, Facets, Assets, Services, Policies e Events.
+
+## Financial Platform
+Bounded Context que governa entrada compensada, orçamento disponível, ledger, carteira de parceiros, saque e políticas financeiras; não calcula preço, prova ou split.
+
+## Campaign Available Budget
+Saldo compensado e disponível para reservar/consumir em Slots. É distinto de Contract Value e a única fonte de autorização financeira de Campaign.
+
+## Partner Ledger
+Livro append-only de créditos, débitos, taxas, chargebacks e recuperações de um parceiro.
+
+## Partner Wallet
+Projeção dos saldos Pending, Available, Blocked, Withdrawable e Negative derivados do Partner Ledger.
+
+## Withdrawal
+Solicitação e ciclo de retirada de saldo de parceiro, governados por Withdrawal Policy e executados pelo provider somente após aprovação/batch.

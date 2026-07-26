@@ -17,3 +17,5 @@ Estas regras são não negociáveis. Toda decisão, contrato, implementação, m
 13. Cloud declara `DesiredState`, Edge reporta `CurrentState` e Cloud deriva `ObservedState`; o reconciliador converge os três por comandos assinados, idempotentes e auditáveis.
 14. Blockchain/Quantum é camada de prova, nunca rail de pagamento ou custódia de valor.
 15. Dados pessoais e telemetria obedecem proprietário, consentimento e minimização; telemetria nunca substitui Evidence.
+16. Settlement cria direitos financeiros; Financial Platform mantém Ledger/Wallet/Withdrawal; Asaas só executa instruções desse contexto.
+17. Campaign só consome Available Budget compensado; Contract Value não é saldo e Quantum nunca movimenta dinheiro.

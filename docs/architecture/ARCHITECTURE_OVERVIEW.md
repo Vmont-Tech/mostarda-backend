@@ -85,8 +85,8 @@ Conjunto de agentes especializados (validação de vídeo, recomendação de TVs
 3. Edge emite **Playback Event** assinado localmente.
 4. Backend constrói, valida e materializa o **Evidence Record** no **Evidence Ledger**.
 5. Cloud prepara o **Canonical Evidence Package**; seu hash é ancorado no **Quantum Registry** / blockchain institucional.
-6. Settlement consolida Evidences válidas do ciclo, explicita impostos/taxas/retenções e aplica o split arquitetural fixo: **30% Mostarda, 20% Proprietário da TV, 20% Proprietário do Local, 20% Vendedor responsável, 10% Influenciador**.
-7. **Asaas** executa o **Split Payment** entre os participantes elegíveis e Settlement reconcilia o resultado.
+6. Settlement consolida Evidences válidas do ciclo, explicita impostos/taxas/retenções, aplica o split arquitetural fixo e cria direitos financeiros.
+7. Financial Platform credita Partner Ledger, deriva Wallet e governa saque; **Asaas** executa cobrança/transferência somente quando instruído por esse contexto.
 
 Qualquer falha de integridade em (3)/(4)/(5) **bloqueia** (6) e (7).
 

@@ -14,3 +14,5 @@
 12. `DesiredState`, `CurrentState` e `ObservedState` são distintos; divergência é diagnosticada antes de qualquer conclusão operacional.
 13. Falha de um SplitShare não bloqueia ou redistribui as demais parcelas.
 14. A autorização é verificada pelo owner antes da transição; a Saga e o consumidor não a presumem.
+15. Settlement cria direitos; Financial Platform credita Ledger; somente Withdrawal instrui saída via Asaas.
+16. CampaignBudget só autoriza Slots com AvailableBudget compensado; ContractValue não é saldo.
