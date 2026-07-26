@@ -48,7 +48,7 @@ Este documento apresenta a **visão arquitetural macro** da Mostarda. Detalhamen
 Núcleo de negócio. Modelado em Clean Architecture + DDD, dividido em módulos de contexto (Campaigns, Inventory, Pricing, Evidence, Settlement, Telemetry, AI, Quantum). Comunica-se via **event bus** interno. Expõe APIs para Frontend e para Edge.
 
 ### Edge
-Roda no mini PC acoplado a cada TV. **Leve por design.** Responsável por: baixar assets, executar Slots, produzir Playback Events, emitir telemetria, assinar evidência local, operar offline por janelas curtas. Regras de negócio complexas (pricing, split, elegibilidade) **não** ficam aqui.
+Roda no mini PC acoplado a cada TV. **Leve por design.** Responsável por: baixar assets, executar Slots, produzir e assinar Playback Events, emitir telemetria e operar offline por janelas curtas. Evidence é construída no Cloud; regras de negócio complexas (pricing, split, elegibilidade) **não** ficam aqui.
 
 ### Canvas
 Subcamada visual do Edge, isolada. Recebe instruções declarativas do Edge e desenha na tela. Permite evoluir tratamento visual sem tocar no player.
@@ -83,8 +83,8 @@ Conjunto de agentes especializados (validação de vídeo, recomendação de TVs
 1. **Campaign** ativa gera **Slots** alocados a **TVs** elegíveis (Inventory + Pricing).
 2. Edge recebe o **Slot**, baixa o **Asset**, exibe via **Canvas** por 15s.
 3. Edge emite **Playback Event** assinado localmente.
-4. Backend valida e materializa a **Evidence** no **Evidence Ledger**.
-5. Hash da Evidence é ancorado no **Quantum Registry** / blockchain institucional.
+4. Backend constrói, valida e materializa o **Evidence Record** no **Evidence Ledger**.
+5. Cloud prepara o **Canonical Evidence Package**; seu hash é ancorado no **Quantum Registry** / blockchain institucional.
 6. Settlement consolida Evidences válidas do ciclo, explicita impostos/taxas/retenções e aplica o split arquitetural fixo: **30% Mostarda, 20% Proprietário da TV, 20% Proprietário do Local, 20% Vendedor responsável, 10% Influenciador**.
 7. **Asaas** executa o **Split Payment** entre os participantes elegíveis e Settlement reconcilia o resultado.
 

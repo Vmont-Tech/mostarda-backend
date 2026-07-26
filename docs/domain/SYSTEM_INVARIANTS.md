@@ -14,6 +14,6 @@ Estas regras são não negociáveis. Toda decisão, contrato, implementação, m
 10. Toda decisão de IA preserva `ModelVersion`, `PromptVersion`, `AgentVersion` e `PolicyVersion`, além da explicação e dos insumos permitidos.
 11. Todo documento auditável possui hash; formato de transporte nunca é identidade da prova.
 12. Facets são independentes, isoladas, versionáveis e hot-swappable; não compartilham estado ou dependência direta.
-13. Cloud declara estado desejado; Edge reporta estado atual; o reconciliador converge ambos por comandos assinados, idempotentes e auditáveis.
+13. Cloud declara `DesiredState`, Edge reporta `CurrentState` e Cloud deriva `ObservedState`; o reconciliador converge os três por comandos assinados, idempotentes e auditáveis.
 14. Blockchain/Quantum é camada de prova, nunca rail de pagamento ou custódia de valor.
 15. Dados pessoais e telemetria obedecem proprietário, consentimento e minimização; telemetria nunca substitui Evidence.

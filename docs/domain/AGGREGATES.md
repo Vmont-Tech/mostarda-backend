@@ -19,6 +19,14 @@ Cada Aggregate tem **uma raiz**, protege **invariantes** e é a única porta de 
 - **Invariantes:** toda TV pertence a **um** Dono da TV e está em **um** Venue; `TV ID` imutável e não reutilizável; só recebe Slots compatíveis com suas Capabilities declaradas; TV suspensa não recebe Slot.
 - **Eventos:** `TvRegistered`, `TvProvisioned`, `TvActivated`, `TvSuspended`, `TvReactivated`, `TvDecommissioned`, `TvAssignedToVenue`, `TvOwnershipTransferred`, `InsurancePolicyAttached`, `NfcTagLinked`.
 
+## TVCapability Aggregate — contexto Edge Runtime
+
+- **Root:** `TVCapability` (`CapabilityIdentifier`)
+- **Entidades internas:** `FacetInstallation`, `AssetBinding`, `ServiceContract`, `PolicyBinding`, `CapabilityHealth`.
+- **Value Objects:** `CapabilityVersion`, `CapabilityState`, `FacetId`, `Owner`, `DeviceHealth`.
+- **Invariantes:** pertence a exatamente uma TV e a um owner técnico; estado, versão, health e contratos são explícitos; Facets instaladas são compatíveis com a versão e não dependem diretamente entre si; alteração de Asset/Service/Policy é versionada e auditável; Capability degradada não anuncia suporte que não pode executar.
+- **Eventos:** `CapabilityDeclared`, `CapabilityActivated`, `CapabilityDegraded`, `CapabilityRecovered`, `FacetInstalled`, `FacetSwapped`, `CapabilityPolicyApplied`.
+
 ## Venue Aggregate — contexto TV Network
 
 - **Root:** `Venue`

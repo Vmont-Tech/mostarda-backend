@@ -187,7 +187,7 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `AiCapabilityDegraded` | Agente degradado; fluxo humano segue com fallback. |
 | `EdgeModelPublished` / `EdgeModelRevoked` | Modelo local homologado/revogado. |
 | `EdgeInferenceCompleted` / `EdgeInferenceDegraded` | Inferência no Edge. |
-| `DesiredStatePublished` / `CurrentStateReported` / `StateReconciliationCompleted` | Convergência entre estado desejado e observado. |
+| `DesiredStatePublished` / `CurrentStateReported` / `ObservedStateDerived` / `StateReconciliationCompleted` | Convergência entre estado desejado, declarado e observado. |
 | `GraoPreferenceLearned` | Preferência aprendida pelo Grão. |
 
 ## Influencer Network

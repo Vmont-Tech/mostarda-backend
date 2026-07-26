@@ -88,5 +88,17 @@ Estado versionado que Cloud declara para uma TV/Edge: configuração e versões 
 ## Current State
 Estado observado e reportado pelo Edge, incluindo configuração, versões, saúde e divergências em relação ao Desired State.
 
+## Observed State
+Leitura independente que Cloud deriva de heartbeat, telemetria, HDMI, execução e confirmações de comando. É comparada ao Current State pelo reconciliador.
+
 ## Split Share Status
 Estado individual de uma parcela: `READY`, `BLOCKED`, `UNCLAIMED`, `PAID` ou `FAILED`.
+
+## Evidence Record
+Registro de prova append-only criado no Cloud após validação de um Playback Event. É a unidade que pode tornar-se `VALID` e habilitar Settlement.
+
+## Playback Collector
+Componente do Edge que coleta, assina, armazena offline e reporta fatos de playback. Não cria Evidence Record nem atribui status de prova.
+
+## TV Capability
+Aggregate que representa uma capacidade instalada em uma TV, com estado, versão, owner, health, Facets, Assets, Services, Policies e Events.

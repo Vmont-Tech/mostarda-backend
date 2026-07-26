@@ -29,7 +29,8 @@
 | QR (emissão, alvo, validade) | **Cloud** | Edge (renderiza), Quantum (resolve) | Todo QR pertence à Campaign. |
 | NFC Interaction | **Quantum** | Cloud | Edge nunca responde NFC. |
 | QR Interaction (histórico público) | **Quantum** | Cloud | |
-| Evidence | **Cloud** (Evidence Ledger) | Settlement, Analytics, Campaign Management | Nasce no Edge, é materializada no Cloud. |
+| Playback Event / Playback Signature | **Edge** | Cloud (Evidence Ledger), Telemetry | Fato assinado; não é Evidence. |
+| Evidence Record | **Cloud** (Evidence Ledger) | Settlement, Analytics, Campaign Management | Construído e materializado no Cloud a partir de fatos e contexto validados. |
 | Status da Evidence | **Cloud** (Evidence Ledger) | Settlement | |
 | Hash (ancoragem pública) | **Quantum** | Cloud | Cálculo no Edge/Cloud; **registro** é do Quantum. |
 | Snapshot do Ledger | **Cloud** (Evidence Ledger) | Quantum (ancora) | |

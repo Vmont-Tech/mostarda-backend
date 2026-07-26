@@ -6,7 +6,7 @@ Toda **TV** é tratada como um **Container de Capabilities**. Uma Capability é 
 
 1. Capability é **declarada** no provisionamento e versionada; o Backend só envia trabalho compatível com as Capabilities declaradas.
 2. Capability **não** contém regra de negócio quando roda no Edge (ADR-002).
-3. Toda Capability é composta por **Facets** (ver [`FACETS.md`](./FACETS.md)) e cada Facet expõe **Assets** de estado (ver [`ASSETS.md`](./ASSETS.md)).
+3. `TVCapability` é Aggregate próprio: `CapabilityId`, estado, versão, owner, health, Facets, Assets, Services, Policies e Events. Toda Capability é composta por **Facets** (ver [`FACETS.md`](./FACETS.md)); cada Facet expõe Assets de conhecimento/estado, Services, Policies e Events (ver [`ASSETS.md`](./ASSETS.md)).
 4. Eventos citados abaixo são os oficiais de [`DOMAIN_EVENTS.md`](./DOMAIN_EVENTS.md).
 
 ---
@@ -35,19 +35,19 @@ Toda **TV** é tratada como um **Container de Capabilities**. Uma Capability é 
 - **Gera:** `PresenceUpdated`, `DwellTimeUpdated`, `OccupancyChanged`, `HeatMapGenerated`, `PeakHourDetected`, `TelemetryBatchSubmitted`, `TelemetryGapDetected`.
 - **Consome:** `TelemetryPolicyUpdated`, `HeartbeatMissed`.
 
-## Evidence
+## Playback Reporting
 
-- **Objetivo:** produzir a prova local de exibição.
-- **Responsabilidades:** ao concluir 15s de exibição, montar o Playback Event, calcular hash, assinar com a chave local, enfileirar offline e ressincronizar.
-- **Dependências:** Playback, Security (chave), Pricing (valor congelado recebido do Backend).
+- **Objetivo:** produzir fatos locais de execução; Evidence é exclusivamente do Cloud.
+- **Responsabilidades:** ao concluir 15s de exibição, montar `PlaybackEvent`, checksums e métricas, assinar com a chave local, enfileirar offline e ressincronizar.
+- **Dependências:** Playback, Security (chave), Pricing (quote congelado recebido do Backend).
 - **Gera:** `PlaybackEventSigned`, `PlaybackEventQueued`, `PlaybackEventSubmitted`.
-- **Consome:** `PlaybackFinished`, `EvidenceValidated`, `EvidenceRejected`.
+- **Consome:** `PlaybackFinished`.
 
 ## Pricing
 
 - **Objetivo:** transportar e exibir o preço já decidido pelo **Pricing Engine**.
 - **Responsabilidades:** guardar imutavelmente o `valor cobrado` associado ao Slot e anexá-lo à Evidence. **Nunca calcula preço no Edge.**
-- **Dependências:** Campaign, Evidence.
+- **Dependências:** Campaign, Playback Reporting.
 - **Gera:** nenhum evento de precificação (somente referência no Playback Event).
 - **Consome:** `PriceQuoted`, `PriceApplied`, `PriceOverridden`.
 
