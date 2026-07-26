@@ -24,10 +24,10 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 
 ## 2. TV Network
 
-- **Responsabilidade:** inventário físico — **TV**, **Venue**, Dono da TV, Dono do espaço, seguro do hardware.
-- **Pertence:** cadastro e identidade (`TV ID`), vínculo TV↔Venue↔proprietários, atributos de contexto do Venue, estado comercial (ativa, suspensa, em manutenção), elegibilidade da TV para receber Slots, contrato de seguro da TV.
+- **Responsabilidade:** ciclo de vida e disponibilidade operacional da frota — **TV**, **Venue**, Device Registry, EdgeInstallation, Capability Registry, health, heartbeat, manutenção, rollout, rollback e Fleet.
+- **Pertence:** cadastro e identidade (`TV ID`), vínculo TV↔Venue↔proprietários, atributos de contexto do Venue, instalação/provisionamento, inventário, estado operacional, Capability declarativa, Desired/Current/Observed State, conectividade e manutenção. Ver [`../tv-network/TV_NETWORK_ARCHITECTURE.md`](../tv-network/TV_NETWORK_ARCHITECTURE.md).
 - **NÃO pertence:** software embarcado e fila local (Edge Runtime), saúde em tempo real (Telemetry), preço do inventário (Pricing Engine), pagamento ao parceiro (Settlement) ou fundo/cobertura/sinistro (Insurance).
-- **Conversa com:** Campaign Management, Pricing Engine, Edge Runtime, Telemetry, Settlement, Marketplace.
+- **Conversa com:** Edge Runtime, Telemetry, Insurance, Notifications e Analytics por fatos operacionais; não conhece Campaign, Pricing, Evidence, Settlement ou Financial Platform.
 - **Proprietário:** Cloud.
 
 ## 3. Edge Runtime

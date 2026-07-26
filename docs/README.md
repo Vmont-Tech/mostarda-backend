@@ -11,6 +11,7 @@ Esta é a documentação oficial de engenharia do backend da Mostarda. Ela é a 
 | `domain/`         | Dicionário de domínio (DDD) — vocabulário oficial da plataforma.                    |
 | `execution/`      | Modelo executável de comportamento: Commands, Events, State Machines, Sagas e Timelines. |
 | `financial/`      | Financial Platform: pagamento compensado, orçamento, ledger, carteira e saque. |
+| `tv-network/`     | TV Network: ciclo de vida, dispositivos Edge, capacidade, saúde e frota. |
 | `domain/REVENUE_ARCHITECTURE.md` | Contrato econômico: split, retenções, conciliação e exceções. |
 | `domain/INSURANCE.md` | Fundo de seguro, apólices, reservas, sinistros e reposições. |
 | `domain/TV_EDGE_MODEL.md` | Operação TV/Edge, recuperação e observabilidade. |
@@ -35,7 +36,8 @@ Esta é a documentação oficial de engenharia do backend da Mostarda. Ela é a 
 4. Leia `architecture/ARCHITECTURE_OVERVIEW.md` para ver o **quadro geral**.
 5. Leia `execution/COMMANDS.md`, `execution/STATE_MACHINES.md` e `execution/SAGAS.md` para entender **como o domínio se comporta**.
 6. Leia `financial/FINANCIAL_ARCHITECTURE.md` para entender os fluxos de entrada e saída de dinheiro.
-7. Consulte `adr/` para entender **por que decidimos assim**.
+7. Leia `tv-network/TV_NETWORK_ARCHITECTURE.md` para entender a operação da infraestrutura física.
+8. Consulte `adr/` para entender **por que decidimos assim**.
 
 ## Regras da documentação
 

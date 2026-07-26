@@ -7,6 +7,9 @@ Vocabulário oficial da plataforma. **Um termo só existe se estiver aqui.** Qua
 ## TV
 Dispositivo físico ativo no ecossistema Mostarda. Composto por **mini PC (Edge)** + **tela** + acessórios. Possui identidade única (`TV ID`), pertence a um **Dono da TV** e está instalada em um **Venue**. Emite telemetria e executa **Playback Events**.
 
+## TV Network
+Bounded Context proprietário do ciclo de vida e da disponibilidade operacional da frota física: TVs, dispositivos, Edge, capabilities, health, heartbeat, atualização e Fleet. Não conhece Campaign, anúncios, preço, Financeiro, Evidence ou Settlement.
+
 ## Edge
 Camada de software que roda no mini PC acoplado à TV. Responsável por: reproduzir conteúdo (via Canvas), coletar telemetria, emitir heartbeat, operar offline por períodos limitados e assinar evidências localmente. **Não** contém regras complexas de negócio.
 

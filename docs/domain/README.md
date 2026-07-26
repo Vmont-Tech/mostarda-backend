@@ -25,3 +25,4 @@ Fonte única da verdade do modelo de domínio. Ordem de leitura:
 21. [`PLAYER.md`](./PLAYER.md) e [`CANVAS.md`](./CANVAS.md) — execução multimídia e composição visual
 22. [`PRICING_ENGINE.md`](./PRICING_ENGINE.md) — cálculo dinâmico e congelamento de preço
 23. [`AI_ARCHITECTURE.md`](./AI_ARCHITECTURE.md) — agentes, prompts, memória, conhecimento e políticas
+24. [`../tv-network/TV_NETWORK_ARCHITECTURE.md`](../tv-network/TV_NETWORK_ARCHITECTURE.md) — contexto proprietário da frota e disponibilidade operacional

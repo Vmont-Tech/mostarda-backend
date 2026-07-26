@@ -17,6 +17,7 @@ Toda a documentação vive em [`/docs`](./docs). Comece por:
 - [`docs/domain/DOMAIN_DICTIONARY.md`](./docs/domain/DOMAIN_DICTIONARY.md)
 - [`docs/execution/`](./docs/execution) — modelo comportamental: Commands, Events, State Machines e Sagas
 - [`docs/financial/FINANCIAL_ARCHITECTURE.md`](./docs/financial/FINANCIAL_ARCHITECTURE.md) — entrada, orçamento, ledger, carteira e saque
+- [`docs/tv-network/TV_NETWORK_ARCHITECTURE.md`](./docs/tv-network/TV_NETWORK_ARCHITECTURE.md) — frota, Edge, saúde, atualização e operação remota
 - [`docs/adr/`](./docs/adr) — Architecture Decision Records
 
 ## Princípios não-negociáveis

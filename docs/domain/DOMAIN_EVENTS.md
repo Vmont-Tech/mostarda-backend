@@ -33,6 +33,17 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `FacetInstalled` / `FacetSwapped` | Facet instalada ou substituída sob contrato versionado. |
 | `CapabilityPolicyApplied` | Política da Capability aplicada. |
 
+## TV Network (produtor: TV Network)
+
+| Evento | Significado |
+| --- | --- |
+| `DeviceRegistered` / `DeviceBoundToTV` / `DeviceReplaced` | Registro, vínculo e substituição de equipamento. |
+| `InstallationVerified` / `InstallationAccepted` / `InstallationFailed` | Ciclo de instalação física. |
+| `HeartbeatReceived` / `HeartbeatMissed` | Liveness operacional e lacunas. |
+| `HealthObserved` / `HealthScoreChanged` / `DiagnosisCreated` | Histórico de saúde e diagnóstico. |
+| `UpdateWaveStarted` / `UpdateWavePaused` / `UpdateRolledBack` | Operação de rollout e rollback. |
+| `FleetCreated` / `FleetMembershipChanged` / `FleetHealthChanged` | Gestão de grupo operacional. |
+
 ## Campaign (produtor: Cloud / Campaign Management; alguns no Edge)
 
 | Evento | Significado |
