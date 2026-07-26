@@ -11,6 +11,8 @@ Toda a documentação vive em [`/docs`](./docs). Comece por:
 - [`docs/README.md`](./docs/README.md) — índice geral
 - [`docs/product/VISION.md`](./docs/product/VISION.md)
 - [`docs/product/PRODUCT_BIBLE.md`](./docs/product/PRODUCT_BIBLE.md)
+- [`docs/product/BUSINESS_FOUNDATION.md`](./docs/product/BUSINESS_FOUNDATION.md) — constituição de negócio
+- [`docs/product/GO_TO_MARKET.md`](./docs/product/GO_TO_MARKET.md) — estratégia do piloto e liquidez inicial
 - [`docs/architecture/ARCHITECTURE_OVERVIEW.md`](./docs/architecture/ARCHITECTURE_OVERVIEW.md)
 - [`docs/domain/DOMAIN_DICTIONARY.md`](./docs/domain/DOMAIN_DICTIONARY.md)
 - [`docs/adr/`](./docs/adr) — Architecture Decision Records

@@ -27,10 +27,11 @@ Esta é a documentação oficial de engenharia do backend da Mostarda. Ela é a 
 
 ## Como ler
 
-1. Comece por `product/VISION.md` e `product/PRODUCT_BIBLE.md` para entender o **porquê**.
-2. Leia `domain/DOMAIN_DICTIONARY.md` para dominar o **vocabulário**.
-3. Leia `architecture/ARCHITECTURE_OVERVIEW.md` para ver o **quadro geral**.
-4. Consulte `adr/` para entender **por que decidimos assim**.
+1. Comece por `product/VISION.md`, `product/PRODUCT_BIBLE.md` e `product/BUSINESS_FOUNDATION.md` para entender o **porquê**, o modelo de negócio e seus princípios.
+2. Leia `product/GO_TO_MARKET.md` para entender a estratégia de liquidez do piloto.
+3. Leia `domain/DOMAIN_DICTIONARY.md` para dominar o **vocabulário**.
+4. Leia `architecture/ARCHITECTURE_OVERVIEW.md` para ver o **quadro geral**.
+5. Consulte `adr/` para entender **por que decidimos assim**.
 
 ## Regras da documentação
 
