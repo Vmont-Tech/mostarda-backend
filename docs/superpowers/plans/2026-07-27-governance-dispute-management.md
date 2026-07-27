@@ -8,6 +8,8 @@
 
 **Tech Stack:** Markdown normativo, DDD, Event Sourcing conceitual, Commands/Events, PowerShell para validação, Git.
 
+**Execution status:** concluído; referências a “fechar `OPEN-049`” abaixo descrevem passos históricos já executados. O estado normativo é `CLOSED` por `DEC-041`.
+
 ---
 
 ## Estrutura de arquivos

@@ -1,8 +1,8 @@
 # Governance & Dispute Management — Design aprovado
 
 - **Data:** 2026-07-27
-- **Status:** aguardando revisão do documento escrito
-- **Decisão relacionada:** fechamento de `OPEN-049`
+- **Status:** aprovado e sincronizado
+- **Decisão relacionada:** `OPEN-049` — `CLOSED` por `DEC-041`
 
 ## 1. Objetivo
 
@@ -432,7 +432,7 @@ Contratos existentes de Evidence, Settlement e Financial que usam “dispute” 
 
 Na sincronização normativa:
 
-- fechar `OPEN-049`;
+- registrar o fechamento histórico de `OPEN-049`;
 - registrar novo `DEC-*`;
 - adicionar o bounded context ao mapa;
 - adicionar GovernanceCase aos Aggregates;
@@ -462,7 +462,7 @@ O design está pronto para plano quando:
 - policy version é única e imutável;
 - troca de policy produz nova decisão, sem mutação histórica;
 - UNKNOWN não é estado intermediário;
-- `OPEN-049` pode ser fechado sem nova suposição.
+- `OPEN-049` está `CLOSED` sem suposição adicional.
 
 ## 19. Roadmap após a sincronização
 
