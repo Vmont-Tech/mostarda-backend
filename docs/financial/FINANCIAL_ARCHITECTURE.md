@@ -303,4 +303,20 @@ Quando uma dessas decisões for aprovada, a especificação oficial deve ser alt
 5. refund usa o meio original quando elegível e permitido;
 6. cada movimento é append-only e idempotente.
 
-Overdelivery com Evidence válida cria direito normal do parceiro. O débito econômico não recai sobre CampaignBudget: uma obrigação `PlatformFundedDelivery` identifica a Mostarda como funding owner, referencia Evidence/causa/responsabilidade e financia os créditos derivados. Não se altera Payment, CampaignBudget, Evidence ou Settlement histórico.
+Overdelivery com Evidence válida cria direito normal do parceiro. O débito econômico não recai sobre CampaignBudget. A obrigação financeira aplicável é criada somente após `ResponsibilityDecisionPublished`, referencia `decisionId + revision` e financia os créditos derivados sem alterar Payment, CampaignBudget, Evidence ou Settlement histórico.
+
+## 19. Governance e consequências de responsabilidade
+
+Financial publica fatos financeiros, inclusive pagamento, chargeback, disputa interna, saldo, tentativa e reconciliação. Ele nunca decide culpa, responsibleParty ou ResponsibilityCategory.
+
+Somente `ResponsibilityDecisionPublished` autoriza materializar consequência baseada em responsabilidade. `PlatformLossEntry`, `PartnerCompensation`, `AdvertiserRefund` e recovery contra parte responsável exigem:
+
+- `governanceCaseId`;
+- `decisionId`;
+- `decisionRevision`;
+- Event ID causal;
+- lançamento original, quando existir;
+- idempotency key;
+- policy financeira aplicável.
+
+Financial valida o contrato e executa por Command próprio. Confidence nunca controla execução. Nova revision não edita lançamento anterior; causa entry compensatória.

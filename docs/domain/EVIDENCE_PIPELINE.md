@@ -42,6 +42,8 @@ A alternativa “Edge cria Evidence pronta e Cloud apenas armazena” foi descar
 
 Evidence Ledger pode conhecer referências conceituais de Campaign, Slot, TV, Creative Asset, PricingQuote e políticas econômicas porque precisa provar o contexto. Quantum recebe somente hash, versão canônica e metadados mínimos permitidos.
 
+`DISPUTED`, `EvidenceDisputed` e `EvidenceDisputeResolved` pertencem exclusivamente ao lifecycle de validade da Evidence. Eles não atribuem culpa, responsável contratual ou funding owner. Quando a resolução exigir julgamento de responsabilidade, Evidence publica fatos e referencia o GovernanceCase; somente Governance & Dispute Management publica a decisão oficial.
+
 Settlement consome apenas a projection de elegibilidade e o snapshot econômico congelado. Ele não lê PlaybackEvent nem revalida assinatura.
 
 ## 4. Objetos distintos
@@ -302,7 +304,7 @@ A projection não altera Evidence nem QuantumAnchor. Settlement deve registrar a
 | `BuildEvidence` | EvidenceRecord | Evidence Builder Cloud | PlaybackEvent identificável e não conflitante | `PENDING_VALIDATION`; `EvidenceGenerated` | por `playbackEventId`; payload divergente é incidente |
 | `ValidateEvidence` | EvidenceRecord | Evidence Validator | pending; fontes/policy identificadas | VALID, INVALID ou DISPUTED | por Evidence + policy version + input digest |
 | `OpenEvidenceDispute` | EvidenceRecord | parte/monitor autorizado | motivo e material correlacionados | DISPUTED | por dispute identity |
-| `ResolveEvidenceDispute` | EvidenceRecord | autoridade segregada | disputa aberta; decisão fundamentada | decisão nova append-only | retry retorna primeira decisão |
+| `ResolveEvidenceDispute` | EvidenceRecord | autoridade segregada de Evidence | disputa de validade aberta; conclusão fundamentada sobre validade | resolução de validade append-only | retry retorna primeira resolução; nunca atribui culpa |
 | `ReverseEvidence` | EvidenceRecord | autoridade segregada/política | causa material comprovada | REVERSED final | por reversal decision; nunca edita registro |
 | `PrepareCanonicalEvidencePackage` | EvidenceRecord | Evidence Ledger | VALID; versão canônica disponível | pacote/hash associados | por Evidence + canonical version |
 | `AnchorEvidence` | QuantumAnchor | Quantum Integration | hash permitido e ainda não confirmado | solicitação/tentativa registrada | por hash; timeout é desconhecido |

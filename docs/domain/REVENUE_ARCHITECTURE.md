@@ -43,7 +43,7 @@ Todo cálculo preserva os valores antes/depois de cada retenção, regra e vers�
 
 ## Limites de responsabilidade
 
-`Pricing` decide preço; `Evidence Ledger` prova o fato; `Settlement` decide elegibilidade financeira e composição; `Financial Platform` governa entrada, ledger, carteira e saída; `Insurance` administra fundo e sinistro; `Asaas` executa os rails quando instruído; `Quantum` ancora hashes, nunca dinheiro. Blockchain não custodia nem movimenta valor.
+`Pricing` decide preço; `Evidence Ledger` prova o fato; `Settlement` decide elegibilidade financeira e composição; `Financial Platform` governa entrada, ledger, carteira e saída; `Governance & Dispute Management` julga responsabilidade; `Insurance` administra fundo e sinistro; `Asaas` executa os rails quando instruído; `Quantum` ancora hashes, nunca dinheiro. Blockchain não custodia nem movimenta valor.
 
 ## Overdelivery financiado pela plataforma
 
@@ -54,6 +54,8 @@ Evidence válida sempre pode originar direito do parceiro, inclusive quando a ex
 - Settlement calcula os direitos normalmente e marca a fonte `PLATFORM_FUNDED_OVERDELIVERY`;
 - Financial Platform materializa obrigação financiada pela Mostarda;
 - cada parceiro elegível recebe segundo o split vigente;
-- a causa e a classificação de responsabilidade permanecem correlacionadas.
+- a causa técnica permanece no owner do fato e a classificação oficial referencia `decisionId + revision` de Governance.
 
 Erro interno nunca reduz o direito do parceiro nem apaga a Evidence.
+
+Quando uma `ResponsibilityDecisionPublished` exigir criar, bloquear ou compensar direito, Settlement recebe a decisão e emite Command próprio ao Aggregate owner. O Event de Governance nunca altera Settlement diretamente. Settlement valida suas invariantes, registra `decisionId + revision` e publica o novo fato financeiro; ele nunca reinterpreta o julgamento.

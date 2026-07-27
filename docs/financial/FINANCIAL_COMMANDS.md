@@ -530,3 +530,38 @@ Saga solicita reserva com revisão 10. O Aggregate autoriza e passa à revisão 
 ## 14. Decisões abertas
 
 Permanece proibido preencher por suposição `OPEN-002`, `OPEN-005/006/008`, `OPEN-016` a `OPEN-020`, `OPEN-025` a `OPEN-027` e `OPEN-030` a `OPEN-033` da [PLATFORM_SPECIFICATION.md](../specification/PLATFORM_SPECIFICATION.md).
+## Commands causados por Governance
+
+Todos exigem `governanceCaseId`, `decisionId`, `decisionRevision` e Event ID causal. Nenhum usa confidence para aceitar, rejeitar, priorizar ou dimensionar efeito.
+
+### RecordPlatformLoss
+
+- **Owner:** ledger financeiro aplicável.
+- **Precondições:** decisão oficial e lançamento causal identificados.
+- **Efeito:** `PlatformLossEntry` append-only.
+- **Idempotência:** decisionId + revision + obrigação.
+- **Falhas:** decisão ausente, revisão stale, valor divergente ou entry duplicada.
+
+### CompensatePartner
+
+- **Owner:** `PartnerLedger`.
+- **Precondições:** decisão oficial e direito causal identificados.
+- **Efeito:** `PartnerCompensation` append-only.
+- **Idempotência:** decisionId + revision + partner + obligation.
+- **Falhas:** parceiro divergente, dupla compensação ou decisão inexistente.
+
+### RefundAdvertiserByResponsibility
+
+- **Owner:** `AdvertiserAccount`/`Payment`, conforme rail e policy.
+- **Precondições:** decisão oficial autoriza `AdvertiserRefund`; origem reconciliada.
+- **Efeito:** crédito interno ou instrução de refund auditável.
+- **Idempotência:** decisionId + revision + refund obligation.
+- **Falhas:** consumo comprovado incluído, rail incompatível ou resultado desconhecido.
+
+### RecoverFromResponsibleParty
+
+- **Owner:** ledger da obrigação.
+- **Precondições:** decisão oficial e recovery permitido pela policy.
+- **Efeito:** recovery entry append-only.
+- **Idempotência:** decisionId + revision + recovery obligation.
+- **Falhas:** autorização ausente, duplicidade ou valor não reconciliado.

@@ -348,25 +348,20 @@ Se overdelivery ocorrer:
 
 - o fato físico é preservado;
 - o Advertiser não é debitado;
-- a plataforma absorve o custo;
+- o custo não é debitado do Advertiser e aguarda consequência financeira autorizada;
 - a ocorrência é classificada e auditada;
 - a causa deve possuir owner;
 - correção nunca apaga PlaybackEvent ou Evidence.
 
-Se a Evidence for válida, o parceiro recebe normalmente. Settlement cria o direito e Financial Platform materializa o crédito. O Advertiser não é debitado e a Mostarda financia integralmente o custo por lançamento explícito.
+Se a Evidence for válida, o parceiro recebe normalmente. Settlement cria o direito e Financial Platform materializa o crédito. O Advertiser não é debitado. A parte que financiará ou absorverá a consequência é determinada exclusivamente por `ResponsibilityDecisionPublished` e executada por lançamento explícito.
 
 ## 15. Responsabilidade por inconsistência
 
-A classificação segue a causa comprovada e atribui exatamente um responsável:
+Campaign publica exclusivamente seus fatos: estado, Slot, Creative, pausa, cancelamento, realocação e resultado comercial. Campaign nunca classifica causa, responsável ou parte que absorve perda.
 
-- `ADVERTISER`;
-- `EDGE_PARTNER`;
-- `MOSTARDA`;
-- `INTEGRATED_THIRD_PARTY`.
+Governance & Dispute Management é o único owner do julgamento. Ele publica `ResponsibilityDecisionPublished` com responsável, categoria, severidade, confidence, policyVersion, razão e referências. Campaign apenas registra `decisionId + revision` e reage por Command próprio quando a consequência for compatível com seu lifecycle.
 
-Nenhuma perda pode ficar sem owner e responsabilidades compartilhadas são proibidas. Toda decisão registra responsável, justificativa, Evidences e trilha de auditoria. O responsável absorve a consequência financeira.
-
-A autoridade que classifica a responsabilidade não foi identificada nas respostas. Financial e Settlement não podem inferir o responsável. Essa autoridade permanece `OPEN-049`. Contestação cria nova revisão/decisão auditável; nunca edita o fato original.
+Contestação ocorre no GovernanceCase e cria revisão append-only. Campaign nunca edita o fato original nem reinterpreta a decisão.
 
 ## 16. Cancelamento e consequência financeira
 
@@ -501,4 +496,4 @@ Novas exibições são interrompidas, Campaign é pausada e Advertiser é notifi
 
 `OPEN-036..048` foram fechados pelo documento “Fechamento do Campaign Management”. Não permanecem decisões específicas abertas neste contexto. Parâmetros numéricos vivem em políticas operacionais versionadas e não alteram a semântica aqui definida.
 
-Permanece uma decisão transversal descoberta na implementação: `OPEN-049`, autoridade/Aggregate que julga e publica a classificação de responsabilidade.
+`OPEN-049` está `CLOSED` por `DEC-041`: Governance & Dispute Management, por GovernanceCase, é o owner exclusivo da classificação oficial.

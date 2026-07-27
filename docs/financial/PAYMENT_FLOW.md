@@ -114,6 +114,8 @@ Enquanto abertas:
 
 A eventual reversão posterior de um Payment compensado não apaga `COMPENSATED`; produz fato compensatório. O lifecycle exato de refund/chargeback permanece `OPEN-016`.
 
+`DISPUTED` representa exclusivamente o lifecycle financeiro do Payment. Financial publica esse fato e jamais conclui responsabilidade. Julgamento e eventual consequência baseada em culpa pertencem a Governance & Dispute Management.
+
 ## 8. Fluxo comum de compensação
 
 ### 8.1 Pré-condições
@@ -320,6 +322,8 @@ Se cancelamento e compensação forem observados concorrentemente, o owner deve 
 ## 15. Estorno, refund e disputa após compensação
 
 São operações compensatórias, não edição do passado.
+
+Quando refund, perda ou recovery decorrer de julgamento de responsabilidade, o Command financeiro exige `governanceCaseId + decisionId + decisionRevision`. Um chargeback isolado não autoriza Financial a escolher quem absorve a perda.
 
 O fluxo mínimo é:
 

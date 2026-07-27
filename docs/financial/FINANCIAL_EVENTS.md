@@ -552,3 +552,15 @@ Interpretar ausência de `WithdrawalExecuted` dentro de um timeout como `Withdra
 ## 15. Decisões abertas
 
 Payloads fiscais/contábeis e parâmetros quantitativos dependem de `OPEN-005/006`, `OPEN-016` a `OPEN-020`, `OPEN-025`, `OPEN-027`, `OPEN-030` a `OPEN-033` da [PLATFORM_SPECIFICATION.md](../specification/PLATFORM_SPECIFICATION.md).
+## Eventos de consequências de Governance
+
+São produzidos pelo Aggregate financeiro executor, nunca pelo GovernanceCase, e referenciam `governanceCaseId + decisionId + decisionRevision`.
+
+| Event | Producer | Significado |
+| --- | --- | --- |
+| `PlatformLossRecorded` | ledger financeiro | perda autorizada foi materializada |
+| `PartnerCompensated` | PartnerLedger | compensação foi registrada |
+| `AdvertiserRefundRecorded` | AdvertiserAccount/Payment | obrigação de refund foi registrada |
+| `ResponsiblePartyRecoveryRecorded` | ledger financeiro | recovery foi registrado |
+
+Reentrega da decisão não republica efeito. Nova revision cria Event/entry compensatório quando necessário e nunca substitui o anterior.

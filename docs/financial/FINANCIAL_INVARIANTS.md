@@ -389,3 +389,16 @@ Qualquer um destes comportamentos invalida a implementação:
 8. Crédito interno cancelado pertence ao Advertiser e não expira sem política legal aprovada.
 9. Refund nunca inclui consumo comprovado.
 10. Overdelivery válido usa obrigação financiada pela Mostarda e remunera o parceiro integralmente.
+
+## 14. Invariantes de Governance
+
+1. Financial nunca julga responsabilidade.
+2. Payment `DISPUTED` é estado financeiro interno e não atribui culpa.
+3. Chargeback é fato e não escolhe funding owner.
+4. PlatformLossEntry exige decisionId + decisionRevision.
+5. PartnerCompensation exige decisionId + decisionRevision.
+6. AdvertiserRefund baseado em responsabilidade exige decisionId + decisionRevision.
+7. Recovery contra responsável exige decisionId + decisionRevision.
+8. Confidence nunca altera valor, elegibilidade, prioridade ou execução.
+9. Nova decisão gera lançamento compensatório; nenhum entry histórico é editado.
+10. Resultado desconhecido é reconciliado antes de retry.
