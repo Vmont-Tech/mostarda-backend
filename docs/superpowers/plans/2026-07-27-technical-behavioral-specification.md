@@ -554,15 +554,32 @@ git commit -m "docs: certify technical behavioral specification candidate"
 
 - [ ] **Step 1: Reavaliar lacunas transversais**
 
-Avaliar somente os artefatos autorizados anteriormente e somente as lacunas preenchidas pela TBS.
+Avaliar somente os artefatos autorizados anteriormente e somente os gates cuja lacuna no IRR V1 era transversal:
+
+- error catalog;
+- snapshot policy;
+- schema evolution;
+- Command Result;
+- replay/rebuild;
+- optimistic concurrency;
+- idempotência;
+- conformidade técnica transversal.
 
 - [ ] **Step 2: Preservar lacunas específicas**
 
-Não promover artefato que ainda dependa de payload, Value Object, Entity, policy ou contrato específico ausente.
+Preservar automaticamente como `IMPLEMENTATION_PARTIAL` ou `IMPLEMENTATION_NOT_READY` qualquer artefato cuja lacuna remanescente seja específica de domínio ou do próprio artefato, incluindo payload, Value Object, Entity, Policy, lifecycle ou contrato próprio ausente.
 
 - [ ] **Step 3: Atualizar candidato ao Vertical Slice**
 
-Determinar se GovernanceCase passa a `IMPLEMENTATION_READY`. Registrar cada gate ainda parcial, se houver.
+Aplicar uma regra mecânica:
+
+1. copiar todos os gates do checklist do IRR V1;
+2. marcar como satisfeitos somente os gates demonstravelmente cobertos pela TBS ou pela especificação própria;
+3. preservar qualquer gate sem evidência como parcial/ausente;
+4. promover um Aggregate para `IMPLEMENTATION_READY` somente quando todos os gates aplicáveis estiverem satisfeitos, sem exceção;
+5. registrar a evidência normativa de cada promoção.
+
+Determinar por essa regra se GovernanceCase passa a `IMPLEMENTATION_READY`.
 
 - [ ] **Step 4: Validar**
 
@@ -581,4 +598,3 @@ Expected: status explícito e documento sem erro de whitespace.
 git add docs/specification/IMPLEMENTATION_READINESS_REVIEW_V2.md
 git commit -m "docs: reassess readiness against TBS"
 ```
-
