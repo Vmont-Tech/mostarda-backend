@@ -268,4 +268,4 @@ OPEN
 | REEVALUATING → DECIDED | PublishDecision | ResponsibilityDecisionPublished | revision monotônica | efeitos append-only |
 | DECIDED → CLOSED | CloseGovernanceCase | GovernanceCaseClosed | nunca fechar por timeout | terminal |
 
-`UNKNOWN` é categoria final após investigação, nunca estado. Especificação integral: [`../governance/GOVERNANCE_STATE_MACHINE.md`](../governance/GOVERNANCE_STATE_MACHINE.md).
+`UNKNOWN` não existe no modelo de Governance. Incerteza mantém INVESTIGATING ou UNDER_REVIEW sem publicação. Especificação integral: [`../governance/GOVERNANCE_STATE_MACHINE.md`](../governance/GOVERNANCE_STATE_MACHINE.md).

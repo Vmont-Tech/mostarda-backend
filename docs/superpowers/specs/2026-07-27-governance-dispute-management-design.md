@@ -157,7 +157,10 @@ Classes permitidas:
 - `ADVERTISER`;
 - `EDGE_PARTNER`;
 - `MOSTARDA`;
-- `INTEGRATED_THIRD_PARTY`.
+- `INTEGRATED_THIRD_PARTY`;
+- `NONE`.
+
+`NONE` significa que nenhum participante do ecossistema é oficialmente responsabilizado.
 
 Categorias permitidas:
 
@@ -166,8 +169,7 @@ Categorias permitidas:
 - `PARTNER_FAILURE`;
 - `THIRD_PARTY_FAILURE`;
 - `USER_MISUSE`;
-- `FORCE_MAJEURE`;
-- `UNKNOWN`.
+- `FORCE_MAJEURE`.
 
 Severidades permitidas:
 
@@ -182,7 +184,7 @@ Cada revisão preserva exatamente o confidence publicado. Categorias visuais de 
 
 `confidence` possui finalidade exclusivamente explicativa, estatística e auditável. Nenhum bounded context pode condicionar, ampliar, reduzir, suspender ou ignorar comportamento de negócio, financeiro, contratual ou jurídico em função desse valor. Toda consequência decorre exclusivamente da existência e do conteúdo normativo de `ResponsibilityDecisionPublished`, nunca de limiares de confidence.
 
-`UNKNOWN` não significa “não analisado”. Ele só pode ser publicado depois da investigação quando as evidências continuarem insuficientes para atribuição inequívoca. Antes disso, o GovernanceCase permanece `INVESTIGATING` ou `UNDER_REVIEW`.
+`UNKNOWN` é proibido como ResponsibilityCategory. Se party ou category ainda não puderem ser determinadas, o GovernanceCase permanece `INVESTIGATING` ou `UNDER_REVIEW` e nenhuma decisão é publicada. Casos em que nenhum participante possui responsabilidade usam `responsibleParty = NONE`, normalmente com `FORCE_MAJEURE`.
 
 ### 6.3 GovernancePolicyVersion
 
@@ -317,7 +319,7 @@ IA nunca pode executar `PublishDecision`.
 
 Ambiguidade, conflito, insuficiência de fatos, policy incompatível ou contestação material exigem revisão humana. O operador autorizado publica por Command ao Aggregate; não edita armazenamento.
 
-Confidence baixo não invalida nem reduz a autoridade de uma decisão publicada. Ele registra incerteza residual. Se a investigação ainda não terminou, não existe decisão publicada nem categoria `UNKNOWN`.
+Confidence baixo não invalida nem reduz a autoridade de uma decisão publicada. Ele registra incerteza residual. Se a investigação ainda não terminou ou party/category não estão determinadas, não existe decisão publicada.
 
 ## 12. Recurso e reavaliação
 
@@ -399,7 +401,7 @@ Atualiza indicadores por classe, causa, responsável, revisão e resultado.
 18. Confidence não representa probabilidade de culpa.
 19. Toda decisão referencia exatamente uma GovernancePolicyVersion.
 20. GovernancePolicyVersion publicada é imutável.
-21. `UNKNOWN` só pode ser publicado após investigação concluída.
+21. `UNKNOWN` é proibido como ResponsibilityCategory.
 22. Confidence possui finalidade exclusivamente explicativa e auditável.
 23. Confidence nunca altera efeitos de negócio, financeiros, contratuais ou jurídicos.
 24. Projeções categóricas de confidence nunca são persistidas nem reclassificam decisões históricas.
@@ -407,6 +409,8 @@ Atualiza indicadores por classe, causa, responsável, revisão e resultado.
 26. Uso de nova policy exige nova ResponsibilityDecision e nova revision append-only.
 27. Confidence considera qualidade, completude e consistência das evidências disponíveis no instante da decisão.
 28. Confidence não representa probabilidade estatística de culpa, risco jurídico nem percentual de certeza jurídica.
+29. `NONE` é o ResponsibleParty obrigatório quando nenhum participante do ecossistema puder ser responsabilizado.
+30. Party e category indeterminadas impedem publicação e mantêm a investigação aberta.
 
 ## 16. Segurança e auditoria
 
@@ -461,7 +465,8 @@ O design está pronto para plano quando:
 - confidence não controla qualquer consequência;
 - policy version é única e imutável;
 - troca de policy produz nova decisão, sem mutação histórica;
-- UNKNOWN não é estado intermediário;
+- UNKNOWN não existe como ResponsibilityCategory;
+- NONE representa ausência de participante responsabilizável;
 - `OPEN-049` está `CLOSED` sem suposição adicional.
 
 ## 19. Roadmap após a sincronização

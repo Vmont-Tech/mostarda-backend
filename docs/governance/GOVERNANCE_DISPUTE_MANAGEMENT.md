@@ -146,9 +146,10 @@ Valores normativos:
 - `ADVERTISER`;
 - `EDGE_PARTNER`;
 - `MOSTARDA`;
-- `INTEGRATED_THIRD_PARTY`.
+- `INTEGRATED_THIRD_PARTY`;
+- `NONE`.
 
-Cada decisão possui exatamente um responsável. Responsabilidade compartilhada é proibida.
+Cada decisão possui exatamente um responsibleParty. `NONE` significa que nenhum participante do ecossistema é oficialmente responsabilizado, como em força maior comprovada. Responsabilidade compartilhada é proibida.
 
 #### ResponsibilityCategory
 
@@ -159,12 +160,11 @@ Valores normativos:
 - `PARTNER_FAILURE`;
 - `THIRD_PARTY_FAILURE`;
 - `USER_MISUSE`;
-- `FORCE_MAJEURE`;
-- `UNKNOWN`.
+- `FORCE_MAJEURE`.
 
 Category representa causa; Severity representa impacto. Uma dimensão não determina a outra.
 
-`UNKNOWN` significa que a investigação terminou e as evidências continuam insuficientes para atribuição inequívoca. Nunca significa “não analisado” e nunca é estado intermediário.
+`UNKNOWN` não existe como ResponsibilityCategory. Ausência de evidência suficiente significa que a investigação continua em INVESTIGATING ou UNDER_REVIEW e nenhuma ResponsibilityDecision pode ser publicada.
 
 #### Severity
 
@@ -246,7 +246,7 @@ Transições permitidas:
 | inexistente | OPEN | OpenGovernanceCase | GovernanceCaseOpened | causa e origem válidas |
 | OPEN | INVESTIGATING | StartInvestigation | InvestigationStarted | policy selecionada |
 | INVESTIGATING | UNDER_REVIEW | RequestHumanReview | HumanReviewRequested | ambiguidade ou conflito |
-| INVESTIGATING | DECIDED | PublishDecision | ResponsibilityDecisionPublished | regra inequívoca e evidências completas |
+| INVESTIGATING | DECIDED | PublishDecision | ResponsibilityDecisionPublished | party e category determinadas, regra inequívoca e evidências completas |
 | UNDER_REVIEW | DECIDED | PublishDecision | ResponsibilityDecisionPublished | operador autorizado |
 | DECIDED | APPEALED | AppealDecision | ResponsibilityDecisionAppealed | recurso admissível |
 | APPEALED | REEVALUATING | ReevaluateGovernanceCase | GovernanceCaseReevaluated | escopo de reavaliação registrado |
@@ -398,9 +398,9 @@ Edge publica playback; Evidence valida a prova; Advertiser abre disputa. Evidenc
 
 Revision 1 atribui MOSTARDA. Recurso adiciona nova evidência e revision 2 atribui INTEGRATED_THIRD_PARTY. Revision 1 e seus efeitos permanecem. Revision 2 causa Commands compensatórios.
 
-### 13.4 UNKNOWN
+### 13.4 Força maior sem responsável do ecossistema
 
-Após investigação concluída, fatos conflitantes e ausência irrecuperável impedem atribuição inequívoca. Governance pode publicar UNKNOWN com responsável único e reason explícito segundo a policy. Antes da conclusão, UNKNOWN é inválido.
+Uma queda nacional de energia é comprovada e classificada como `FORCE_MAJEURE`. A decisão publica `responsibleParty = NONE`, category, severity, confidence, policyVersion, reason e evidências. Se a categoria ou a parte ainda não puderem ser determinadas, nenhuma decisão é publicada.
 
 ## 14. Contraexemplos proibidos
 
@@ -410,7 +410,7 @@ Após investigação concluída, fatos conflitantes e ausência irrecuperável i
 - Analytics persiste HIGH como confidence oficial.
 - Operador troca policyVersion de decisão histórica.
 - Replay republica ResponsibilityDecisionPublished com novo Event ID.
-- Timeout encerra caso como UNKNOWN.
+- Timeout publica decisão sem party ou category determinadas.
 - Dois contextos publicam eventos de responsabilidade concorrentes.
 
 ## 15. Critério de implementabilidade

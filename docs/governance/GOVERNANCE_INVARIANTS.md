@@ -31,8 +31,8 @@
 21. Nova revisão nunca altera decisão anterior.
 22. Recurso nunca apaga decisão.
 23. Mudança de responsável exige nova ResponsibilityDecisionPublished.
-24. `UNKNOWN` somente é válido após investigação concluída.
-25. `UNKNOWN` nunca representa estado intermediário.
+24. `UNKNOWN` é proibido como ResponsibilityCategory.
+25. Party ou category indeterminada mantém investigação aberta e impede publicação.
 
 ## 4. Confidence
 
@@ -64,7 +64,7 @@
 45. Reavaliação não edita revisão contestada.
 46. CLOSED é final.
 47. Novo fato após CLOSED abre caso correlacionado.
-48. UNKNOWN não é estado.
+48. UNKNOWN não existe no lifecycle de Governance.
 
 ## 7. Distribuição
 
@@ -101,7 +101,7 @@ São violações:
 - cobrar automaticamente porque confidence excede limiar;
 - ignorar decisão por confidence baixo;
 - alterar policyVersion no banco;
-- publicar UNKNOWN durante investigação;
+- publicar decisão com party ou category indeterminadas;
 - Financial escolher quem absorve chargeback;
 - Evidence declarar parceiro culpado;
 - replay repetir refund;

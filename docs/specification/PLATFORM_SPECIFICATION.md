@@ -538,9 +538,9 @@ Toda ResponsibilityDecision contém decisionId, revision, responsibleParty, resp
 
 Confidence registra somente robustez da conclusão diante da qualidade, completude e consistência das evidências. Não representa probabilidade de culpa ou certeza jurídica, não altera a validade da decisão e nunca controla efeitos de negócio.
 
-### SPEC-GOV-004 — Investigação e UNKNOWN
+### SPEC-GOV-004 — Investigação completa e NONE
 
-Ambiguidade exige revisão humana. `UNKNOWN` é categoria final permitida somente após investigação concluída sem evidência suficiente para atribuição inequívoca; não é estado intermediário.
+Ambiguidade exige revisão humana. `UNKNOWN` é proibido como ResponsibilityCategory. Enquanto party ou category não puderem ser determinadas, o caso permanece INVESTIGATING ou UNDER_REVIEW sem decisão publicada. `NONE` é responsibleParty obrigatório quando nenhum participante do ecossistema puder ser responsabilizado, inclusive em FORCE_MAJEURE comprovada.
 
 ### SPEC-GOV-005 — Consequências
 

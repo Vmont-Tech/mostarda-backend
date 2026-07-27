@@ -148,8 +148,11 @@ Decisão append-only que contém responsável, categoria, severidade, confidence
 ## Governance Policy Version
 Versão imutável da política aplicada a uma Responsibility Decision. Mudança de critérios cria nova versão e nunca reinterpreta decisão histórica.
 
+## Responsible Party
+Ator oficialmente responsabilizado pela decisão: `ADVERTISER`, `EDGE_PARTNER`, `MOSTARDA`, `INTEGRATED_THIRD_PARTY` ou `NONE`. `NONE` significa que nenhum participante do ecossistema possui responsabilidade.
+
 ## Responsibility Category
-Causa normativa do incidente: `PLATFORM_BUG`, `OPERATIONAL_FAILURE`, `PARTNER_FAILURE`, `THIRD_PARTY_FAILURE`, `USER_MISUSE`, `FORCE_MAJEURE` ou `UNKNOWN`.
+Causa normativa do incidente: `PLATFORM_BUG`, `OPERATIONAL_FAILURE`, `PARTNER_FAILURE`, `THIRD_PARTY_FAILURE`, `USER_MISUSE` ou `FORCE_MAJEURE`. `UNKNOWN` é proibido.
 
 ## Responsibility Severity
 Impacto normativo independente da causa: `LOW`, `MEDIUM`, `HIGH` ou `CRITICAL`.

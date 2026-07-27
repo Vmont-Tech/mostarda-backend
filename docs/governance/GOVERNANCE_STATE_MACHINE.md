@@ -12,7 +12,7 @@
 | REEVALUATING | recurso está sendo reavaliado | sim, como nova revisão |
 | CLOSED | caso terminado | nunca |
 
-`UNKNOWN` é ResponsibilityCategory, não estado.
+`UNKNOWN` não existe no modelo de Governance. Incerteza mantém o caso em INVESTIGATING ou UNDER_REVIEW sem decisão publicada.
 
 ## 2. Transições
 
@@ -105,7 +105,7 @@
 - DECIDED → INVESTIGATING sem Appeal.
 - APPEALED → DECIDED sem reavaliação.
 - CLOSED → qualquer estado.
-- qualquer estado → UNKNOWN.
+- qualquer estado → decisão parcial ou UNKNOWN.
 - timeout → DECIDED.
 
 ## 4. Falhas e recuperação

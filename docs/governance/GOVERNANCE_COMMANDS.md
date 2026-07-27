@@ -74,7 +74,7 @@ O Command não copia ownership nem corrige o fato.
 - **Event público:** nenhum.
 - **Idempotência:** por investigation revision + conteúdo da proposta.
 - **Concorrência:** nova proposta exige expected revision atual; proposta anterior permanece auditável.
-- **Falhas:** categoria, party, severity ou confidence inválidos; UNKNOWN antes da conclusão; evidência ausente.
+- **Falhas:** categoria, party, severity ou confidence inválidos; party/category indeterminadas; evidência ausente.
 
 IA pode recomendar payload, mas não é actor autorizado deste Command quando ele altera estado decisório.
 
@@ -87,7 +87,7 @@ IA pode recomendar payload, mas não é actor autorizado deste Command quando el
 - **Event:** ResponsibilityDecisionPublished.
 - **Idempotência:** decisionId + revision; retry idêntico preserva Event ID.
 - **Concorrência:** somente uma publicação por expected aggregate revision; perdedor relê e submete nova intenção, se ainda válida.
-- **Falhas:** confidence fora de `[0.00,1.00]`; policy mutável; actor sem autoridade; revisão repetida; responsável compartilhado; UNKNOWN sem investigação concluída.
+- **Falhas:** confidence fora de `[0.00,1.00]`; policy mutável; actor sem autoridade; revisão repetida; responsável compartilhado; party/category indeterminadas.
 
 Publicação é oficial independentemente do confidence. Confidence nunca decide se consequências serão executadas.
 

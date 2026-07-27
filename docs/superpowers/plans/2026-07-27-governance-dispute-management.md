@@ -63,14 +63,16 @@ Declarar como invariantes:
 - policyVersion e sua referência na decisão são imutáveis;
 - GovernancePolicyVersion nunca pode ser alterada após a publicação da decisão;
 - nova policy exige nova ResponsibilityDecision e nova revision append-only;
-- `UNKNOWN` somente é publicável após investigação concluída.
+- `NONE` é ResponsibleParty quando nenhum participante do ecossistema puder ser responsabilizado;
+- `UNKNOWN` é proibido como ResponsibilityCategory;
+- party ou category indeterminadas impedem publicação.
 
 - [ ] **Step 2: Verificar termos obrigatórios**
 
 Run:
 
 ```powershell
-Select-String docs\governance\GOVERNANCE_DISPUTE_MANAGEMENT.md -Pattern 'GovernanceCase','ResponsibilityDecisionPublished','GovernancePolicyVersion','UNKNOWN','confidence','exclusivamente explicativa','policyVersion'
+Select-String docs\governance\GOVERNANCE_DISPUTE_MANAGEMENT.md -Pattern 'GovernanceCase','ResponsibilityDecisionPublished','GovernancePolicyVersion','NONE','UNKNOWN','confidence','exclusivamente explicativa','policyVersion'
 ```
 
 Expected: ao menos uma ocorrência de cada termo.
@@ -141,7 +143,7 @@ REEVALUATING → DECIDED
 DECIDED → CLOSED
 ```
 
-`UNKNOWN` só pode aparecer em decisão publicada após investigação; nunca é estado do Aggregate.
+`UNKNOWN` é proibido como ResponsibilityCategory; incerteza mantém INVESTIGATING ou UNDER_REVIEW sem publicação. `NONE` é ResponsibleParty para ausência de participante responsabilizável.
 
 - [ ] **Step 4: Criar invariantes**
 
