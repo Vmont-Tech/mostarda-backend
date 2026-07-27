@@ -18,6 +18,7 @@
 | Commands/Events/Sagas | todos os documentos em `execution/` | ADR-001 |
 | `SPEC-DIST-001..008` | `execution/EXECUTION_INVARIANTS.md`, `EVENTS.md`, `SAGAS.md`, `STATE_MACHINES.md`; catálogos Financial e TV Network | ADR-001, 007, 008 |
 | Escalabilidade | `domain/SCALABILITY.md` | ADR-001 |
+| `SPEC-GOV-001..005` | `governance/GOVERNANCE_DISPUTE_MANAGEMENT.md`, `GOVERNANCE_COMMANDS.md`, `GOVERNANCE_EVENTS.md`, `GOVERNANCE_STATE_MACHINE.md`, `GOVERNANCE_INVARIANTS.md`; execution e consumidores Financial/Settlement/Campaign/Notifications/Analytics | — |
 
 ## Rastreabilidade de fluxos
 
@@ -33,6 +34,8 @@
 | Frota | Register → Install → Provision → Health → Active | TV Network lifecycle/state machines |
 | Update | DesiredState → Wave → Health Gate → Apply/Rollback | TV Network update/rollback docs |
 | Seguro | Premium/Policy → Claim → Reserve → Repair/Replacement | Insurance, Execution Sagas |
+| Governança | Fatos autoritativos → GovernanceCase → investigação/revisão humana → ResponsibilityDecisionPublished → Commands dos owners consumidores | Governance specification, Commands, Events, State Machine, Sagas |
+| Recurso | ResponsibilityDecisionPublished → Appeal → reavaliação → nova revision → compensações append-only | Governance specification, Governance Saga, Financial/Settlement/Campaign |
 
 ## Lacunas
 

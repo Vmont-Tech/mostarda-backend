@@ -203,7 +203,7 @@ Grace periods, confiança de IA, SLA de moderação, equivalência de realocaç�
 
 Toda perda recebe exatamente um responsável entre Advertiser, Edge Partner, Mostarda e Terceiro Integrado, com justificativa, evidências e auditoria. Responsabilidade compartilhada é proibida.
 
-Se overdelivery possuir Evidence válida, parceiro recebe normalmente; Advertiser não é debitado e Mostarda financia integralmente o direito. A autoridade que julga a responsabilidade permanece `OPEN-049`.
+Se overdelivery possuir Evidence válida, parceiro recebe normalmente; Advertiser não é debitado e Mostarda financia integralmente o direito. Governance & Dispute Management é a única autoridade que julga e publica a responsabilidade; os demais contextos somente publicam fatos e executam consequências autorizadas.
 
 ### SPEC-MEDIA-015 — Autorização
 
@@ -522,7 +522,33 @@ Antes da implementação de um contexto, devem estar `ACCEPTED`:
 
 API, persistência, mensageria, frameworks e infraestrutura são decisões posteriores e NÃO podem alterar o modelo sem atualizar primeiro esta especificação.
 
-## 20. Decisões abertas
+## 20. Governance & Dispute Management
+
+### SPEC-GOV-001 — Owner único do julgamento
+
+Governance & Dispute Management é o único bounded context autorizado a publicar julgamento oficial de responsabilidade. Campaign, Pricing, Campaign Budget, Edge, Evidence, Financial, Settlement, AI e TV Network permanecem owners somente de seus fatos.
+
+### SPEC-GOV-002 — Aggregate e contrato público
+
+`GovernanceCase` é o Aggregate owner. `ResponsibilityDecisionPublished` é o único contrato público de decisão. `ResponsibilityAssigned` e `ResponsibilityReassigned` são proibidos; mudança de conclusão cria nova revision append-only.
+
+### SPEC-GOV-003 — Conteúdo da decisão
+
+Toda ResponsibilityDecision contém decisionId, revision, responsibleParty, responsibilityCategory, severity, confidence decimal `[0.00,1.00]`, exatamente uma policyVersion imutável, decidedBy, decidedAt, reason e evidenceReferences.
+
+Confidence registra somente robustez da conclusão diante da qualidade, completude e consistência das evidências. Não representa probabilidade de culpa ou certeza jurídica, não altera a validade da decisão e nunca controla efeitos de negócio.
+
+### SPEC-GOV-004 — Investigação e UNKNOWN
+
+Ambiguidade exige revisão humana. `UNKNOWN` é categoria final permitida somente após investigação concluída sem evidência suficiente para atribuição inequívoca; não é estado intermediário.
+
+### SPEC-GOV-005 — Consequências
+
+Consumidores nunca reinterpretam a decisão. Financial, Settlement, Campaign e demais owners executam consequências por Commands próprios, sempre referenciando decisionId + revision. Reavaliação nunca edita efeitos anteriores; produz compensações append-only.
+
+Os contratos completos estão em [`../governance/GOVERNANCE_DISPUTE_MANAGEMENT.md`](../governance/GOVERNANCE_DISPUTE_MANAGEMENT.md).
+
+## 21. Decisões abertas
 
 | ID | Decisão pendente | Impacto | Regra provisória |
 | --- | --- | --- | --- |
@@ -550,8 +576,6 @@ API, persistência, mensageria, frameworks e infraestrutura são decisões poste
 | `OPEN-032` | Segregação de funções para finanças, reversão, emergência e manutenção | Identity/Contexts | Owner revalida autorização |
 | `OPEN-033` | Completar Commands/Events ausentes e remover wildcards | Execution Model | Nenhum evento implícito é contrato de implementação |
 | `OPEN-034` | Relação entre Playback attempt e PlayerSession | Player/Execution | Ambos preservam tentativa e fatos, sem owner duplo |
-| `OPEN-049` | Autoridade/Aggregate que julga e publica responsabilidade por falha | Compliance/Financial/Operations | Classificação possui um responsável e evidências; consumidores não inferem culpa |
-
-## 21. Documentos normativos relacionados
+## 22. Documentos normativos relacionados
 
 O mapa de rastreabilidade completo está em [`TRACEABILITY.md`](./TRACEABILITY.md), o registro de decisões em [`DECISION_REGISTRY.md`](./DECISION_REGISTRY.md) e o processo de sincronização em [`CONSISTENCY_RULES.md`](./CONSISTENCY_RULES.md).

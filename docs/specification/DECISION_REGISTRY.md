@@ -56,10 +56,11 @@ Este registro conecta regras vigentes, ADRs e supersessões. O status `ACCEPTED`
 | `DEC-034` | Saldo cancelado vira crédito interno por padrão; Advertiser pode solicitar refund | Fechamento do Campaign Management (`OPEN-042`) | ACCEPTED no draft |
 | `DEC-035` | Moderação possui auto-approve, auto-reject ou human-review; incerteza sempre exige humano | Fechamento do Campaign Management (`OPEN-043`) | ACCEPTED no draft |
 | `DEC-036` | SLA de moderação é operacional, configurável e observável; timeout nunca aprova conteúdo | Fechamento do Campaign Management (`OPEN-044`) | ACCEPTED no draft |
-| `DEC-037` | Toda falha possui exatamente um responsável entre quatro classes, sem responsabilidade compartilhada | Fechamento do Campaign Management (`OPEN-045`) | ACCEPTED no draft; autoridade julgadora em `OPEN-049` |
+| `DEC-037` | Toda falha possui exatamente um responsável entre quatro classes, sem responsabilidade compartilhada | Fechamento do Campaign Management (`OPEN-045`) | ACCEPTED no draft; autoridade julgadora definida por `DEC-041` |
 | `DEC-038` | Evidence válida de overdelivery remunera parceiro; Mostarda financia e Advertiser não paga | Fechamento do Campaign Management (`OPEN-046`) | ACCEPTED no draft |
 | `DEC-039` | Slots consecutivos evitam repetição por padrão e só reorganizam unidades movíveis sem prejudicar terceiros | Fechamento do Campaign Management (`OPEN-047`) | ACCEPTED no draft |
 | `DEC-040` | Matriz Advertiser/Grão/IA/Moderador/Financial/Campaign define autoridade e proibições | Fechamento do Campaign Management (`OPEN-048`) | ACCEPTED no draft |
+| `DEC-041` | Governance & Dispute Management, por GovernanceCase, é o único owner do julgamento oficial; decisões são revisions append-only publicadas por ResponsibilityDecisionPublished e consumidores não reinterpretam | Fechamento de `OPEN-049`; Governance specification | ACCEPTED no draft |
 
 ## Conflitos conhecidos a sincronizar
 

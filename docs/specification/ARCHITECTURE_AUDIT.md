@@ -339,6 +339,32 @@ Status atualizado do contexto:
 | Realocação | IMPLEMENTÁVEL; tolerâncias vêm de `SlotEquivalencePolicy` |
 | Crédito/refund | IMPLEMENTÁVEL semanticamente; contabilidade global ainda depende de `OPEN-020` |
 | Overdelivery | IMPLEMENTÁVEL semanticamente; lançamentos dependem do modelo contábil global |
-| Julgamento de responsabilidade | BLOQUEADO por `OPEN-049` |
+| Julgamento de responsabilidade | IMPLEMENTÁVEL normativamente por Governance & Dispute Management |
 
 Os achados históricos das seções anteriores permanecem como fotografia da auditoria original. Para Campaign, esta seção prevalece. A plataforma integral continua bloqueada pelas decisões transversais financeiras, legais, Identity, Evidence e TV Network já relacionadas.
+
+## 9. Reauditoria de Governance & Dispute Management — 2026-07-27
+
+`OPEN-049` está `CLOSED`. A autoridade normativa foi atribuída exclusivamente a Governance & Dispute Management, com `GovernanceCase` como Aggregate root e `ResponsibilityDecisionPublished` como único contrato público de julgamento.
+
+| Dimensão | Status |
+| --- | --- |
+| Propósito e fronteira | IMPLEMENTÁVEL |
+| Aggregate e lifecycle | IMPLEMENTÁVEL |
+| Commands e Events | IMPLEMENTÁVEL |
+| Investigação e revisão humana | IMPLEMENTÁVEL |
+| Recurso e reavaliação | IMPLEMENTÁVEL |
+| Confidence e PolicyVersion | IMPLEMENTÁVEL |
+| Concorrência, idempotência e ordering | IMPLEMENTÁVEL |
+| Replay, rebuild e compensação | IMPLEMENTÁVEL |
+| Integração com consumidores | IMPLEMENTÁVEL normativamente; sincronização transversal em andamento |
+
+Condições preservadas:
+
+- nenhum contexto de origem pode concluir culpa;
+- toda consequência material referencia decisionId + revision;
+- confidence nunca controla validade ou efeito;
+- policyVersion e decisões publicadas são imutáveis;
+- eventos `ResponsibilityAssigned` e `ResponsibilityReassigned` são proibidos.
+
+Esta reauditoria fecha somente a decisão `OPEN-049`. Nenhuma outra `OPEN-*`, lacuna legal, contábil, operacional ou de segurança é encerrada por inferência.
