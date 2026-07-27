@@ -105,3 +105,17 @@ Este documento é normativo. Ele especializa a [Especificação Oficial](../spec
 | Uma SplitShare não tem beneficiário elegível | Marcar somente ela `UNCLAIMED` | Redistribuir seus 10% às outras |
 | Update falha no health gate | Emitir falha e Command de rollback conforme política | Apagar a tentativa e declarar versão antiga como nunca alterada |
 | Playback offline chega atrasado | Preservar instante/tentativa, deduplicar e validar gaps | Recriar evento com timestamp de ingestão |
+## Governance execution invariants
+
+1. GovernanceCase é o único Aggregate que aceita PublishDecision.
+2. ResponsibilityDecisionPublished possui producer único.
+3. Consumer nunca deriva responsável a partir de fatos.
+4. Confidence nunca controla branching de consequência.
+5. Toda consequência referencia decisionId + revision.
+6. Ordering é por governanceCaseId + aggregateRevision.
+7. Duplicidade não cria nova decisão nem efeito.
+8. Replay e rebuild executam sem side effects externos.
+9. Timeout não equivale a decisão.
+10. Nova policy exige nova revision.
+11. CLOSED é final.
+12. Compensação é novo Command no owner competente.

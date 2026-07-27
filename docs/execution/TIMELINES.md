@@ -500,3 +500,33 @@ PROIBIDO: timeout ─> new idempotency key ─> second effect
 | Update | target `UpdateApplied` + acceptable health | failed/rolled back/unknown target |
 | Emergency | confirmation per TV and clear/restore | partial/unknown TV |
 | Insurance | `InsuranceSettlementExecuted` + Claim settled | under review/reserve/financial unknown |
+## Timeline — incidente, julgamento e consequência
+
+```text
+T0  Contexto de origem persiste e publica fato
+T1  Orquestração solicita OpenGovernanceCase
+T2  GovernanceCaseOpened
+T3  EvidenceReferenceAttached (zero ou mais, conforme policy)
+T4  InvestigationStarted
+T5a Classificação determinística completa
+T5b ou HumanReviewRequested → decisão humana autorizada
+T6  PublishDecision
+T7  ResponsibilityDecisionPublished
+T8  Consumers deduplicam decisionId + revision
+T9  Cada owner recebe/executa Command próprio
+T10 Resultado é reconciliado e auditado
+```
+
+Events de streams distintos podem chegar fora de ordem. T6 é bloqueado enquanto dependência obrigatória estiver ausente. T7 é sempre oficial independentemente do confidence. T9 nunca ocorre por mutação direta do Event no Aggregate consumidor.
+
+### Recurso
+
+```text
+T11 AppealDecision
+T12 ResponsibilityDecisionAppealed
+T13 ReevaluateGovernanceCase
+T14 GovernanceCaseReevaluated
+T15 PublishDecision revision N+1
+T16 ResponsibilityDecisionPublished revision N+1
+T17 Commands compensatórios append-only
+```

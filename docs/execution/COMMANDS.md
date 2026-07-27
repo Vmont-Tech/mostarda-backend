@@ -222,3 +222,20 @@ Um Command delegado por IA usa o Command normal do contexto alvo, com o usuário
 | `RequestSlotReallocation` | Campaign | falha original sem execução, reserva liberada, janela vigente | tentativa de busca criada | `SlotReallocationRequested` |
 
 Mandato do Grão é informado no envelope e revalidado pelo Campaign owner. Ele não cria um Command privilegiado.
+## Governance & Dispute Management Commands
+
+Owner único de todos os Commands: `GovernanceCase`.
+
+| Command | Preestado | Pós-estado/efeito | Event |
+| --- | --- | --- | --- |
+| `OpenGovernanceCase` | inexistente | OPEN | `GovernanceCaseOpened` |
+| `AttachEvidenceReference` | qualquer não CLOSED | referência imutável anexada | `EvidenceReferenceAttached` |
+| `StartInvestigation` | OPEN | INVESTIGATING | `InvestigationStarted` |
+| `RequestHumanReview` | INVESTIGATING | UNDER_REVIEW | `HumanReviewRequested` |
+| `ClassifyResponsibility` | INVESTIGATING/UNDER_REVIEW | proposta interna, sem autoridade pública | nenhum público |
+| `PublishDecision` | INVESTIGATING/UNDER_REVIEW/REEVALUATING | DECIDED e nova revision | `ResponsibilityDecisionPublished` |
+| `AppealDecision` | DECIDED | APPEALED | `ResponsibilityDecisionAppealed` |
+| `ReevaluateGovernanceCase` | APPEALED | REEVALUATING | `GovernanceCaseReevaluated` |
+| `CloseGovernanceCase` | DECIDED | CLOSED | `GovernanceCaseClosed` |
+
+Todos exigem actor, autorização, expected revision, idempotency key, correlation e causation. Contrato integral: [`../governance/GOVERNANCE_COMMANDS.md`](../governance/GOVERNANCE_COMMANDS.md).

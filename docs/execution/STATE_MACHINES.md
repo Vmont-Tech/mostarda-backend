@@ -244,3 +244,28 @@ Estados: `REQUESTED`, `APPROVED`, `BATCHED`, `EXECUTING`, `EXECUTED`, `REJECTED`
 - `Edge UPDATING → HEALTHY` apenas porque o processo reiniciou.
 - `InsuranceClaim DENIED → APPROVED` na mesma Claim.
 - `Withdrawal timeout → EXECUTED` por suposição.
+## GovernanceCase
+
+```text
+OPEN
+→ INVESTIGATING
+→ UNDER_REVIEW
+→ DECIDED
+→ APPEALED
+→ REEVALUATING
+→ DECIDED
+→ CLOSED
+```
+
+| Transição | Command | Event | Timeout/retry | Compensação |
+| --- | --- | --- | --- | --- |
+| inexistente → OPEN | OpenGovernanceCase | GovernanceCaseOpened | abertura deduplicada | fechar preservando histórico |
+| OPEN → INVESTIGATING | StartInvestigation | InvestigationStarted | atraso não decide | nova investigação correlacionada |
+| INVESTIGATING → UNDER_REVIEW | RequestHumanReview | HumanReviewRequested | timeout escala fila | não aplicável |
+| INVESTIGATING/UNDER_REVIEW → DECIDED | PublishDecision | ResponsibilityDecisionPublished | optimistic lock; retry idêntico | nova revision após Appeal |
+| DECIDED → APPEALED | AppealDecision | ResponsibilityDecisionAppealed | prazo por policy | decisão permanece |
+| APPEALED → REEVALUATING | ReevaluateGovernanceCase | GovernanceCaseReevaluated | uma ativa por Appeal | nova tentativa auditada |
+| REEVALUATING → DECIDED | PublishDecision | ResponsibilityDecisionPublished | revision monotônica | efeitos append-only |
+| DECIDED → CLOSED | CloseGovernanceCase | GovernanceCaseClosed | nunca fechar por timeout | terminal |
+
+`UNKNOWN` é categoria final após investigação, nunca estado. Especificação integral: [`../governance/GOVERNANCE_STATE_MACHINE.md`](../governance/GOVERNANCE_STATE_MACHINE.md).

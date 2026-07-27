@@ -254,3 +254,19 @@ Eventos específicos de recomendação devem ter nomes no passado e payload pró
 | `CampaignCancellationRequested` | Campaign | Slot/Budget Saga | Campaign, reason, cutoff, revision | não significa cancelamento concluído |
 | `CampaignCancelled` | Campaign | Financial, Analytics, Notifications | Campaign, reason, remaining obligations, revision | nunca equivale a completed |
 | `SlotReallocationRequested` | Campaign | Pricing/Allocation Saga | original obligation, original Slot, constraints, attempt | novo Slot usa nova identidade |
+## Governance & Dispute Management Events
+
+Producer único: `GovernanceCase`. Ordering: `governanceCaseId + aggregateRevision`. Deduplicação: Event ID; decisões também por `decisionId + revision`.
+
+| Event | Consumers principais |
+| --- | --- |
+| `GovernanceCaseOpened` | Governance workers, Audit, Analytics |
+| `EvidenceReferenceAttached` | Investigation, Audit |
+| `InvestigationStarted` | Investigation, AI Orchestration, Audit |
+| `HumanReviewRequested` | Operations, Notifications, Audit |
+| `ResponsibilityDecisionPublished` | Financial, Settlement, Campaign, Notifications, Analytics |
+| `ResponsibilityDecisionAppealed` | Investigation, Notifications, Audit |
+| `GovernanceCaseReevaluated` | Investigation, Audit |
+| `GovernanceCaseClosed` | Audit, Analytics, Notifications |
+
+`ResponsibilityAssigned` e `ResponsibilityReassigned` são proibidos. Replay preserva Event ID e nunca repete consequência externa. Contrato integral: [`../governance/GOVERNANCE_EVENTS.md`](../governance/GOVERNANCE_EVENTS.md).

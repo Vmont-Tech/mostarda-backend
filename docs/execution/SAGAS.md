@@ -317,3 +317,44 @@ Solicitação de refund é fluxo posterior e opcional do Financial Platform. Rep
 ## Reorganização de Slots consecutivos
 
 Somente Slots ainda movíveis podem ser reorganizados. A Saga seleciona o Slot elegível imediatamente mais próximo conforme `ConsecutiveSlotPolicy`, revoga a alocação antiga pelos owners e cria nova reserva/Slot. Preço, budget, prioridade, targeting e direito de outro Advertiser não podem piorar. Falha preserva a organização anterior ou deixa compensações explícitas; nunca move in place.
+## Governance Decision Saga
+
+```text
+Source facts
+→ OpenGovernanceCase
+→ GovernanceCaseOpened
+→ AttachEvidenceReference*
+→ StartInvestigation
+→ deterministic classification OR HumanReviewRequested
+→ PublishDecision
+→ ResponsibilityDecisionPublished
+→ owner-specific Commands
+→ reconciliation
+```
+
+| Passo | Owner | Regra |
+| --- | --- | --- |
+| fatos | contexts de origem | publicam somente o observado |
+| abertura/evidências | GovernanceCase | deduplica e registra gaps |
+| investigação | GovernanceCase | congela GovernancePolicyVersion |
+| classificação | GovernanceCase | proposta não é decisão pública |
+| publicação | GovernanceCase | cria revision oficial append-only |
+| consequência | Financial/Settlement/Campaign/etc. | Command próprio referencia decisionId + revision |
+| reconciliação | cada executor | verifica resultado desconhecido antes de retry |
+
+Timeout nunca publica decisão. Event fora de ordem aguarda dependência. Replay não repete efeito.
+
+## Governance Appeal Saga
+
+```text
+ResponsibilityDecisionPublished
+→ AppealDecision
+→ ResponsibilityDecisionAppealed
+→ ReevaluateGovernanceCase
+→ GovernanceCaseReevaluated
+→ PublishDecision (new revision)
+→ ResponsibilityDecisionPublished
+→ compensating owner-specific Commands
+```
+
+A decisão recorrida e seus efeitos permanecem. A nova revisão causa lançamentos, direitos ou estados compensatórios; nenhuma Saga edita Aggregate alheio.
