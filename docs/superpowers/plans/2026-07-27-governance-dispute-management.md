@@ -442,14 +442,14 @@ git commit -m "docs: validate governance synchronization"
 
 Depois deste plano:
 
-1. continuar o fechamento na ordem normativa: Pricing Engine, Campaign Budget, Financial Platform, Settlement, Evidence Ledger, Edge Runtime, Governance & Dispute Management, AI Orchestration, Notifications, Analytics, CRM, Marketplace, Configuration Service e revisão final de User Identity;
+1. continuar o fechamento por fases: (1) User Identity, Configuration Service, Governance & Dispute Management e Financial Platform; (2) Pricing Engine, Campaign Budget, revisão final de Campaign Management e Settlement; (3) Edge Runtime, Evidence Ledger e AI Orchestration; (4) Notifications, Analytics, CRM e Marketplace;
 2. criar mapa integral de Events;
 3. criar mapa integral de Sagas;
 4. validar Ownership;
 5. validar invariantes globais;
 6. validar fluxos end-to-end;
 7. declarar Domain Freeze;
-8. emitir `Domain Certification (Architecture Lock)`, validando automaticamente owners, producers, Sagas circulares, fronteiras, decisões abertas, estados inalcançáveis, Commands sem Aggregate, Events sem consumidor, contextos órfãos e rastreabilidade dos invariantes;
+8. emitir `Domain Freeze Review (Architecture Lock)`, contendo os mapas completos de bounded contexts, Aggregates, Commands, Events e Sagas, matriz de ownership, dependências e fluxos ponta a ponta, além de validar automaticamente owners, producers, Sagas circulares, fronteiras, decisões abertas, estados inalcançáveis, Commands sem Aggregate, Events sem consumidor, contextos órfãos e rastreabilidade dos invariantes;
 9. bloquear a geração enquanto qualquer regra da certificação falhar;
 10. gerar contratos técnicos somente sobre baseline certificado;
 11. iniciar implementação de código.

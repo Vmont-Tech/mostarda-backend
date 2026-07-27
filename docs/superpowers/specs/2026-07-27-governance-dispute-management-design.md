@@ -472,22 +472,12 @@ Cada contexto deve terminar com Aggregate, Commands, Events, invariantes, state 
 
 Ordem normativa de fechamento:
 
-1. Pricing Engine;
-2. Campaign Budget;
-3. Financial Platform;
-4. Settlement;
-5. Evidence Ledger;
-6. Edge Runtime;
-7. Governance & Dispute Management;
-8. AI Orchestration;
-9. Notifications;
-10. Analytics;
-11. CRM;
-12. Marketplace;
-13. Configuration Service;
-14. User Identity, somente para revisão final.
+1. **Fase 1 — Núcleo da plataforma:** User Identity, Configuration Service, Governance & Dispute Management e Financial Platform.
+2. **Fase 2 — Núcleo comercial:** Pricing Engine, Campaign Budget, revisão final de Campaign Management e Settlement.
+3. **Fase 3 — Execução:** Edge Runtime, Evidence Ledger e AI Orchestration.
+4. **Fase 4 — Contextos consumidores:** Notifications, Analytics, CRM e Marketplace.
 
-Campaign Management é considerado suficientemente maduro e não retorna ao ciclo de aprofundamento, salvo inconsistência transversal comprovada.
+Campaign Management não retorna a um novo ciclo de descoberta; recebe somente revisão final e correções decorrentes de inconsistência transversal comprovada.
 
 ### Etapa 1 — Mapa integral de Events
 
@@ -513,9 +503,20 @@ Executar walkthrough normativo dos fluxos completos e de suas falhas. A validaç
 
 Após aprovação da revisão global, nenhuma nova regra de negócio entra no baseline congelado. Mudanças posteriores exigem processo formal de decisão, versionamento e impacto.
 
-### Etapa 7 — Domain Certification (Architecture Lock)
+### Etapa 7 — Domain Freeze Review (Architecture Lock)
 
-Emitir a certidão normativa e automatizada de que o baseline congelado está completo e transversalmente consistente. A certificação bloqueia geração de contratos enquanto qualquer verificação falhar e deve comprovar, no mínimo:
+Emitir a revisão normativa e automatizada de que o baseline congelado está completo e transversalmente consistente. O `Domain Freeze Review` funciona como certificação final da arquitetura, bloqueia geração de contratos enquanto qualquer verificação falhar e contém:
+
+- mapa completo dos bounded contexts;
+- mapa completo dos Aggregates;
+- mapa completo dos Commands;
+- mapa completo dos Events;
+- mapa completo das Sagas;
+- matriz de ownership;
+- dependências entre contextos;
+- fluxos ponta a ponta, incluindo cadastro → campanha → execução → evidência → liquidação → governança.
+
+Além dos artefatos, deve comprovar, no mínimo:
 
 - nenhum Aggregate possui mais de um owner;
 - nenhum Event possui mais de um producer normativo;
@@ -528,7 +529,7 @@ Emitir a certidão normativa e automatizada de que o baseline congelado está co
 - nenhum bounded context está órfão;
 - todo invariante possui rastreabilidade normativa.
 
-O artefato deve registrar baseline, data, versão das regras de certificação, resultados, exceções aprovadas e evidências reproduzíveis. Qualquer falha impede o Architecture Lock. Qualquer alteração posterior invalida a certificação e exige nova revisão, novo freeze e nova certificação.
+O artefato deve registrar baseline, data, versão das regras de revisão, resultados, exceções aprovadas e evidências reproduzíveis. Qualquer falha impede o Architecture Lock. Qualquer alteração posterior invalida o Review e exige nova revisão, novo freeze e nova certificação.
 
 ### Etapa 8 — Geração de contratos técnicos
 
