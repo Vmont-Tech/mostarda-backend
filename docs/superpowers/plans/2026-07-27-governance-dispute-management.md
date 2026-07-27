@@ -51,12 +51,15 @@ Definir `ResponsibleParty`, `ResponsibilityCategory`, `Severity`, confidence dec
 Declarar como invariantes:
 
 - confidence é obrigatório, explicativo e auditável;
+- confidence considera qualidade, completude e consistência das evidências disponíveis no momento da decisão;
+- confidence não representa probabilidade estatística de culpa, risco jurídico nem percentual de certeza jurídica;
 - confidence não determina a validade jurídica ou operacional da decisão;
 - ResponsibilityDecisionPublished é sempre oficial, independentemente do confidence;
 - confidence nunca controla efeitos de negócio, financeiros, contratuais ou jurídicos;
 - classificações LOW/MEDIUM/HIGH de confidence são somente projections e nunca são persistidas;
 - toda ResponsibilityDecision referencia exatamente uma policyVersion;
 - policyVersion e sua referência na decisão são imutáveis;
+- GovernancePolicyVersion nunca pode ser alterada após a publicação da decisão;
 - nova policy exige nova ResponsibilityDecision e nova revision append-only;
 - `UNKNOWN` somente é publicável após investigação concluída.
 
@@ -439,7 +442,7 @@ git commit -m "docs: validate governance synchronization"
 
 Depois deste plano:
 
-1. continuar fechamento dos demais bounded contexts;
+1. continuar o fechamento na ordem normativa: Pricing Engine, Campaign Budget, Financial Platform, Settlement, Evidence Ledger, Edge Runtime, Governance & Dispute Management, AI Orchestration, Notifications, Analytics, CRM, Marketplace, Configuration Service e revisão final de User Identity;
 2. criar mapa integral de Events;
 3. criar mapa integral de Sagas;
 4. validar Ownership;

@@ -176,7 +176,7 @@ Severidades permitidas:
 - `HIGH`;
 - `CRITICAL`.
 
-`confidence` é decimal normalizado obrigatório no intervalo fechado `[0.00, 1.00]`. Confidence não determina a validade jurídica ou operacional da decisão. Ele representa apenas o grau de robustez da conclusão obtida segundo a `GovernancePolicyVersion` utilizada. Uma `ResponsibilityDecisionPublished` é sempre uma decisão oficial, independentemente do valor de confidence.
+`confidence` é decimal normalizado obrigatório no intervalo fechado `[0.00, 1.00]`. Ele representa a robustez da conclusão produzida pelo processo de governança, considerando a qualidade, completude e consistência das evidências disponíveis no momento da decisão. Não representa probabilidade estatística de culpa, risco jurídico nem percentual de certeza jurídica. Confidence não determina a validade jurídica ou operacional da decisão. Uma `ResponsibilityDecisionPublished` é sempre uma decisão oficial, independentemente do valor de confidence.
 
 Cada revisão preserva exatamente o confidence publicado. Categorias visuais de confidence não são persistidas; são projections calculadas por limiares versionados do Configuration Service. Mudança de limiar nunca modifica decisão histórica.
 
@@ -188,7 +188,7 @@ Cada revisão preserva exatamente o confidence publicado. Categorias visuais de 
 
 Toda decisão publicada referencia exatamente uma `GovernancePolicyVersion`.
 
-Uma versão publicada é imutável. Correção, novo critério, novo limiar ou mudança de interpretação exige nova versão. A policy preserva:
+Uma versão publicada é imutável. A `GovernancePolicyVersion` nunca pode ser alterada após a publicação da decisão que a referencia. Correção, novo critério, novo limiar ou mudança de interpretação exige nova versão. A policy preserva:
 
 - identidade e versão;
 - status e vigência;
@@ -405,6 +405,8 @@ Atualiza indicadores por classe, causa, responsável, revisão e resultado.
 24. Projeções categóricas de confidence nunca são persistidas nem reclassificam decisões históricas.
 25. A referência policyVersion de uma decisão publicada é imutável.
 26. Uso de nova policy exige nova ResponsibilityDecision e nova revision append-only.
+27. Confidence considera qualidade, completude e consistência das evidências disponíveis no instante da decisão.
+28. Confidence não representa probabilidade estatística de culpa, risco jurídico nem percentual de certeza jurídica.
 
 ## 16. Segurança e auditoria
 
@@ -468,6 +470,25 @@ O design está pronto para plano quando:
 
 Cada contexto deve terminar com Aggregate, Commands, Events, invariantes, state machine, ownership, Sagas, consistência eventual e regras de negócio sem decisões abertas.
 
+Ordem normativa de fechamento:
+
+1. Pricing Engine;
+2. Campaign Budget;
+3. Financial Platform;
+4. Settlement;
+5. Evidence Ledger;
+6. Edge Runtime;
+7. Governance & Dispute Management;
+8. AI Orchestration;
+9. Notifications;
+10. Analytics;
+11. CRM;
+12. Marketplace;
+13. Configuration Service;
+14. User Identity, somente para revisão final.
+
+Campaign Management é considerado suficientemente maduro e não retorna ao ciclo de aprofundamento, salvo inconsistência transversal comprovada.
+
 ### Etapa 1 — Mapa integral de Events
 
 Consolidar o fluxo causal completo, identificar duplicidades, aliases, producer único, consumidores, ordering e gaps.
@@ -515,4 +536,4 @@ Gerar OpenAPI, Protobuf, Events, Commands, DTOs, schemas, repositories, filas, b
 
 ### Etapa 9 — Implementação
 
-Iniciar pelos pilares: User Identity, Financial Platform, Campaign Management, Campaign Budget, Pricing Engine, Edge Runtime, Evidence Ledger e Governance & Dispute Management.
+Iniciar somente após geração e validação dos contratos técnicos sobre o baseline certificado. A ordem de implementação será derivada das dependências confirmadas pelos mapas globais de Events e Sagas; ela não altera a ordem normativa de fechamento dos bounded contexts.
