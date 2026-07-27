@@ -145,10 +145,10 @@ Decisão append-only:
 - `severity`;
 - `confidence` decimal no intervalo fechado `[0.00, 1.00]`;
 - `policyVersion`, referenciando exatamente uma `GovernancePolicyVersion`;
-- `explanation`;
+- `decidedBy`;
+- `decidedAt`;
+- `reason`;
 - `evidenceReferences`;
-- `createdAt`;
-- actor ou regra decisora;
 - consequência autorizada conceitualmente;
 - referência à decisão anterior, quando existir.
 
@@ -176,7 +176,7 @@ Severidades permitidas:
 - `HIGH`;
 - `CRITICAL`.
 
-`confidence` é decimal normalizado obrigatório no intervalo fechado `[0.00, 1.00]`. Ele registra a robustez da conclusão diante das evidências e da política, não a probabilidade de culpa nem a autoridade da decisão.
+`confidence` é decimal normalizado obrigatório no intervalo fechado `[0.00, 1.00]`. Confidence não determina a validade jurídica ou operacional da decisão. Ele representa apenas o grau de robustez da conclusão obtida segundo a `GovernancePolicyVersion` utilizada. Uma `ResponsibilityDecisionPublished` é sempre uma decisão oficial, independentemente do valor de confidence.
 
 Cada revisão preserva exatamente o confidence publicado. Categorias visuais de confidence não são persistidas; são projections calculadas por limiares versionados do Configuration Service. Mudança de limiar nunca modifica decisão histórica.
 
@@ -476,15 +476,23 @@ Consolidar o fluxo causal completo, identificar duplicidades, aliases, producer 
 
 Desenhar os workflows ponta a ponta, incluindo ativação, Pricing, Slot, playback, Evidence, Settlement, Governance, compensação e refund.
 
-### Etapa 3 — Revisão global
+### Etapa 3 — Validação de Ownership
 
-Revisar owners, Aggregates, invariantes, Events, Commands, contratos, dependências, concorrência e consistência eventual.
+Comprovar owner único para bounded contexts, Aggregates, Commands e Events. Identificar produtores duplicados, Commands sem Aggregate, consumidores que reinterpretam fatos e violações de fronteira.
 
-### Etapa 4 — Domain Freeze
+### Etapa 4 — Validação de Invariantes Globais
+
+Consolidar e validar invariantes distribuídos, precondições e pós-condições entre contextos, incluindo concorrência, idempotência, ordering, consistência eventual, compensações, replay e reprocessamento.
+
+### Etapa 5 — Validação de Fluxos End-to-End
+
+Executar walkthrough normativo dos fluxos completos e de suas falhas. A validação deve detectar Events órfãos, consumidores ausentes, estados inalcançáveis, Sagas circulares, ciclos de dependência, gaps temporais e consequências sem causa normativa.
+
+### Etapa 6 — Domain Freeze
 
 Após aprovação da revisão global, nenhuma nova regra de negócio entra no baseline congelado. Mudanças posteriores exigem processo formal de decisão, versionamento e impacto.
 
-### Etapa 5 — Domain Certification (Architecture Lock)
+### Etapa 7 — Domain Certification (Architecture Lock)
 
 Emitir a certidão normativa e automatizada de que o baseline congelado está completo e transversalmente consistente. A certificação bloqueia geração de contratos enquanto qualquer verificação falhar e deve comprovar, no mínimo:
 
@@ -501,10 +509,10 @@ Emitir a certidão normativa e automatizada de que o baseline congelado está co
 
 O artefato deve registrar baseline, data, versão das regras de certificação, resultados, exceções aprovadas e evidências reproduzíveis. Qualquer falha impede o Architecture Lock. Qualquer alteração posterior invalida a certificação e exige nova revisão, novo freeze e nova certificação.
 
-### Etapa 6 — Geração de contratos técnicos
+### Etapa 8 — Geração de contratos técnicos
 
 Gerar OpenAPI, Protobuf, Events, Commands, DTOs, schemas, repositories, filas, banco e testes a partir do domínio congelado.
 
-### Etapa 7 — Implementação
+### Etapa 9 — Implementação
 
 Iniciar pelos pilares: User Identity, Financial Platform, Campaign Management, Campaign Budget, Pricing Engine, Edge Runtime, Evidence Ledger e Governance & Dispute Management.

@@ -51,6 +51,8 @@ Definir `ResponsibleParty`, `ResponsibilityCategory`, `Severity`, confidence dec
 Declarar como invariantes:
 
 - confidence é obrigatório, explicativo e auditável;
+- confidence não determina a validade jurídica ou operacional da decisão;
+- ResponsibilityDecisionPublished é sempre oficial, independentemente do confidence;
 - confidence nunca controla efeitos de negócio, financeiros, contratuais ou jurídicos;
 - classificações LOW/MEDIUM/HIGH de confidence são somente projections e nunca são persistidas;
 - toda ResponsibilityDecision referencia exatamente uma policyVersion;
@@ -440,9 +442,11 @@ Depois deste plano:
 1. continuar fechamento dos demais bounded contexts;
 2. criar mapa integral de Events;
 3. criar mapa integral de Sagas;
-4. executar revisão global;
-5. declarar Domain Freeze;
-6. emitir `Domain Certification (Architecture Lock)`, validando automaticamente owners, producers, Sagas circulares, fronteiras, decisões abertas, estados inalcançáveis, Commands sem Aggregate, Events sem consumidor, contextos órfãos e rastreabilidade dos invariantes;
-7. bloquear a geração enquanto qualquer regra da certificação falhar;
-8. gerar contratos técnicos somente sobre baseline certificado;
-9. iniciar implementação de código.
+4. validar Ownership;
+5. validar invariantes globais;
+6. validar fluxos end-to-end;
+7. declarar Domain Freeze;
+8. emitir `Domain Certification (Architecture Lock)`, validando automaticamente owners, producers, Sagas circulares, fronteiras, decisões abertas, estados inalcançáveis, Commands sem Aggregate, Events sem consumidor, contextos órfãos e rastreabilidade dos invariantes;
+9. bloquear a geração enquanto qualquer regra da certificação falhar;
+10. gerar contratos técnicos somente sobre baseline certificado;
+11. iniciar implementação de código.
