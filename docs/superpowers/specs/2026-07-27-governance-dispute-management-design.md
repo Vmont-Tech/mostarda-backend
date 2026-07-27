@@ -141,9 +141,12 @@ Decisão append-only:
 - `decisionId`;
 - `decisionRevision`;
 - `responsibleParty`;
+- `responsibilityCategory`;
+- `severity`;
+- `confidence`;
 - justificativa;
 - evidências utilizadas;
-- policy versions;
+- exatamente uma `governancePolicyVersion`;
 - actor ou regra decisora;
 - consequência autorizada conceitualmente;
 - `publishedAt`;
@@ -155,6 +158,47 @@ Classes permitidas:
 - `EDGE_PARTNER`;
 - `MOSTARDA`;
 - `INTEGRATED_THIRD_PARTY`.
+
+Categorias permitidas:
+
+- `PLATFORM_BUG`;
+- `OPERATIONAL_FAILURE`;
+- `PARTNER_FAILURE`;
+- `THIRD_PARTY_FAILURE`;
+- `USER_MISUSE`;
+- `FORCE_MAJEURE`;
+- `UNKNOWN`.
+
+Severidades permitidas:
+
+- `LOW`;
+- `MEDIUM`;
+- `HIGH`;
+- `CRITICAL`.
+
+`confidence` é decimal normalizado obrigatório no intervalo fechado `[0.00, 1.00]`. Ele registra a robustez da conclusão diante das evidências e da política, não a probabilidade de culpa nem a autoridade da decisão.
+
+Cada revisão preserva exatamente o confidence publicado. Categorias visuais de confidence não são persistidas; são projections calculadas por limiares versionados do Configuration Service. Mudança de limiar nunca modifica decisão histórica.
+
+`UNKNOWN` não significa “não analisado”. Ele só pode ser publicado depois da investigação quando as evidências continuarem insuficientes para atribuição inequívoca. Antes disso, o GovernanceCase permanece `INVESTIGATING` ou `UNDER_REVIEW`.
+
+### 6.3 GovernancePolicyVersion
+
+Toda decisão publicada referencia exatamente uma `GovernancePolicyVersion`.
+
+Uma versão publicada é imutável. Correção, novo critério, novo limiar ou mudança de interpretação exige nova versão. A policy preserva:
+
+- identidade e versão;
+- status e vigência;
+- critérios determinísticos;
+- evidências obrigatórias;
+- regras de categoria e severidade;
+- requisitos de revisão humana;
+- autoridade de publicação;
+- hash/digest;
+- autoria e aprovação.
+
+Policy nova não reinterpreta decisão anterior. Replay e auditoria utilizam a versão preservada na ResponsibilityDecision.
 
 #### Appeal
 
@@ -240,9 +284,12 @@ Payload conceitual:
 - Decision ID;
 - Decision Revision;
 - Responsible Party;
+- Responsibility Category;
+- Severity;
+- Confidence decimal;
 - justificativa;
 - Evidence References;
-- policy versions;
+- exatamente uma Governance Policy Version;
 - actor/regra decisora;
 - consequência conceitualmente autorizada;
 - decisão anterior substituída, quando houver;
@@ -265,6 +312,8 @@ IA pode:
 IA nunca pode executar `PublishDecision`.
 
 Ambiguidade, conflito, insuficiência de fatos, policy incompatível ou contestação material exigem revisão humana. O operador autorizado publica por Command ao Aggregate; não edita armazenamento.
+
+Confidence baixo não invalida nem reduz a autoridade de uma decisão publicada. Ele registra incerteza residual. Se a investigação ainda não terminou, não existe decisão publicada nem categoria `UNKNOWN`.
 
 ## 12. Recurso e reavaliação
 
@@ -340,6 +389,13 @@ Atualiza indicadores por classe, causa, responsável, revisão e resultado.
 12. Consumidor não reinterpreta a decisão.
 13. Timeout não significa conclusão.
 14. Caso fechado não retorna.
+15. Toda decisão possui ResponsibilityCategory.
+16. Toda decisão possui Severity.
+17. Confidence é obrigatório e pertence a `[0.00, 1.00]`.
+18. Confidence não representa probabilidade de culpa.
+19. Toda decisão referencia exatamente uma GovernancePolicyVersion.
+20. GovernancePolicyVersion publicada é imutável.
+21. `UNKNOWN` só pode ser publicado após investigação concluída.
 
 ## 16. Segurança e auditoria
 
@@ -390,4 +446,37 @@ O design está pronto para plano quando:
 - recurso é append-only;
 - consumidores não reinterpretam;
 - consequência financeira referencia decisão;
+- category, severity e confidence estão presentes;
+- policy version é única e imutável;
+- UNKNOWN não é estado intermediário;
 - `OPEN-049` pode ser fechado sem nova suposição.
+
+## 19. Roadmap após a sincronização
+
+### Etapa 0 — Fechar todos os bounded contexts
+
+Cada contexto deve terminar com Aggregate, Commands, Events, invariantes, state machine, ownership, Sagas, consistência eventual e regras de negócio sem decisões abertas.
+
+### Etapa 1 — Mapa integral de Events
+
+Consolidar o fluxo causal completo, identificar duplicidades, aliases, producer único, consumidores, ordering e gaps.
+
+### Etapa 2 — Mapa integral de Sagas
+
+Desenhar os workflows ponta a ponta, incluindo ativação, Pricing, Slot, playback, Evidence, Settlement, Governance, compensação e refund.
+
+### Etapa 3 — Revisão global
+
+Revisar owners, Aggregates, invariantes, Events, Commands, contratos, dependências, concorrência e consistência eventual.
+
+### Etapa 4 — Domain Freeze
+
+Após aprovação da revisão global, nenhuma nova regra de negócio entra no baseline congelado. Mudanças posteriores exigem processo formal de decisão, versionamento e impacto.
+
+### Etapa 5 — Geração de contratos técnicos
+
+Gerar OpenAPI, Protobuf, Events, Commands, DTOs, schemas, repositories, filas, banco e testes a partir do domínio congelado.
+
+### Etapa 6 — Implementação
+
+Iniciar pelos pilares: User Identity, Financial Platform, Campaign Management, Campaign Budget, Pricing Engine, Edge Runtime, Evidence Ledger e Governance & Dispute Management.
