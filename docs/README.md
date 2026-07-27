@@ -15,6 +15,7 @@ A candidata a fonte normativa primária é [`specification/PLATFORM_SPECIFICATIO
 | `execution/`      | Modelo executável de comportamento: Commands, Events, State Machines, Sagas e Timelines. |
 | `financial/`      | Financial Platform: pagamento compensado, orçamento, ledger, carteira e saque. |
 | `tv-network/`     | TV Network: ciclo de vida, dispositivos Edge, capacidade, saúde e frota. |
+| `governance/`     | Governance & Dispute Management: investigação, decisões oficiais, recursos e responsabilidade. |
 | `domain/REVENUE_ARCHITECTURE.md` | Contrato econômico: split, retenções, conciliação e exceções. |
 | `domain/INSURANCE.md` | Fundo de seguro, apólices, reservas, sinistros e reposições. |
 | `domain/TV_EDGE_MODEL.md` | Operação TV/Edge, recuperação e observabilidade. |
@@ -39,6 +40,7 @@ A candidata a fonte normativa primária é [`specification/PLATFORM_SPECIFICATIO
 4. Leia `financial/` e `tv-network/` para os contextos estruturais especializados.
 5. Consulte `adr/` para entender **por que decidimos assim**.
 6. Leia `domain/CAMPAIGN_MANAGEMENT.md` antes de implementar Campaign, Slot, Creative, realocação ou concorrência de inventário.
+7. Leia `governance/GOVERNANCE_DISPUTE_MANAGEMENT.md` antes de implementar incidentes, disputas, atribuição de responsabilidade ou consequências decorrentes de julgamentos.
 
 ## Regras da documentação
 
