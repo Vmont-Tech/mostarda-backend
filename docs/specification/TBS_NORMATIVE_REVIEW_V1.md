@@ -39,7 +39,7 @@ Identificador único não garante autoridade textual única. A seção 4 registr
 | TBS-N-002 | S | S | S | S | KEEP |
 | TBS-ID-001 | S | S | S | S | KEEP |
 | TBS-ID-002 | S | S | S | S | KEEP |
-| TBS-ID-003 | S | S | S | N | REMOVE_UPSTREAM_DUPLICATE |
+| TBS-ID-003 | S | S | S | S | KEEP |
 | TBS-ID-004 | S | S | S | S | KEEP |
 | TBS-ID-005 | S | S | S | S | KEEP |
 | TBS-ID-006 | S | S | S | S | KEEP |
@@ -213,12 +213,6 @@ A revisão deve apontar para o processo de governança normativa vigente, sem re
 
 ## 6. Duplicações de autoridade superior
 
-### TBS-ID-003
-
-Estabilidade da identidade do Aggregate já pertence ao modelo de Aggregate autorizado pelo Domain Freeze/Architecture Lock. A TBS pode assumir essa propriedade, mas não deve republicá-la como decisão própria.
-
-Veredito: `REMOVE_UPSTREAM_DUPLICATE`.
-
 ### TBS-SAG-001
 
 “Saga coordena e nunca decide regra de domínio” já é invariante arquitetural explícita em `CONSISTENCY_RULES.md`.
@@ -227,14 +221,22 @@ Veredito: `REMOVE_UPSTREAM_DUPLICATE`.
 
 A seção de Saga deve declarar essa regra como precondição arquitetural referenciada, não como nova norma TBS.
 
+### TBS-ID-003 — correção da hipótese de auditoria
+
+A busca nas autoridades superiores encontrou referências por identidade, identidade alvo e ownership, mas nenhuma norma semanticamente equivalente a “Aggregate possui identidade estável durante todo o lifecycle”.
+
+Remover `TBS-ID-003` permitiria uma implementação trocar a identidade do mesmo Aggregate ao longo do lifecycle, produzindo efeitos observáveis diferentes.
+
+Veredito corrigido: `KEEP`.
+
 ## 7. Resultado
 
 | Veredito | Quantidade |
 | --- | ---: |
-| KEEP | 81 |
+| KEEP | 82 |
 | CONSOLIDATE_REFERENCE | 11 |
 | REWRITE_TESTABLE | 2 |
-| REMOVE_UPSTREAM_DUPLICATE | 2 |
+| REMOVE_UPSTREAM_DUPLICATE | 1 |
 | Total | 96 |
 
 ## 8. Parecer
@@ -245,9 +247,8 @@ Motivos objetivos:
 
 1. onze normas possuem mais de um texto normativo autoritativo para a mesma semântica;
 2. duas normas não são testáveis sem referência externa explícita;
-3. duas normas repetem autoridade superior.
+3. uma norma repete autoridade superior.
 
-As 81 normas `KEEP` passam nos quatro gates. Nenhuma foi identificada como escolha de linguagem, framework, banco, broker ou serialização.
+As 82 normas `KEEP` passam nos quatro gates. Nenhuma foi identificada como escolha de linguagem, framework, banco, broker ou serialização.
 
 A aprovação exige somente consolidação normativa; não exige nova decisão de domínio ou arquitetura.
-
