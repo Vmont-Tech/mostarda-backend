@@ -19,3 +19,7 @@ Estas regras são não negociáveis. Toda decisão, contrato, implementação, m
 15. Dados pessoais e telemetria obedecem proprietário, consentimento e minimização; telemetria nunca substitui Evidence.
 16. Settlement cria direitos financeiros; Financial Platform mantém Ledger/Wallet/Withdrawal; Asaas só executa instruções desse contexto.
 17. Campaign só consome Available Budget compensado; Contract Value não é saldo e Quantum nunca movimenta dinheiro.
+18. Todos os bounded contexts produzem fatos; somente Governance & Dispute Management publica julgamentos oficiais de responsabilidade.
+19. Nenhuma consequência material de responsabilidade existe sem `ResponsibilityDecisionPublished` e referência a `decisionId + revision`.
+20. Confidence de governança nunca determina validade nem efeito jurídico, operacional, contratual ou financeiro.
+21. Toda ResponsibilityDecision referencia exatamente uma GovernancePolicyVersion imutável e permanece append-only.

@@ -162,6 +162,16 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 
 Ausência, expiração ou incompatibilidade de versão bloqueia a operação dependente. Toda decisão preserva policy version e valores efetivos.
 
+## 19. Governance & Dispute Management
+
+- **Responsabilidade:** investigar fatos, aplicar GovernancePolicyVersion, publicar julgamento oficial de responsabilidade, receber recursos e preservar revisões.
+- **Pertence:** GovernanceCase, EvidenceReference, Investigation, ResponsibilityDecision, Appeal e trilha de auditoria.
+- **NÃO pertence:** fatos de origem, identidade, preço, saldo, Evidence, direito de Settlement, execução de consequência ou administração de políticas de outros contexts.
+- **Conversa com:** recebe fatos de todos; publica ResponsibilityDecisionPublished para Financial, Settlement, Campaign, Notifications e Analytics.
+- **Proprietário:** Cloud, com autoridade humana segregada quando a policy exigir.
+
+Governance é o único owner do julgamento. Todos os demais contexts produzem fatos. Consumers nunca reinterpretam responsibleParty, category, severity ou policyVersion.
+
 ## Mapa de contexto (resumo)
 
 ```text
@@ -175,4 +185,5 @@ Campaign Management <───┴── Pricing Engine             └──> Fi
      └──> Marketplace / Influencer Network / CRM
 AI Orchestration, Analytics, Notifications: consumidores transversais
 User Identity: fornecedor transversal de identidade e permissão
+Todos os fatos relevantes ──> Governance & Dispute Management ──ResponsibilityDecisionPublished──> owners das consequências
 ```

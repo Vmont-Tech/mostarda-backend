@@ -135,3 +135,27 @@ Capacidade Cloud que distribui parâmetros e versões aprovadas de políticas op
 
 ## Campaign Execution Started
 Fato publicado uma única vez quando o primeiro Slot da Campaign é reservado. É distinto da ativação comercial no início da janela.
+
+## Governance & Dispute Management
+Bounded Context que transforma fatos autoritativos em julgamentos oficiais, revisionados e auditáveis. É o único owner de responsabilidade.
+
+## Governance Case
+Aggregate que conduz abertura, investigação, revisão humana, decisão, recurso, reavaliação e fechamento sem alterar fatos externos.
+
+## Responsibility Decision
+Decisão append-only que contém responsável, categoria, severidade, confidence, policyVersion, razão e evidências. Torna-se oficial por `ResponsibilityDecisionPublished`.
+
+## Governance Policy Version
+Versão imutável da política aplicada a uma Responsibility Decision. Mudança de critérios cria nova versão e nunca reinterpreta decisão histórica.
+
+## Responsibility Category
+Causa normativa do incidente: `PLATFORM_BUG`, `OPERATIONAL_FAILURE`, `PARTNER_FAILURE`, `THIRD_PARTY_FAILURE`, `USER_MISUSE`, `FORCE_MAJEURE` ou `UNKNOWN`.
+
+## Responsibility Severity
+Impacto normativo independente da causa: `LOW`, `MEDIUM`, `HIGH` ou `CRITICAL`.
+
+## Governance Confidence
+Decimal `[0.00,1.00]` que registra robustez da conclusão diante da qualidade, completude e consistência das evidências. Não representa probabilidade de culpa nem controla efeitos.
+
+## Governance Appeal
+Contestação formal de uma revisão publicada. Preserva a decisão original e pode causar nova revisão após reavaliação.

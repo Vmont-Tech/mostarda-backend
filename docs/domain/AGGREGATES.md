@@ -137,3 +137,14 @@ Especificação integral: [`CAMPAIGN_MANAGEMENT.md`](./CAMPAIGN_MANAGEMENT.md).
 - **Value Objects:** `EvidenceHash`, `AnchoringReceipt`, `InteractionIdentifier`
 - **Invariantes:** ancoragem é idempotente por hash; Quantum nunca recebe dados de Campaign, preço ou pessoas; NFC/QR resolvem aqui e **nunca** no Edge.
 - **Eventos:** `AnchoringRequested`, `AnchoringConfirmed`, `AnchoringFailed`, `DocumentHashRegistered`, `NfcInteractionRegistered`, `QrInteractionRegistered`, `QrCodeIssued`, `QrCodeRevoked`.
+
+## GovernanceCase Aggregate — contexto Governance & Dispute Management
+
+- **Root:** `GovernanceCase`.
+- **Entidades internas:** `EvidenceReference`, `Investigation`, `ResponsibilityDecision`, `Appeal`.
+- **Value Objects:** `ResponsibleParty`, `ResponsibilityCategory`, `Severity`, `Confidence`, `GovernancePolicyVersion`, `DecisionRevision`.
+- **Lifecycle:** `OPEN → INVESTIGATING → UNDER_REVIEW → DECIDED → APPEALED → REEVALUATING → DECIDED → CLOSED`.
+- **Invariantes:** owner único do julgamento; fatos externos imutáveis; decisão append-only; exatamente um responsável; confidence obrigatório em `[0.00,1.00]` e sem efeito decisório; exatamente uma policyVersion imutável; UNKNOWN somente após investigação; CLOSED final.
+- **Eventos:** `GovernanceCaseOpened`, `EvidenceReferenceAttached`, `InvestigationStarted`, `HumanReviewRequested`, `ResponsibilityDecisionPublished`, `ResponsibilityDecisionAppealed`, `GovernanceCaseReevaluated`, `GovernanceCaseClosed`.
+
+O Aggregate não executa consequências. Toda consequência material ocorre no owner competente e referencia `decisionId + revision`.

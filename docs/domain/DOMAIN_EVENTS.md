@@ -301,6 +301,21 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `ReadModelRebuilt` | Modelo de leitura reconstruído. |
 | `AnomalyDetected` | Anomalia identificada em métricas. |
 
+## Governance & Dispute Management
+
+| Evento | Significado |
+| --- | --- |
+| `GovernanceCaseOpened` | Caso de governança foi aberto sem atribuição de culpa. |
+| `EvidenceReferenceAttached` | Referência imutável a fato autoritativo foi anexada. |
+| `InvestigationStarted` | Investigação começou sob policy versionada. |
+| `HumanReviewRequested` | Ambiguidade exige autoridade humana. |
+| `ResponsibilityDecisionPublished` | Revisão oficial da decisão foi publicada. |
+| `ResponsibilityDecisionAppealed` | Revisão recebeu recurso formal. |
+| `GovernanceCaseReevaluated` | Reavaliação foi preparada para eventual nova publicação. |
+| `GovernanceCaseClosed` | Caso atingiu estado final. |
+
+`ResponsibilityAssigned` e `ResponsibilityReassigned` são aliases proibidos.
+
 ---
 
 ## Saga de referência: exibição → dinheiro
