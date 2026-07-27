@@ -366,6 +366,7 @@ Condições preservadas:
 - confidence nunca controla validade ou efeito;
 - policyVersion e decisões publicadas são imutáveis;
 - responsibleParty é obrigatório e admite `NONE`; `UNKNOWN` é proibido como category;
+- DEC-042 separa início (`GovernanceCaseReevaluationStarted`) e conclusão (`GovernanceCaseReevaluated`) da reavaliação;
 - eventos `ResponsibilityAssigned` e `ResponsibilityReassigned` são proibidos.
 
 Esta reauditoria fecha somente a decisão `OPEN-049`. Nenhuma outra `OPEN-*`, lacuna legal, contábil, operacional ou de segurança é encerrada por inferência.

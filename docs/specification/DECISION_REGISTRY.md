@@ -61,6 +61,7 @@ Este registro conecta regras vigentes, ADRs e supersessões. O status `ACCEPTED`
 | `DEC-039` | Slots consecutivos evitam repetição por padrão e só reorganizam unidades movíveis sem prejudicar terceiros | Fechamento do Campaign Management (`OPEN-047`) | ACCEPTED no draft |
 | `DEC-040` | Matriz Advertiser/Grão/IA/Moderador/Financial/Campaign define autoridade e proibições | Fechamento do Campaign Management (`OPEN-048`) | ACCEPTED no draft |
 | `DEC-041` | Governance & Dispute Management, por GovernanceCase, é o único owner do julgamento oficial; decisões são revisions append-only publicadas por ResponsibilityDecisionPublished e consumidores não reinterpretam | Fechamento de `OPEN-049`; Governance specification | ACCEPTED no draft |
+| `DEC-042` | ReevaluateGovernanceCase inicia reavaliação por GovernanceCaseReevaluationStarted; nova ResponsibilityDecisionPublished precede GovernanceCaseReevaluated, que representa exclusivamente a conclusão e retorno a DECIDED | Semântica normativa da reavaliação de GovernanceCase | ACCEPTED no draft |
 
 ## Conflitos conhecidos a sincronizar
 

@@ -145,6 +145,6 @@ Especificação integral: [`CAMPAIGN_MANAGEMENT.md`](./CAMPAIGN_MANAGEMENT.md).
 - **Value Objects:** `ResponsibleParty`, `ResponsibilityCategory`, `Severity`, `Confidence`, `GovernancePolicyVersion`, `DecisionRevision`.
 - **Lifecycle:** `OPEN → INVESTIGATING → UNDER_REVIEW → DECIDED → APPEALED → REEVALUATING → DECIDED → CLOSED`.
 - **Invariantes:** owner único do julgamento; fatos externos imutáveis; decisão append-only; exatamente um responsibleParty, incluindo `NONE`; confidence obrigatório em `[0.00,1.00]` e sem efeito decisório; exatamente uma policyVersion imutável; party/category indeterminadas impedem publicação; CLOSED final.
-- **Eventos:** `GovernanceCaseOpened`, `EvidenceReferenceAttached`, `InvestigationStarted`, `HumanReviewRequested`, `ResponsibilityDecisionPublished`, `ResponsibilityDecisionAppealed`, `GovernanceCaseReevaluated`, `GovernanceCaseClosed`.
+- **Eventos:** `GovernanceCaseOpened`, `EvidenceReferenceAttached`, `InvestigationStarted`, `HumanReviewRequested`, `ResponsibilityDecisionPublished`, `ResponsibilityDecisionAppealed`, `GovernanceCaseReevaluationStarted`, `GovernanceCaseReevaluated`, `GovernanceCaseClosed`.
 
 O Aggregate não executa consequências. Toda consequência material ocorre no owner competente e referencia `decisionId + revision`.

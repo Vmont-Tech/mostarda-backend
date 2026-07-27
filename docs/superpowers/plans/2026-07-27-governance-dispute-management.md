@@ -123,6 +123,7 @@ InvestigationStarted
 HumanReviewRequested
 ResponsibilityDecisionPublished
 ResponsibilityDecisionAppealed
+GovernanceCaseReevaluationStarted
 GovernanceCaseReevaluated
 GovernanceCaseClosed
 ```
@@ -144,6 +145,8 @@ DECIDED → CLOSED
 ```
 
 `UNKNOWN` é proibido como ResponsibilityCategory; incerteza mantém INVESTIGATING ou UNDER_REVIEW sem publicação. `NONE` é ResponsibleParty para ausência de participante responsabilizável.
+
+Na reavaliação, APPEALED → REEVALUATING emite `GovernanceCaseReevaluationStarted`; REEVALUATING → DECIDED emite primeiro a nova `ResponsibilityDecisionPublished` e depois `GovernanceCaseReevaluated`, conforme `DEC-042`.
 
 - [ ] **Step 4: Criar invariantes**
 
@@ -235,7 +238,7 @@ Definir GovernanceCase, ResponsibilityDecision, GovernancePolicyVersion, Respons
 
 - [ ] **Step 4: Atualizar eventos globais**
 
-Adicionar apenas os oito Events aprovados e remover aliases de Assigned/Reassigned.
+Adicionar apenas os nove Events aprovados após `DEC-042` e remover aliases de Assigned/Reassigned.
 
 - [ ] **Step 5: Adicionar invariante global**
 

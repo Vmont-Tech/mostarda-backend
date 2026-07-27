@@ -93,6 +93,9 @@
 65. ResponsibilityAssigned é proibido.
 66. ResponsibilityReassigned é proibido.
 67. Nenhum alias pode restaurar a semântica desses eventos.
+68. GovernanceCaseReevaluationStarted representa exclusivamente o início.
+69. GovernanceCaseReevaluated representa exclusivamente a conclusão.
+70. Em uma reavaliação, ResponsibilityDecisionPublished precede GovernanceCaseReevaluated.
 
 ## 10. Contraexemplos
 

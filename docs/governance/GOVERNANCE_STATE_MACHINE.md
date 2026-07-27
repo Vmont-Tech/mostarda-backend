@@ -73,7 +73,7 @@
 ### APPEALED → REEVALUATING
 
 - **Command:** ReevaluateGovernanceCase.
-- **Event:** GovernanceCaseReevaluated.
+- **Event:** GovernanceCaseReevaluationStarted.
 - **Owner:** GovernanceCase.
 - **Invariantes:** Appeal admissível; escopo e policy registrados.
 - **Retry:** uma reavaliação ativa por Appeal.
@@ -82,11 +82,13 @@
 ### REEVALUATING → DECIDED
 
 - **Command:** PublishDecision.
-- **Event:** ResponsibilityDecisionPublished.
+- **Events, nesta ordem:** ResponsibilityDecisionPublished; GovernanceCaseReevaluated.
 - **Owner:** GovernanceCase.
 - **Invariantes:** revision nova; decisão anterior intocada; uma policyVersion imutável.
 - **Compensação:** consumidores recebem Commands para novos efeitos append-only.
 - **Concorrência:** revisão monotônica.
+
+ResponsibilityDecisionPublished materializa a nova decisão enquanto o processo ainda está em REEVALUATING. GovernanceCaseReevaluated confirma a conclusão consumada e aplica o retorno a DECIDED. Nenhum dos dois pode trocar de ordem.
 
 ### DECIDED → CLOSED
 

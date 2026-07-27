@@ -546,6 +546,12 @@ Ambiguidade exige revisão humana. `UNKNOWN` é proibido como ResponsibilityCate
 
 Consumidores nunca reinterpretam a decisão. Financial, Settlement, Campaign e demais owners executam consequências por Commands próprios, sempre referenciando decisionId + revision. Reavaliação nunca edita efeitos anteriores; produz compensações append-only.
 
+### SPEC-GOV-006 — Semântica da reavaliação
+
+`ReevaluateGovernanceCase` expressa a intenção de iniciar nova análise e produz `GovernanceCaseReevaluationStarted`, movendo APPEALED para REEVALUATING. Durante REEVALUATING, novas evidências e análise podem ser anexadas. Ao alcançar nova conclusão, `PublishDecision` emite `ResponsibilityDecisionPublished` com nova revision e, depois, `GovernanceCaseReevaluated`, que representa exclusivamente a conclusão consumada e retorna o Aggregate a DECIDED.
+
+GovernanceCaseReevaluated nunca representa início. Commands expressam intenção, States representam processos e Events registram fatos imutáveis.
+
 Os contratos completos estão em [`../governance/GOVERNANCE_DISPUTE_MANAGEMENT.md`](../governance/GOVERNANCE_DISPUTE_MANAGEMENT.md).
 
 ## 21. Decisões abertas

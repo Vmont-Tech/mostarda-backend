@@ -269,7 +269,8 @@ Todo Command exige actor, autorização, revisão esperada, correlation, causati
 | `HumanReviewRequested` | ambiguidade exige operador |
 | `ResponsibilityDecisionPublished` | decisão oficial foi publicada |
 | `ResponsibilityDecisionAppealed` | decisão recebeu recurso formal |
-| `GovernanceCaseReevaluated` | reavaliação terminou e está apta a nova publicação |
+| `GovernanceCaseReevaluationStarted` | reavaliação foi aceita e entrou em REEVALUATING |
+| `GovernanceCaseReevaluated` | reavaliação terminou depois da nova decisão publicada |
 | `GovernanceCaseClosed` | caso foi encerrado |
 
 Não existem `ResponsibilityAssigned` nem `ResponsibilityReassigned`. A mudança de responsável é representada por nova revisão de `ResponsibilityDecisionPublished`.
@@ -334,6 +335,8 @@ O recurso:
 - exige `ReevaluateGovernanceCase`;
 - pode resultar na publicação de nova revisão;
 - não suspende automaticamente efeitos anteriores sem política expressa.
+
+`ReevaluateGovernanceCase` produz `GovernanceCaseReevaluationStarted`. Ao concluir, `PublishDecision` produz primeiro a nova `ResponsibilityDecisionPublished` e depois `GovernanceCaseReevaluated`. O segundo Event nunca representa início.
 
 Se a nova revisão alterar o responsável, consumidores materializam compensações append-only. Nenhum consumidor desfaz efeitos por edição.
 
@@ -411,6 +414,8 @@ Atualiza indicadores por classe, causa, responsável, revisão e resultado.
 28. Confidence não representa probabilidade estatística de culpa, risco jurídico nem percentual de certeza jurídica.
 29. `NONE` é o ResponsibleParty obrigatório quando nenhum participante do ecossistema puder ser responsabilizado.
 30. Party e category indeterminadas impedem publicação e mantêm a investigação aberta.
+31. GovernanceCaseReevaluationStarted representa exclusivamente início.
+32. GovernanceCaseReevaluated representa exclusivamente conclusão e sucede a nova ResponsibilityDecisionPublished.
 
 ## 16. Segurança e auditoria
 

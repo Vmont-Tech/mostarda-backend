@@ -110,10 +110,12 @@ O recurso não apaga nem suspende automaticamente a decisão.
 - **Actor:** investigador ou autoridade de recurso.
 - **Precondições:** estado APPEALED; Appeal admissível; escopo e policy de reavaliação definidos.
 - **Pós-condições:** estado REEVALUATING; trilha de reavaliação aberta.
-- **Event:** GovernanceCaseReevaluated.
+- **Event:** GovernanceCaseReevaluationStarted.
 - **Idempotência:** uma reavaliação por appeal revision.
 - **Concorrência:** somente uma reavaliação ativa; outros recursos ficam correlacionados.
 - **Falhas:** recurso inadmissível, policy ausente, estado inválido, tentativa de editar decisão anterior.
+
+Quando `PublishDecision` for aceito em REEVALUATING, ele emite primeiro `ResponsibilityDecisionPublished` com nova revision e depois `GovernanceCaseReevaluated`, que conclui o processo e retorna o Aggregate a DECIDED.
 
 ## 10. CloseGovernanceCase
 

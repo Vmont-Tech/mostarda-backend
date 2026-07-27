@@ -525,8 +525,10 @@ Events de streams distintos podem chegar fora de ordem. T6 é bloqueado enquanto
 T11 AppealDecision
 T12 ResponsibilityDecisionAppealed
 T13 ReevaluateGovernanceCase
-T14 GovernanceCaseReevaluated
-T15 PublishDecision revision N+1
-T16 ResponsibilityDecisionPublished revision N+1
-T17 Commands compensatórios append-only
+T14 GovernanceCaseReevaluationStarted
+T15 novas evidências/análise/revisão humana
+T16 PublishDecision revision N+1
+T17 ResponsibilityDecisionPublished revision N+1
+T18 GovernanceCaseReevaluated
+T19 Commands compensatórios append-only
 ```

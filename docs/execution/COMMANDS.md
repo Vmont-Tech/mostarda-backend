@@ -233,9 +233,10 @@ Owner único de todos os Commands: `GovernanceCase`.
 | `StartInvestigation` | OPEN | INVESTIGATING | `InvestigationStarted` |
 | `RequestHumanReview` | INVESTIGATING | UNDER_REVIEW | `HumanReviewRequested` |
 | `ClassifyResponsibility` | INVESTIGATING/UNDER_REVIEW | proposta interna, sem autoridade pública | nenhum público |
-| `PublishDecision` | INVESTIGATING/UNDER_REVIEW/REEVALUATING | DECIDED e nova revision | `ResponsibilityDecisionPublished` |
+| `PublishDecision` | INVESTIGATING/UNDER_REVIEW | DECIDED e nova revision | `ResponsibilityDecisionPublished` |
+| `PublishDecision` | REEVALUATING | nova revision e DECIDED | `ResponsibilityDecisionPublished`, depois `GovernanceCaseReevaluated` |
 | `AppealDecision` | DECIDED | APPEALED | `ResponsibilityDecisionAppealed` |
-| `ReevaluateGovernanceCase` | APPEALED | REEVALUATING | `GovernanceCaseReevaluated` |
+| `ReevaluateGovernanceCase` | APPEALED | REEVALUATING | `GovernanceCaseReevaluationStarted` |
 | `CloseGovernanceCase` | DECIDED | CLOSED | `GovernanceCaseClosed` |
 
 Todos exigem actor, autorização, expected revision, idempotency key, correlation e causation. Contrato integral: [`../governance/GOVERNANCE_COMMANDS.md`](../governance/GOVERNANCE_COMMANDS.md).

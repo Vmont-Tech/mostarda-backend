@@ -74,18 +74,27 @@ Confidence não controla consumo nem validade. Todo consumidor trata a publicaç
 - **Duplicidade:** por identidade do Appeal.
 - **Compensação:** desistência ou rejeição é novo fato; recurso não é removido.
 
-## 8. GovernanceCaseReevaluated
+## 8. GovernanceCaseReevaluationStarted
 
 - **Producer:** GovernanceCase.
 - **Consumers:** investigação, Audit e projections.
-- **Payload:** appealId, reevaluationId, escopo, policyVersion e resultado de preparação.
-- **Ordering:** após ResponsibilityDecisionAppealed e antes de eventual nova publicação.
+- **Payload:** appealId, reevaluationId, escopo, policyVersion e actor.
+- **Ordering:** após ResponsibilityDecisionAppealed e antes da nova decisão.
+- **Efeito:** confirma entrada em REEVALUATING.
 - **Duplicidade:** uma ocorrência por reevaluation revision.
-- **Compensação:** falha permanece auditada e pode gerar nova tentativa correlacionada.
 
-Este Event não atribui responsabilidade e não substitui ResponsibilityDecisionPublished.
+## 9. GovernanceCaseReevaluated
 
-## 9. GovernanceCaseClosed
+- **Producer:** GovernanceCase.
+- **Consumers:** Audit e projections de Governance.
+- **Payload:** appealId, reevaluationId, decisionId, decisionRevision, policyVersion e concludedAt.
+- **Ordering:** imediatamente após ResponsibilityDecisionPublished da nova revision.
+- **Duplicidade:** uma ocorrência por reevaluation revision.
+- **Efeito:** confirma conclusão e retorno a DECIDED.
+
+Este Event nunca representa início, não atribui responsabilidade e não substitui ResponsibilityDecisionPublished.
+
+## 10. GovernanceCaseClosed
 
 - **Producer:** GovernanceCase.
 - **Consumers:** Audit, Analytics, Notifications e projections.
@@ -94,13 +103,13 @@ Este Event não atribui responsabilidade e não substitui ResponsibilityDecision
 - **Duplicidade:** uma ocorrência.
 - **Compensação:** inexistente; novo fato abre novo caso.
 
-## 10. Eventos proibidos
+## 11. Eventos proibidos
 
 `ResponsibilityAssigned` e `ResponsibilityReassigned` não existem como contratos públicos ou internos normativos.
 
 Eles são proibidos porque escondem a revisão append-only. Primeira atribuição e qualquer mudança são representadas uniformemente por ResponsibilityDecisionPublished com revision própria.
 
-## 11. Falhas de entrega
+## 12. Falhas de entrega
 
 - Broker indisponível: outbox preserva Event e Event ID.
 - Entrega duplicada: consumidor retorna efeito anterior.

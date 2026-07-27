@@ -249,8 +249,8 @@ Transições permitidas:
 | INVESTIGATING | DECIDED | PublishDecision | ResponsibilityDecisionPublished | party e category determinadas, regra inequívoca e evidências completas |
 | UNDER_REVIEW | DECIDED | PublishDecision | ResponsibilityDecisionPublished | operador autorizado |
 | DECIDED | APPEALED | AppealDecision | ResponsibilityDecisionAppealed | recurso admissível |
-| APPEALED | REEVALUATING | ReevaluateGovernanceCase | GovernanceCaseReevaluated | escopo de reavaliação registrado |
-| REEVALUATING | DECIDED | PublishDecision | ResponsibilityDecisionPublished | nova revisão válida |
+| APPEALED | REEVALUATING | ReevaluateGovernanceCase | GovernanceCaseReevaluationStarted | escopo de reavaliação registrado |
+| REEVALUATING | DECIDED | PublishDecision | ResponsibilityDecisionPublished, depois GovernanceCaseReevaluated | nova revisão válida e processo concluído |
 | DECIDED | CLOSED | CloseGovernanceCase | GovernanceCaseClosed | efeitos e prazos reconciliados |
 
 `CLOSED` é final. Novo fato após fechamento abre novo caso correlacionado. Timeout nunca muda estado para DECIDED ou CLOSED.
@@ -281,10 +281,11 @@ Events normativos:
 - `HumanReviewRequested`;
 - `ResponsibilityDecisionPublished`;
 - `ResponsibilityDecisionAppealed`;
+- `GovernanceCaseReevaluationStarted`;
 - `GovernanceCaseReevaluated`;
 - `GovernanceCaseClosed`.
 
-`ResponsibilityAssigned` e `ResponsibilityReassigned` são proibidos. Mudança de conclusão é nova revision de ResponsibilityDecisionPublished.
+`ResponsibilityAssigned` e `ResponsibilityReassigned` são proibidos. Mudança de conclusão é nova revision de ResponsibilityDecisionPublished. `GovernanceCaseReevaluationStarted` marca exclusivamente o início; `GovernanceCaseReevaluated` marca exclusivamente a conclusão após a nova decisão.
 
 Contratos completos estão em [GOVERNANCE_EVENTS.md](./GOVERNANCE_EVENTS.md).
 

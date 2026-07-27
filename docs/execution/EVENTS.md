@@ -266,7 +266,8 @@ Producer único: `GovernanceCase`. Ordering: `governanceCaseId + aggregateRevisi
 | `HumanReviewRequested` | Operations, Notifications, Audit |
 | `ResponsibilityDecisionPublished` | Financial, Settlement, Campaign, Notifications, Analytics |
 | `ResponsibilityDecisionAppealed` | Investigation, Notifications, Audit |
-| `GovernanceCaseReevaluated` | Investigation, Audit |
+| `GovernanceCaseReevaluationStarted` | Investigation, Audit |
+| `GovernanceCaseReevaluated` | Audit, Governance projections |
 | `GovernanceCaseClosed` | Audit, Analytics, Notifications |
 
 `ResponsibilityAssigned` e `ResponsibilityReassigned` são proibidos. Replay preserva Event ID e nunca repete consequência externa. Contrato integral: [`../governance/GOVERNANCE_EVENTS.md`](../governance/GOVERNANCE_EVENTS.md).

@@ -264,8 +264,8 @@ OPEN
 | INVESTIGATING → UNDER_REVIEW | RequestHumanReview | HumanReviewRequested | timeout escala fila | não aplicável |
 | INVESTIGATING/UNDER_REVIEW → DECIDED | PublishDecision | ResponsibilityDecisionPublished | optimistic lock; retry idêntico | nova revision após Appeal |
 | DECIDED → APPEALED | AppealDecision | ResponsibilityDecisionAppealed | prazo por policy | decisão permanece |
-| APPEALED → REEVALUATING | ReevaluateGovernanceCase | GovernanceCaseReevaluated | uma ativa por Appeal | nova tentativa auditada |
-| REEVALUATING → DECIDED | PublishDecision | ResponsibilityDecisionPublished | revision monotônica | efeitos append-only |
+| APPEALED → REEVALUATING | ReevaluateGovernanceCase | GovernanceCaseReevaluationStarted | uma ativa por Appeal | nova tentativa auditada |
+| REEVALUATING → DECIDED | PublishDecision | ResponsibilityDecisionPublished; GovernanceCaseReevaluated | revision monotônica; ordem fixa | efeitos append-only |
 | DECIDED → CLOSED | CloseGovernanceCase | GovernanceCaseClosed | nunca fechar por timeout | terminal |
 
 `UNKNOWN` não existe no modelo de Governance. Incerteza mantém INVESTIGATING ou UNDER_REVIEW sem publicação. Especificação integral: [`../governance/GOVERNANCE_STATE_MACHINE.md`](../governance/GOVERNANCE_STATE_MACHINE.md).

@@ -311,7 +311,8 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `HumanReviewRequested` | Ambiguidade exige autoridade humana. |
 | `ResponsibilityDecisionPublished` | Revisão oficial da decisão foi publicada. |
 | `ResponsibilityDecisionAppealed` | Revisão recebeu recurso formal. |
-| `GovernanceCaseReevaluated` | Reavaliação foi preparada para eventual nova publicação. |
+| `GovernanceCaseReevaluationStarted` | Reavaliação foi aceita e entrou em REEVALUATING. |
+| `GovernanceCaseReevaluated` | Reavaliação foi concluída após a nova decisão publicada. |
 | `GovernanceCaseClosed` | Caso atingiu estado final. |
 
 `ResponsibilityAssigned` e `ResponsibilityReassigned` são aliases proibidos.

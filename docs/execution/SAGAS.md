@@ -351,9 +351,11 @@ ResponsibilityDecisionPublished
 → AppealDecision
 → ResponsibilityDecisionAppealed
 → ReevaluateGovernanceCase
-→ GovernanceCaseReevaluated
+→ GovernanceCaseReevaluationStarted
+→ novas evidências/análise/revisão humana
 → PublishDecision (new revision)
 → ResponsibilityDecisionPublished
+→ GovernanceCaseReevaluated
 → compensating owner-specific Commands
 ```
 
