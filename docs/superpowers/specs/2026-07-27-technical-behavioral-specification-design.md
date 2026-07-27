@@ -24,10 +24,43 @@ Ela não reavalia:
 
 > A TBS define exclusivamente semântica observável. Sempre que uma decisão puder ser modificada sem alterar o comportamento observável do domínio, ela não pertence à TBS.
 
+Um **efeito observável** é qualquer resultado percebido por outro artefato normativo, consumidor, Aggregate, Projection, Saga ou contrato de integração. Inclui resultado de Command, Event persistido/publicado, transição de estado, erro normativo, alteração de Projection e side effect autorizado.
+
+Não são efeitos observáveis, desde que preservem integralmente a semântica:
+
+- organização interna de classes;
+- estrutura de memória;
+- algoritmo equivalente utilizado;
+- banco ou broker escolhido;
+- formato interno de cache;
+- ordem de funções internas sem efeito externo;
+- otimização de desempenho que não altere resultados.
+
 Teste de pertencimento:
 
 - se duas implementações válidas puderem produzir efeitos observáveis diferentes, a decisão pertence à TBS;
 - se produzirem os mesmos efeitos observáveis e diferirem apenas em estrutura, tecnologia ou desempenho, a decisão pertence à CGS ou à configuração.
+
+### 2.1 Princípio de minimalidade
+
+A TBS somente introduz comportamento técnico quando sua ausência permitir implementações observavelmente diferentes. Preferência, conveniência, otimização ou uniformidade estrutural sem efeito semântico não justificam regra na TBS.
+
+### 2.2 Glossário normativo
+
+| Termo | Significado neste design |
+| --- | --- |
+| Aggregate | boundary transacional que protege invariantes e decide Events |
+| Replay | aplicação ordenada de Events autoritativos para reidratar um Aggregate |
+| Rebuild | reconstrução de Projection ou Read Model a partir de fatos autoritativos |
+| Snapshot | estado derivado e descartável usado para acelerar restauração |
+| Upcast | transformação determinística de representação antiga para schema suportado, sem alterar o Event original |
+| Duplicate | repetição da mesma identidade e mesmo conteúdo lógico |
+| Conflict | incompatibilidade de conteúdo, revisão ou intenção concorrente |
+| Revision | posição monotônica dentro do stream autoritativo |
+| ExpectedRevision | revisão que o emissor exige como precondição da mutação |
+| Unknown Event | Event cujo tipo ou schema não pode ser interpretado normativamente |
+| Side Effect | efeito fora da aplicação pura de estado, como publicação, chamada externa ou materialização |
+| Projection | estado derivado e reconstruível, sem autoridade transacional |
 
 ## 3. Fronteiras
 
@@ -81,6 +114,17 @@ Definem ou validam parâmetros quantitativos:
 
 Ausência de parâmetro obrigatório para operação real produz falha explícita. Não existe default silencioso com força normativa.
 
+### 3.4 Autoridade interna da TBS
+
+Em conflito dentro da própria TBS, prevalece:
+
+1. texto explicitamente normativo;
+2. tabela explicitamente normativa;
+3. exemplo;
+4. nota.
+
+Exemplo e nota nunca criam exceção à norma.
+
 ## 4. Estrutura da TBS
 
 ### 4.1 Princípios e escopo
@@ -90,6 +134,13 @@ Declarará autoridade, precedência, linguagem normativa e não objetivos.
 ### 4.2 Critérios normativos
 
 Aplicará o teste de comportamento observável e distinguirá regra normativa, exemplo, recomendação, materialização técnica e configuração.
+
+Também separará:
+
+- **norma:** comportamento que toda implementação deve produzir;
+- **perfil de conformidade:** evidência exigida para demonstrar que a implementação produz o comportamento.
+
+Teste não define comportamento. Teste prova comportamento definido por norma.
 
 ### 4.3 Command Result normativo
 
@@ -157,8 +208,11 @@ Fixará:
 - invariantes verificáveis durante replay;
 - ausência de side effects;
 - abortar diante de Event desconhecido/incompatível;
+- descartar integralmente o estado parcialmente reconstruído após aborto;
 - Aggregate não continua parcialmente conhecido;
 - replay integral é referência normativa.
+
+Replay refere-se exclusivamente à reidratação de Aggregate. Reconstrução de Projection ou Read Model é rebuild e obedece à seção 4.12.
 
 ### 4.8 Snapshots conceituais
 
@@ -167,7 +221,8 @@ Fixará:
 - snapshot é derivado e descartável;
 - nunca substitui nem altera Events;
 - possui versão e integridade verificáveis;
-- snapshot incompatível é ignorado e causa replay integral;
+- snapshot incompatível nunca altera o comportamento normativo do Aggregate;
+- restauração, sem snapshot compatível, utiliza somente a sequência autoritativa de Events;
 - snapshot + tail replay produz estado idêntico ao replay integral;
 - ausência/corrupção de snapshot não altera significado.
 
@@ -192,6 +247,11 @@ Formato de serialização fica fora da TBS.
 
 Fixará:
 
+- identidade de Command é estável por intenção lógica;
+- identidade de Event é estável por fato persistido;
+- identidade causal liga efeito à intenção/fato que o causou;
+- identidade lógica sobrevive a reentrega e mudança de transporte;
+- identidade de transporte não substitui identidade normativa;
 - mesma key e mesmo payload retorna resultado original;
 - mesma key e payload diferente é conflito;
 - retry não cria identidade causal nova;
@@ -216,6 +276,7 @@ O envelope normativo deverá representar falha como `ReplayAborted` com causa es
 
 Fixará:
 
+- rebuild não é replay de Aggregate;
 - rebuild é determinístico;
 - side effects externos ficam desabilitados;
 - versão da projeção é registrada;
@@ -277,10 +338,12 @@ Cada decisão transversal será registrada em exatamente uma coluna:
 
 ### 4.16 Critérios de conformidade
 
+Esta seção não cria comportamento. Ela define como comprovar normas estabelecidas nas seções anteriores.
+
 Uma implementação somente pode declarar conformidade quando:
 
 - nenhuma decisão comportamental é inferida pelo código;
-- todo comportamento obrigatório possui teste normativo;
+- todo comportamento obrigatório possui evidência e teste de conformidade correspondente;
 - a mesma sequência de Commands e Events produz a mesma sequência de efeitos observáveis;
 - comportamento não especificado falha explicitamente;
 - extensão da implementação é marcada como não normativa;
@@ -357,4 +420,3 @@ Este design não escolhe:
 - nomes de classes/interfaces.
 
 Essas decisões pertencem à CGS, configuração ou Vertical Slice.
-
