@@ -12,6 +12,7 @@ Esta revisão não altera regras de domínio. Ela reclassifica os 14 achados da 
 Categorias normativas desta revisão:
 
 - `DOMAIN_BLOCKER`: impede implementar corretamente um ou mais contratos de domínio;
+- `ARCHITECTURE_BLOCKER`: o comportamento de negócio está decidido, mas boundary, ownership ou contrato técnico ainda não são únicos;
 - `PRODUCTION_BLOCKER`: permite desenvolvimento, mas impede deploy seguro ou legal em produção;
 - `DOCUMENTATION_DEBT`: exige sincronização documental, sem alterar comportamento já determinado por fonte normativa mais específica.
 
@@ -21,13 +22,14 @@ Um documento incompleto não é, isoladamente, bloqueador de domínio. O bloquei
 
 | Categoria | Quantidade | Itens |
 | --- | ---: | --- |
-| `DOMAIN_BLOCKER` | 7 | DFR-002, DFR-006, DFR-007, DFR-008, DFR-010, DFR-011, DFR-013 |
+| `DOMAIN_BLOCKER` | 3 | DFR-002, DFR-011, DFR-013 |
+| `ARCHITECTURE_BLOCKER` | 4 | DFR-006, DFR-007, DFR-008, DFR-010 |
 | `PRODUCTION_BLOCKER` | 1 | DFR-014 |
 | `DOCUMENTATION_DEBT` | 6 | DFR-001, DFR-003, DFR-004, DFR-005, DFR-009, DFR-012 |
 
 Conclusão:
 
-- a plataforma **pode iniciar desenvolvimento estrutural e dos contextos não atingidos por bloqueadores locais**;
+- a plataforma **pode iniciar o desenvolvimento somente dos Bounded Contexts cujos contratos de domínio e arquitetura estejam integralmente fechados**;
 - a plataforma **não pode gerar como definitivos todos os contratos públicos**;
 - Financial, ownership operacional distribuído e fluxos transversais ainda não podem ser implementados integralmente sem decisões;
 - nenhum deploy em produção pode ser autorizado antes do fechamento do bloqueador de produção;
@@ -113,7 +115,7 @@ Conflitos que não possuam uma regra de precedência inequívoca devem ser trata
 
 ### DFR-006 — Catálogo central de Aggregates incompleto
 
-**Classificação:** `DOMAIN_BLOCKER`
+**Classificação:** `ARCHITECTURE_BLOCKER`
 
 **Motivo:** omissões puramente editoriais seriam dívida documental, mas a auditoria também encontrou conceitos cuja natureza varia entre Aggregate, serviço, projeção e owner genérico. O freeze exige fronteiras de Aggregate estáveis.
 
@@ -127,7 +129,7 @@ Conflitos que não possuam uma regra de precedência inequívoca devem ser trata
 
 ### DFR-007 — Ownership global desatualizado ou conflitante
 
-**Classificação:** `DOMAIN_BLOCKER`
+**Classificação:** `ARCHITECTURE_BLOCKER`
 
 **Motivo:** TV Network, Edge Runtime, Telemetry, Health e Insurance ainda aparecem com autoridade sobreposta. Owner único é condição explícita do Domain Freeze.
 
@@ -141,7 +143,7 @@ Conflitos que não possuam uma regra de precedência inequívoca devem ser trata
 
 ### DFR-008 — Commands e Events financeiros possuem owner/produtor variável
 
-**Classificação:** `DOMAIN_BLOCKER`
+**Classificação:** `ARCHITECTURE_BLOCKER`
 
 **Motivo:** expressões como “Aggregate correspondente”, “ledger aplicável” e `AdvertiserAccount/Payment` não definem um único destino transacional ou produtor autoritativo.
 
@@ -169,7 +171,7 @@ Conflitos que não possuam uma regra de precedência inequívoca devem ser trata
 
 ### DFR-010 — Catálogos globais e especializados não formam contrato único
 
-**Classificação:** `DOMAIN_BLOCKER`
+**Classificação:** `ARCHITECTURE_BLOCKER`
 
 **Motivo:** existem aliases, wildcards, eventos ausentes e contratos sem produtor ou owner consolidado. O Domain Freeze exige Commands e Events públicos congelados.
 
@@ -245,11 +247,18 @@ A matriz mínima de owner continua sendo requisito de domínio e está coberta p
 
 ### 4.1 Bloqueadores globais
 
-Os seguintes itens impedem congelar contratos públicos para toda a plataforma:
+Os seguintes bloqueadores de domínio impedem decidir integralmente o comportamento:
 
 - DFR-002 — decisões abertas com conteúdo estrutural;
-- DFR-010 — catálogo público de Commands e Events não consolidado;
-- DFR-011 — Sagas com semântica distribuída ainda aberta.
+- DFR-011 — Sagas com semântica distribuída ainda aberta;
+- DFR-013 — conservação financeira não demonstrada.
+
+Os seguintes bloqueadores arquiteturais impedem materializar contratos únicos, mesmo quando a intenção de negócio já é conhecida:
+
+- DFR-006 — natureza ou boundary de Aggregates divergente;
+- DFR-007 — ownership global conflitante;
+- DFR-008 — owner/produtor financeiro variável;
+- DFR-010 — catálogo público de Commands e Events não consolidado.
 
 ### 4.2 Bloqueadores localizados
 
@@ -260,9 +269,9 @@ Os seguintes itens impedem congelar contratos públicos para toda a plataforma:
 | Evidence/Execution | DFR-002, DFR-010, DFR-011 | estruturas locais fechadas; não Saga integral nem contrato público final |
 | Aggregates divergentes | DFR-006 | roots inequívocos podem avançar; conceitos divergentes não |
 
-### 4.3 Contextos que podem iniciar implementação controlada
+### 4.3 Contextos que podem iniciar implementação restrita
 
-Com base apenas no critério de domínio e respeitando os contratos especializados vigentes:
+Com base nos critérios de domínio e arquitetura e respeitando os contratos especializados vigentes:
 
 - Campaign Management pode iniciar núcleo de Aggregate, Value Objects e transições já fechadas;
 - Governance & Dispute Management pode iniciar Aggregate, revisões append-only e contratos aprovados;
@@ -270,7 +279,7 @@ Com base apenas no critério de domínio e respeitando os contratos especializad
 - componentes internos de TV Network podem iniciar onde o owner não esteja em disputa;
 - infraestrutura comum de Event Store, Outbox, Inbox, optimistic concurrency e envelopes versionados pode iniciar sem criar regra de negócio.
 
-Essas frentes não autorizam publicar contratos globais como definitivos nem implementar comportamento ainda ligado a `OPEN-*`.
+Essas frentes não autorizam publicar contratos globais como definitivos, atravessar um `ARCHITECTURE_BLOCKER` nem implementar comportamento ainda ligado a `OPEN-*`.
 
 ## 5. Bloqueadores apenas de produção
 
@@ -306,11 +315,11 @@ Também são débitos documentais:
 - terminologia antiga quando existe definição normativa inequívoca;
 - ausência de visão consolidada que pode ser gerada sem decisão.
 
-Débito documental deixa de ser apenas dívida e passa a `DOMAIN_BLOCKER` quando duas fontes com autoridade equivalente exigem comportamentos incompatíveis e não existe regra de precedência.
+Débito documental deixa de ser apenas dívida quando duas fontes com autoridade equivalente exigem resultados incompatíveis e não existe regra de precedência. A divergência passa a `DOMAIN_BLOCKER` quando exige escolher comportamento de negócio, ou a `ARCHITECTURE_BLOCKER` quando exige escolher boundary, ownership ou contrato técnico.
 
 ## 7. Novo gate para início do desenvolvimento
 
-O desenvolvimento pode começar imediatamente sob as seguintes restrições:
+O desenvolvimento pode começar somente nos Bounded Contexts cujos contratos de domínio e arquitetura estejam integralmente fechados, sob as seguintes restrições:
 
 1. implementar somente Aggregates com boundary e invariantes inequívocos;
 2. aceitar somente Commands com owner único;
@@ -325,16 +334,15 @@ O desenvolvimento pode começar imediatamente sob as seguintes restrições:
 
 ## 8. Parecer final
 
-**A plataforma já pode iniciar desenvolvimento controlado.**
+**A plataforma pode iniciar o desenvolvimento dos Bounded Contexts cujos contratos de domínio e arquitetura já estejam integralmente fechados, permanecendo proibida a implementação dos contratos classificados como `DOMAIN_BLOCKER` ou `ARCHITECTURE_BLOCKER`.**
 
-O Domain Freeze não está globalmente certificado porque ainda existem sete classes de bloqueio de domínio. Isso não exige paralisar todo o repositório.
+O Domain Freeze não está globalmente certificado porque ainda existem três bloqueios de domínio e quatro bloqueios arquiteturais. Isso não exige paralisar os Bounded Contexts já fechados.
 
 O ponto correto de transição é:
 
 - iniciar código dos contextos e componentes cujos cinco gates estejam fechados;
-- manter bloqueados somente os Aggregates, Commands, Events, invariantes e Sagas atingidos pelos sete `DOMAIN_BLOCKER`;
+- manter bloqueados somente os Aggregates, Commands, Events, invariantes e Sagas atingidos pelos três `DOMAIN_BLOCKER` e quatro `ARCHITECTURE_BLOCKER`;
 - resolver DFR-014 antes de produção;
 - executar os seis itens de `DOCUMENTATION_DEBT` em paralelo, sem tratá-los como impedimento arquitetural.
 
 Nenhuma regra de negócio foi criada, removida ou reinterpretada nesta reclassificação.
-
