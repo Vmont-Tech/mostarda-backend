@@ -139,17 +139,17 @@ Registra:
 Decisão append-only:
 
 - `decisionId`;
-- `decisionRevision`;
+- `revision`;
 - `responsibleParty`;
 - `responsibilityCategory`;
 - `severity`;
-- `confidence`;
-- justificativa;
-- evidências utilizadas;
-- exatamente uma `governancePolicyVersion`;
+- `confidence` decimal no intervalo fechado `[0.00, 1.00]`;
+- `policyVersion`, referenciando exatamente uma `GovernancePolicyVersion`;
+- `explanation`;
+- `evidenceReferences`;
+- `createdAt`;
 - actor ou regra decisora;
 - consequência autorizada conceitualmente;
-- `publishedAt`;
 - referência à decisão anterior, quando existir.
 
 Classes permitidas:
@@ -180,6 +180,8 @@ Severidades permitidas:
 
 Cada revisão preserva exatamente o confidence publicado. Categorias visuais de confidence não são persistidas; são projections calculadas por limiares versionados do Configuration Service. Mudança de limiar nunca modifica decisão histórica.
 
+`confidence` possui finalidade exclusivamente explicativa, estatística e auditável. Nenhum bounded context pode condicionar, ampliar, reduzir, suspender ou ignorar comportamento de negócio, financeiro, contratual ou jurídico em função desse valor. Toda consequência decorre exclusivamente da existência e do conteúdo normativo de `ResponsibilityDecisionPublished`, nunca de limiares de confidence.
+
 `UNKNOWN` não significa “não analisado”. Ele só pode ser publicado depois da investigação quando as evidências continuarem insuficientes para atribuição inequívoca. Antes disso, o GovernanceCase permanece `INVESTIGATING` ou `UNDER_REVIEW`.
 
 ### 6.3 GovernancePolicyVersion
@@ -197,6 +199,8 @@ Uma versão publicada é imutável. Correção, novo critério, novo limiar ou m
 - autoridade de publicação;
 - hash/digest;
 - autoria e aprovação.
+
+A referência `policyVersion` também é imutável dentro da `ResponsibilityDecision`. Reavaliação sob outra política cria uma nova decisão append-only, com nova `revision` e sua própria referência de política. É proibido substituir a policy de uma decisão já publicada ou reescrever sua revisão anterior.
 
 Policy nova não reinterpreta decisão anterior. Replay e auditoria utilizam a versão preservada na ResponsibilityDecision.
 
@@ -396,6 +400,11 @@ Atualiza indicadores por classe, causa, responsável, revisão e resultado.
 19. Toda decisão referencia exatamente uma GovernancePolicyVersion.
 20. GovernancePolicyVersion publicada é imutável.
 21. `UNKNOWN` só pode ser publicado após investigação concluída.
+22. Confidence possui finalidade exclusivamente explicativa e auditável.
+23. Confidence nunca altera efeitos de negócio, financeiros, contratuais ou jurídicos.
+24. Projeções categóricas de confidence nunca são persistidas nem reclassificam decisões históricas.
+25. A referência policyVersion de uma decisão publicada é imutável.
+26. Uso de nova policy exige nova ResponsibilityDecision e nova revision append-only.
 
 ## 16. Segurança e auditoria
 
@@ -447,7 +456,9 @@ O design está pronto para plano quando:
 - consumidores não reinterpretam;
 - consequência financeira referencia decisão;
 - category, severity e confidence estão presentes;
+- confidence não controla qualquer consequência;
 - policy version é única e imutável;
+- troca de policy produz nova decisão, sem mutação histórica;
 - UNKNOWN não é estado intermediário;
 - `OPEN-049` pode ser fechado sem nova suposição.
 
@@ -473,10 +484,27 @@ Revisar owners, Aggregates, invariantes, Events, Commands, contratos, dependênc
 
 Após aprovação da revisão global, nenhuma nova regra de negócio entra no baseline congelado. Mudanças posteriores exigem processo formal de decisão, versionamento e impacto.
 
-### Etapa 5 — Geração de contratos técnicos
+### Etapa 5 — Domain Certification (Architecture Lock)
+
+Emitir a certidão normativa e automatizada de que o baseline congelado está completo e transversalmente consistente. A certificação bloqueia geração de contratos enquanto qualquer verificação falhar e deve comprovar, no mínimo:
+
+- nenhum Aggregate possui mais de um owner;
+- nenhum Event possui mais de um producer normativo;
+- nenhuma Saga contém dependência circular;
+- nenhuma referência entre bounded contexts viola fronteiras;
+- nenhuma decisão permanece `OPEN`;
+- nenhum estado é inalcançável;
+- nenhum Command existe sem Aggregate owner;
+- nenhum Event requerido existe sem consumidor;
+- nenhum bounded context está órfão;
+- todo invariante possui rastreabilidade normativa.
+
+O artefato deve registrar baseline, data, versão das regras de certificação, resultados, exceções aprovadas e evidências reproduzíveis. Qualquer falha impede o Architecture Lock. Qualquer alteração posterior invalida a certificação e exige nova revisão, novo freeze e nova certificação.
+
+### Etapa 6 — Geração de contratos técnicos
 
 Gerar OpenAPI, Protobuf, Events, Commands, DTOs, schemas, repositories, filas, banco e testes a partir do domínio congelado.
 
-### Etapa 6 — Implementação
+### Etapa 7 — Implementação
 
 Iniciar pelos pilares: User Identity, Financial Platform, Campaign Management, Campaign Budget, Pricing Engine, Edge Runtime, Evidence Ledger e Governance & Dispute Management.

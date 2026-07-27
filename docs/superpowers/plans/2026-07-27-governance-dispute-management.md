@@ -48,12 +48,22 @@ Official event: ResponsibilityDecisionPublished
 
 Definir `ResponsibleParty`, `ResponsibilityCategory`, `Severity`, confidence decimal `[0.00,1.00]`, `GovernancePolicyVersion`, recurso, revisão, consumidores, consistência eventual, replay, rebuild, exemplos e contraexemplos conforme o design aprovado.
 
+Declarar como invariantes:
+
+- confidence é obrigatório, explicativo e auditável;
+- confidence nunca controla efeitos de negócio, financeiros, contratuais ou jurídicos;
+- classificações LOW/MEDIUM/HIGH de confidence são somente projections e nunca são persistidas;
+- toda ResponsibilityDecision referencia exatamente uma policyVersion;
+- policyVersion e sua referência na decisão são imutáveis;
+- nova policy exige nova ResponsibilityDecision e nova revision append-only;
+- `UNKNOWN` somente é publicável após investigação concluída.
+
 - [ ] **Step 2: Verificar termos obrigatórios**
 
 Run:
 
 ```powershell
-Select-String docs\governance\GOVERNANCE_DISPUTE_MANAGEMENT.md -Pattern 'GovernanceCase','ResponsibilityDecisionPublished','GovernancePolicyVersion','UNKNOWN','confidence'
+Select-String docs\governance\GOVERNANCE_DISPUTE_MANAGEMENT.md -Pattern 'GovernanceCase','ResponsibilityDecisionPublished','GovernancePolicyVersion','UNKNOWN','confidence','exclusivamente explicativa','policyVersion'
 ```
 
 Expected: ao menos uma ocorrência de cada termo.
@@ -432,5 +442,7 @@ Depois deste plano:
 3. criar mapa integral de Sagas;
 4. executar revisão global;
 5. declarar Domain Freeze;
-6. gerar contratos técnicos;
-7. iniciar implementação de código.
+6. emitir `Domain Certification (Architecture Lock)`, validando automaticamente owners, producers, Sagas circulares, fronteiras, decisões abertas, estados inalcançáveis, Commands sem Aggregate, Events sem consumidor, contextos órfãos e rastreabilidade dos invariantes;
+7. bloquear a geração enquanto qualquer regra da certificação falhar;
+8. gerar contratos técnicos somente sobre baseline certificado;
+9. iniciar implementação de código.
