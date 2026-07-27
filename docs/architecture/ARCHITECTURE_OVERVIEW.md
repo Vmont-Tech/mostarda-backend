@@ -60,7 +60,7 @@ Aplicação web com dashboards por perfil (Anunciante, Dono da TV, Dono do espa�
 Registro público de provas. Hashes de documentos, evidências e interações NFC/QR são ancorados aqui para consulta externa. Interações NFC/QR do usuário final **passam pelo Quantum**, nunca diretamente pelo Edge.
 
 ### Asaas
-Provedor financeiro. Responsável por **split**, **notas fiscais** e **ciclos de pagamento**. Nenhuma liquidação ocorre sem Evidence válida.
+Provedor financeiro externo. Executa cobrança e transferência quando instruído pelo Financial Platform. Não calcula split, não mantém a Wallet autoritativa e não decide elegibilidade de Settlement. Regras fiscais e emissão de notas seguem políticas ainda sujeitas a validação especializada.
 
 ### IA local (agentes)
 Conjunto de agentes especializados (validação de vídeo, recomendação de TVs, otimização de orçamento, análise de performance, relatórios, atendimento via Grão). Ver [ADR-006](../adr/ADR-006-AI-Architecture.md).
@@ -72,7 +72,7 @@ Conjunto de agentes especializados (validação de vídeo, recomendação de TVs
 
 1. **Blockchain não será utilizada para pagamentos.**
 2. **Blockchain será apenas camada de prova institucional.**
-3. **Asaas será responsável pelo financeiro** (split, notas, ciclos).
+3. **Financial Platform governa o financeiro; Asaas executa rails externos quando instruído.**
 4. **Edge deve ser leve** — sem regras complexas de negócio.
 5. **Sistema deve ser orientado a eventos** — comunicação assíncrona via event bus interno; sagas para processos multi-etapa (Evidence → Settlement → Split).
 6. **Nada é liquidado sem Evidence íntegra.**

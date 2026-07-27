@@ -17,10 +17,11 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 ## 1. Campaign Management
 
 - **Responsabilidade:** ciclo de vida de **Campaign**, **Asset** e geração de **Slot**.
-- **Pertence:** criação/edição de Campaign, orçamento contratado, janela temporal, segmentação, upload e estado de elegibilidade do Asset, geração e reserva de Slots, pausa/retomada/encerramento.
-- **NÃO pertence:** cálculo de preço (Pricing Engine), validação técnica do vídeo por IA (AI Orchestration executa; Campaign Management apenas consome o veredito), exibição (Edge Runtime), prova (Evidence Ledger), cobrança (Settlement).
+- **Pertence:** criação/revisão de Campaign, estratégia manual/delegada, janela, targeting, mandato do Grão, upload/revisão e elegibilidade do Creative, lifecycle de Slot, causas de pausa, cancelamento, encerramento e coordenação de realocação.
+- **NÃO pertence:** saldo/reserva/consumo (Financial Platform), cálculo de preço (Pricing Engine), avaliação técnica por IA, exibição (Edge Runtime), prova (Evidence Ledger), direito financeiro (Settlement) ou cobrança/devolução (Financial Platform).
 - **Conversa com:** Pricing Engine, TV Network, AI Orchestration, Evidence Ledger (consumo), Analytics, Notifications, User Identity.
 - **Proprietário:** Cloud.
+- **Especificação:** [`CAMPAIGN_MANAGEMENT.md`](./CAMPAIGN_MANAGEMENT.md).
 
 ## 2. TV Network
 
@@ -58,7 +59,7 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 
 - **Responsabilidade:** **Dynamic Pricing** — definir o `valor cobrado` de um Slot no instante da alocação.
 - **Pertence:** CPM base, multiplicadores de demanda/horário/contexto/ocupação, tabelas de piso e teto, registro auditável do preço aplicado.
-- **NÃO pertence:** cobrança, split, emissão de nota (Settlement/Financial Platform/Asaas), decisão de qual TV usar (Campaign Management + AI Orchestration).
+- **NÃO pertence:** cobrança, split, emissão de nota, saldo ou execução financeira; decisão final de TV pertence a Campaign Management, com recomendação opcional do AI Orchestration.
 - **Conversa com:** Campaign Management, TV Network, Telemetry, AI Orchestration, Evidence Ledger (fornece valor congelado), Analytics.
 - **Proprietário:** Cloud.
 
@@ -114,7 +115,7 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 
 - **Responsabilidade:** fronteira comercial com quatro subdomínios separados: **Marketplace Ads** (campanhas/inventário), **Marketplace Influencers** (criadores), **Marketplace TV Owners** (TVs/parceiros) e **Marketplace Rentals** (aluguel futuro).
 - **Pertence:** cada subdomínio possui catálogo, disponibilidade publicada, propostas, checkout de contratação e regras de vitrine próprios; propostas nunca misturam tipos de oferta.
-- **NÃO pertence:** reserva efetiva de Slot (Campaign Management), preço final (Pricing Engine), cobrança (Settlement).
+- **NÃO pertence:** reserva efetiva de Slot (Campaign Management), preço final (Pricing Engine), cobrança ou devolução (Financial Platform).
 - **Conversa com:** Campaign Management, TV Network, Pricing Engine, Influencer Network, CRM, User Identity.
 - **Proprietário:** Cloud.
 
@@ -151,6 +152,16 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 - **Conversa com:** Asaas via adapter, Campaign Management, Settlement, Insurance, User Identity, Notifications e Analytics.
 - **Proprietário:** Cloud (regras e ledger) / Asaas (execução de cobrança e transferência).
 
+## 18. Configuration Service
+
+- **Responsabilidade:** distribuir configurações e versões aprovadas de políticas operacionais.
+- **Pertence:** grace periods, limiares, SLAs/SLOs, tolerâncias e parâmetros de policies já decididas pelos respectivos owners.
+- **NÃO pertence:** criar regra de negócio, escolher owner, alterar fato histórico ou fornecer default implícito.
+- **Conversa com:** todos os contextos que executam política versionada.
+- **Proprietário:** Cloud; o contexto dono da política aprova seu conteúdo.
+
+Ausência, expiração ou incompatibilidade de versão bloqueia a operação dependente. Toda decisão preserva policy version e valores efetivos.
+
 ## Mapa de contexto (resumo)
 
 ```text
@@ -158,7 +169,7 @@ Edge Runtime ──Playback Event──> Evidence Ledger ──hash──> Quant
      │                                  │                          │
      └──Telemetry──> Telemetry          └──VALID──> Settlement <──ancorado──┘
                         │                              │
-Campaign Management <───┴── Pricing Engine             └──> Asaas (Adapter)
+Campaign Management <───┴── Pricing Engine             └──> Financial Platform ──> Asaas
      │        │                  ▲
      │        └── TV Network ────┘
      └──> Marketplace / Influencer Network / CRM

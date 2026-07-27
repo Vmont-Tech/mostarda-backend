@@ -38,18 +38,20 @@ Cada Aggregate tem **uma raiz**, protege **invariantes** e é a única porta de 
 ## Campaign Aggregate — contexto Campaign Management
 
 - **Root:** `Campaign` (identidade `CampaignIdentifier`)
-- **Entidades internas:** CreativeAsset, TargetingRule, BudgetAllocation
+- **Entidades internas:** CreativeAssetRevision, TargetingRule, StrategyRevision, OptimizationMandate, PauseCause
 - **Value Objects:** `Money`, `TimeSlot`, `AssetReference`, `PlaybackWindow`
-- **Invariantes:** toda Campaign pertence a **um** Advertiser; só gera Slot com pelo menos um Creative Asset aprovado; não veicula fora da janela; Contract Value registra o contrato, mas reserva/consumo financeiro nunca excedem o `AvailableBudget` do CampaignBudget; pausa impede nova alocação sem revogar Slots já executados.
-- **Eventos:** `CampaignCreated`, `CampaignScheduled`, `CampaignStarted`, `CampaignPaused`, `CampaignResumed`, `CampaignCompleted`, `CampaignExpired`, `CampaignBudgetExhausted`, `CreativeAssetUploaded`, `CreativeAssetApproved`, `CreativeAssetRejected`.
+- **Invariantes:** toda Campaign pertence a **um** Advertiser; só solicita Slot com Creative aprovado; não veicula fora da janela; Contract Value não é saldo; budget pertence ao Financial Platform; pausa impede nova alocação; causas de pausa são independentes; Grão só atua dentro de mandato; estimativa nunca é garantia; estados finais não retornam.
+- **Eventos:** `CampaignCreated`, `CampaignStrategyRevised`, `CampaignReady`, `CampaignPublished`, `CampaignActivated`, `CampaignPaused`, `CampaignPauseCauseRemoved`, `CampaignResumed`, `CampaignCompleted`, `CampaignExpired`, `CampaignCancellationRequested`, `CampaignCancelled`, `CreativeRevisionSubmitted`, `CreativeApproved`, `CreativeRejected`.
+
+Especificação integral: [`CAMPAIGN_MANAGEMENT.md`](./CAMPAIGN_MANAGEMENT.md).
 
 ## Slot Aggregate — contexto Campaign Management
 
 - **Root:** `Slot` (identidade `SlotIdentifier`)
 - **Entidades internas:** —
 - **Value Objects:** `CampaignIdentifier`, `TVIdentifier`, `PlaybackWindow`, `PricingQuote`, `AssetReference`
-- **Invariantes:** um Slot referencia exatamente **uma** Campaign, **uma** TV e **um** Creative Asset; preço é congelado na alocação e nunca recalculado; Slot executado é imutável; Slot não executado na janela expira.
-- **Eventos:** `SlotAllocated`, `SlotRevoked`, `SlotExpiredLocally`, `PlaybackQueueUpdated`.
+- **Invariantes:** um Slot referencia exatamente **uma** Campaign, **uma** TV e **um** Creative Asset; preço é congelado na alocação e nunca recalculado; lifecycle `ALLOCATED → DISPATCHED → DELIVERED → EVIDENCED`; Slot dispatched não permite cancelamento imediato; Slot executado é imutável; Slot não executado na janela expira.
+- **Eventos:** `SlotAllocated`, `SlotDispatchedToEdge`, `SlotDelivered`, `SlotEvidenced`, `SlotRevoked`, `SlotExpired`.
 
 ## Evidence Aggregate — contexto Evidence Ledger
 

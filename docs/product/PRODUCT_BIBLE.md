@@ -44,37 +44,40 @@ Agente pessoal de IA de cada usuário. Não recebe receita — é benefício emb
 
 ## Modelo econômico
 
-O modelo é baseado em **eventos atômicos de exibição de 15 segundos**. Cada exibição válida gera:
+O modelo é baseado em **Slots atômicos de exibição de 15 segundos**. O produto comercial é capacidade financeira de acesso ao inventário, consumida em Slots conforme estratégia manual ou delegada pelo Advertiser. A Mostarda não vende Campaign pronta, pacote fechado, audiência garantida, alcance mínimo nem quantidade fixa de exibições.
+
+Cada exibição válida gera:
 
 - uma **evidência íntegra** (ver ADR-003);
 - um **valor cobrado** definido por precificação dinâmica;
 - um **split** entre participantes elegíveis àquela exibição;
 - uma **liquidação** processada via Asaas.
 
-O sistema não opera em pré-pagamento cego: **o anunciante só paga o que foi realmente exibido e provado**.
+Pagamento compensado cria capacidade financeira disponível. Reserva compromete o valor para um Slot; consumo definitivo exige exibição comprovada e elegível. O sistema não cobra uma exibição inexistente nem overdelivery causado por falha da plataforma.
 
 ## Divisão de receitas
 
-A divisão de cada exibição respeita o seguinte modelo (percentuais indicativos, ajustáveis por contrato):
+A divisão de cada exibição respeita o modelo canônico vigente:
 
 | Participante        | Faixa típica |
 | ------------------- | ------------ |
-| Dono da TV          | 30–45%       |
-| Dono do espaço      | 10–20%       |
-| Vendedor            | 5–15%        |
-| Influenciador       | 0–15%        |
-| Mostarda (plataforma) | 15–25%     |
-| Fundo de seguro da TV | 3–7%       |
+| Dono da TV          | 20%       |
+| Dono do espaço      | 20%       |
+| Vendedor            | 20%        |
+| Influenciador       | 10%        |
+| Mostarda (plataforma) | 30%     |
+
 
 Regras:
 
 - A soma **sempre** fecha 100% do valor líquido cobrado do anunciante.
-- Se um papel não participa daquela exibição (ex: sem influenciador), sua fatia é redistribuída conforme regra contratual.
+- Se um papel não participa daquela exibição, sua parcela permanece `BLOCKED` ou `UNCLAIMED`; ela não é redistribuída automaticamente.
 - O split é calculado a partir da **evidência**, nunca a partir do orçamento planejado.
+- Alteração dos percentuais exige nova versão de política e decisão arquitetural aprovada.
 
 ## Seguro da TV
 
-Todo hardware ativo no ecossistema contribui, por cada exibição, a um **Fundo de Seguro da TV**. Esse fundo cobre:
+O contexto Insurance pode manter Fundo de Seguro da TV para coberturas aprovadas. A fonte e a forma de capitalização permanecem decisão normativa aberta e não podem ser inferidas como desconto por exibição. O fundo pode cobrir, conforme apólice:
 
 - reposição em caso de dano/roubo elegível;
 - manutenção preventiva pactuada;

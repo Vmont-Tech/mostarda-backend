@@ -7,13 +7,14 @@ Este registro conecta regras vigentes, ADRs e supersessões. O status `ACCEPTED`
 | ADR | Decisão | Status / supersessão |
 | --- | --- | --- |
 | ADR-001 | Fundação DDD, eventos, Edge/Cloud e invariantes arquiteturais | Aceito; sua cláusula de fonte única em `domain/` é supersedida pelo ADR-009 após aceite da Specification |
-| ADR-002 | Edge leve, offline e sem regras complexas | Aceito; identidade/capability foram refinadas por ADR-008 e possuem pontos `OPEN-011/012` |
+| ADR-002 | Edge leve, offline e sem regras complexas | Aceito; identidade, lifecycle e capability foram refinadas por ADR-008 e pela Specification |
 | ADR-003 | Evidence Ledger append-only e prova de exibição | Aceito; pagamento direto citado foi supersedido por ADR-007 |
 | ADR-004 | Quantum registra hashes e atende NFC/QR, sem pagamento | Aceito |
 | ADR-005 | Asaas adapter e arquitetura financeira original | Aceito parcialmente; execução via Settlement foi supersedida por ADR-007 |
 | ADR-006 | AI Orchestration, agentes e explicabilidade | Aceito |
 | ADR-007 | Financial Platform separa direito, ledger, wallet e withdrawal | Aceito; vigente para movimentos financeiros |
 | ADR-008 | TV Network é proprietário da frota e disponibilidade | Aceito |
+| ADR-009 | Especificação oficial como fonte normativa primária e processo obrigatório de sincronização | Proposto; passa a governar quando a especificação for declarada `ACCEPTED` |
 
 ## Decisões normativas consolidadas
 
@@ -34,28 +35,52 @@ Este registro conecta regras vigentes, ADRs e supersessões. O status `ACCEPTED`
 | `DEC-013` | QR contém token opaco e é resolvido no Cloud | Institutional Domain | ACCEPTED |
 | `DEC-014` | Seguro é Bounded Context próprio, não atributo da TV | Insurance | ACCEPTED |
 | `DEC-015` | Escala preserva conceitos de 100 a 1.000.000 de TVs | Scalability | ACCEPTED |
+| `DEC-016` | Installation física aceita precede Provisioning lógico e ambos são gates de ativação | TV Network + Specification | ACCEPTED no draft |
+| `DEC-017` | TV, Device e EdgeInstallation possuem identidades distintas; credencial pertence à EdgeInstallation e não é transferida em substituição | Device Registry + Specification | ACCEPTED no draft |
+| `DEC-018` | Produto comercial é capacidade financeira livre consumida em Slots, não Campaign pronta, pacote ou audiência garantida | Contexto de Negócio Consolidado + Campaign Management | ACCEPTED no draft |
+| `DEC-019` | Advertiser mantém autoridade final; Grão otimiza somente dentro de mandato explícito | Contexto de Negócio Consolidado + Campaign Management | ACCEPTED no draft |
+| `DEC-020` | Concorrência de Slot é first-confirmed/first-reserved, sem leilão ou prioridade por preço | Contexto de Negócio Consolidado + Campaign Management | ACCEPTED no draft |
+| `DEC-021` | Ocupação afeta preços posteriores; Slot reservado não é reprecificado | Contexto de Negócio Consolidado + Pricing Engine | ACCEPTED no draft |
+| `DEC-022` | Falha operacional libera orçamento e tenta realocação compatível antes de saldo ocioso | Contexto de Negócio Consolidado + Campaign Management | ACCEPTED no draft |
+| `DEC-023` | Overdelivery técnico não é cobrado do Advertiser; custo é absorvido pela Mostarda | Contexto de Negócio Consolidado + Campaign Management | ACCEPTED no draft |
+| `DEC-024` | Cancelamento preserva exibições comprovadas e devolve somente saldo não consumido | Contexto de Negócio Consolidado + Campaign Management | ACCEPTED no draft |
+| `DEC-025` | Remoção de uma causa de pausa só retoma Campaign quando nenhuma outra causa permanecer | Contexto de Negócio Consolidado + Campaign Management | ACCEPTED no draft |
+| `DEC-026` | IA modera por regra/confiança; ambiguidade ou baixa confiança exige revisão humana; Advertiser mantém autoria | Contexto de Negócio Consolidado + Campaign Management | ACCEPTED no draft |
+| `DEC-027` | Inventário prioriza anúncios pagos e depois as classes editoriais explicitadas, sem deslocar compromisso pago confirmado | Contexto de Negócio Consolidado + Campaign Management | ACCEPTED no draft |
+| `DEC-028` | Campaign DRAFT exige Advertiser, nome, objetivo, moeda, país, responsável e data | Fechamento do Campaign Management (`OPEN-036`) | ACCEPTED no draft |
+| `DEC-029` | DRAFT é editável; READY congela revisão; PUBLISHED/ACTIVE não sofrem mutação operacional in place | Fechamento do Campaign Management (`OPEN-037`) | ACCEPTED no draft |
+| `DEC-030` | Campaign ativa automaticamente no início da janela; primeira reserva publica ExecutionStarted | Fechamento do Campaign Management (`OPEN-038`) | ACCEPTED no draft |
+| `DEC-031` | Cancelamento é imediato antes de Slot DISPATCHED e coordenado depois da distribuição ao Edge | Fechamento do Campaign Management (`OPEN-039`) | ACCEPTED no draft |
+| `DEC-032` | Grace periods são parâmetros de políticas operacionais distribuídas pelo Configuration Service | Fechamento do Campaign Management (`OPEN-040`) | ACCEPTED no draft |
+| `DEC-033` | Realocação exige equivalência multidimensional governada por policy; fim da janela libera saldo | Fechamento do Campaign Management (`OPEN-041`) | ACCEPTED no draft |
+| `DEC-034` | Saldo cancelado vira crédito interno por padrão; Advertiser pode solicitar refund | Fechamento do Campaign Management (`OPEN-042`) | ACCEPTED no draft |
+| `DEC-035` | Moderação possui auto-approve, auto-reject ou human-review; incerteza sempre exige humano | Fechamento do Campaign Management (`OPEN-043`) | ACCEPTED no draft |
+| `DEC-036` | SLA de moderação é operacional, configurável e observável; timeout nunca aprova conteúdo | Fechamento do Campaign Management (`OPEN-044`) | ACCEPTED no draft |
+| `DEC-037` | Toda falha possui exatamente um responsável entre quatro classes, sem responsabilidade compartilhada | Fechamento do Campaign Management (`OPEN-045`) | ACCEPTED no draft; autoridade julgadora em `OPEN-049` |
+| `DEC-038` | Evidence válida de overdelivery remunera parceiro; Mostarda financia e Advertiser não paga | Fechamento do Campaign Management (`OPEN-046`) | ACCEPTED no draft |
+| `DEC-039` | Slots consecutivos evitam repetição por padrão e só reorganizam unidades movíveis sem prejudicar terceiros | Fechamento do Campaign Management (`OPEN-047`) | ACCEPTED no draft |
+| `DEC-040` | Matriz Advertiser/Grão/IA/Moderador/Financial/Campaign define autoridade e proibições | Fechamento do Campaign Management (`OPEN-048`) | ACCEPTED no draft |
 
 ## Conflitos conhecidos a sincronizar
 
 | ID | Documento | Divergência | Decisão vigente |
 | --- | --- | --- | --- |
-| `SYNC-001` | `product/PRODUCT_BIBLE.md` | Ainda descreve percentuais como indicativos/ajustáveis e redistribuição por papel ausente | `DEC-001`: fixos e parcela bloqueada/unclaimed |
-| `SYNC-002` | `product/PRODUCT_BIBLE.md` | Descreve seguro como contribuição por exibição sem política aprovada | `OPEN-009`: não inferir capitalização |
+| `SYNC-001` | `product/PRODUCT_BIBLE.md` | Percentuais/redistribuição antigos | RESOLVED por sincronização com `DEC-001` |
+| `SYNC-002` | `product/PRODUCT_BIBLE.md` | Capitalização presumida do seguro | RESOLVED; fonte permanece `OPEN-009` |
 | `SYNC-003` | ADR-003/ADR-005 históricos | Linguagem associa Settlement diretamente a Asaas | ADR-007 supersede essa parte; ADRs históricos não são editados |
 | `SYNC-004` | `domain/DOMAIN_PRINCIPLES.md`, `WORLDS.md`, `DOMAIN_DICTIONARY.md` | Linguagem antiga sugere Evidence nascendo/assinada no Edge | `DEC-002`: Edge cria PlaybackEvent; EvidenceRecord nasce no Cloud |
 | `SYNC-005` | documentos antigos de QR/Quantum | Alguns trechos sugerem resolução final no Quantum | `DEC-013`: QR contém token e Cloud resolve destino; Quantum fornece consulta/âncora permitida |
 | `SYNC-006` | `domain/BOUNDED_CONTEXTS.md`, `OWNERSHIP.md` e documentos legados | Ownership de TV Network, Edge, Telemetry e Capability ainda tem sobreposição | ADR-008 e `SPEC-TV-001..005` governam a frota; execução de mídia continua no Edge Runtime |
-| `SYNC-007` | `tv-network/TV_LIFECYCLE.md`, `INSTALLATION.md`, `PROVISIONING.md` | Ordem Installation/Provisioning diverge | `OPEN-011`; ambos permanecem gates antes de ACTIVE |
 | `SYNC-008` | ADR-002 e Capability docs | ADR antigo compõe Capability por Facets; regra nova exige independência declarativa | `DEC-010`: Capability Registry é independente; Facets são mecanismo interno separado quando aplicável |
 | `SYNC-009` | `architecture/ARCHITECTURE_OVERVIEW.md` | Diagrama/texto legado ainda pode representar Settlement/Asaas e Inventory separados | ADR-007/008 e a Specification são vigentes |
 | `SYNC-010` | `execution/TIMELINES.md` | Timeline termina pagamento em Settlement | Financial Platform reconcilia Withdrawal; Settlement termina no direito |
 | `SYNC-011` | `execution/STATE_MACHINES.md` | Settlement `CLOSED → COMPENSATING` conflita com CLOSED imutável | Compensação é nova linha/Aggregate; Settlement fechado não reabre |
-| `SYNC-012` | `execution/COMMANDS.md` | CancelCampaign publica CampaignCompleted | Evento de cancelamento precisa ser explicitado em `OPEN-033` |
+| `SYNC-012` | `execution/COMMANDS.md` | CancelCampaign publicava CampaignCompleted | RESOLVED; `CampaignCancelled` é o fato terminal |
 | `SYNC-013` | Commands/Sagas de Evidence | Ordem Builder/Validator/Ledger diverge | Spec: cria PENDING, valida, então torna VALID |
 | `SYNC-014` | Command de emergência | Um Command aparece com dois owners | Owner único ou Saga com Commands separados (`OPEN-027`) |
-| `SYNC-015` | CampaignBudget docs | Estados/buckets e ownership de ContractValue divergem | `OPEN-013/014` |
-| `SYNC-016` | Financial Commands | Command de PaymentLedger descreve efeito em CampaignBudget | Owner emite Event; consumidor emite novo Command (`OPEN-015`) |
-| `SYNC-017` | WithdrawalBatch docs | Open/Close/Seal/Execute possuem semânticas conflitantes | `OPEN-024` |
+| `SYNC-015` | CampaignBudget docs | Estados/buckets e ownership de ContractValue divergem | `SPEC-FIN-002`: Campaign é owner de ContractValue; CampaignBudget referencia o contrato e governa Available/Reserved/Consumed |
+| `SYNC-016` | Financial Commands | Command de PaymentLedger descreve efeito em CampaignBudget | `SPEC-FIN-002`: Payment, PaymentLedger e CampaignBudget recebem Commands distintos, ligados por Events |
+| `SYNC-017` | WithdrawalBatch docs | Open/Close/Seal/Execute possuem semânticas conflitantes | `SPEC-FIN-004`: `OPEN → SEALED → SUBMITTED → RECONCILING → CLOSED`, com resultado por Withdrawal |
 | `SYNC-018` | Player/Playback e Evidence/Anchor state machines | Lifecycles/owners estão sobrepostos | `OPEN-028/034` |
 
-`SYNC-001` e `SYNC-002` não são corrigidos neste commit porque `PRODUCT_BIBLE.md` contém alteração local do usuário. Todos os itens `SYNC-*` devem ser sincronizados somente após revisão/aceite explícito desta especificação.
+Itens marcados `RESOLVED` foram sincronizados a partir das respostas consolidadas do fundador. Os demais `SYNC-*` continuam bloqueantes até correção e validação.

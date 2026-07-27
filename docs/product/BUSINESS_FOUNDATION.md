@@ -35,6 +35,22 @@ Modelo **SaaS + Marketplace**: o anunciante compra Campaigns; pagamento compensa
 
 Cobrança é exclusivamente pelo Asaas, via PIX, cartão e boleto; assinaturas são futuras. Não há blockchain financeira, token ou criptomoeda.
 
+### 6.1 Compromisso comercial
+
+A Mostarda não vende Campaign pronta, pacote fixo, circuito fechado, audiência garantida, alcance mínimo ou quantidade fixa de exibições. O anunciante compra capacidade financeira de acesso ao inventário e decide como consumi-la em Slots independentes.
+
+Campaign é o instrumento de planejamento e governança desse consumo, não o produto financeiro nem uma promessa de resultado de audiência. O Advertiser pode planejar manualmente ou delegar otimização ao Grão, mantendo sempre a decisão final.
+
+### 6.2 Garantia
+
+A Mostarda garante transparência, rastreabilidade, auditoria e comprovação da execução. Dados de audiência, preço e ocupação anteriores à execução são estimativas claramente identificadas.
+
+Falha operacional não consome definitivamente orçamento sem exibição. O sistema tenta realocar o valor em Slot compatível antes de manter saldo remanescente. Overdelivery causado pela plataforma nunca é cobrado do Advertiser.
+
+### 6.3 Cancelamento
+
+O Advertiser pode cancelar a Campaign. Exibições já comprovadas permanecem faturadas; reservas liberáveis e saldo não consumido retornam ao fluxo financeiro de devolução. A plataforma pode oferecer retenção ou replanejamento, mas não impedir o cancelamento.
+
 ## 7. Modelo operacional
 
 | Componente | Função de negócio |

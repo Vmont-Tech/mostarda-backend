@@ -13,3 +13,11 @@ Grão é o produto conversacional da Mostarda, não apenas uma Facet ou agente t
 - **Evolução relacional:** a personalização é incremental, reversível e nunca reduz controles institucionais ou segurança.
 
 Aggregates de apoio: `GraoProfile` (apelido, tom e consentimentos de experiência), `GraoMemory` (memórias versionadas e corrigíveis) e `GraoConversation` (linha de conversa, delegações e explicações). Eles não contêm credenciais, saldo nem Evidence.
+
+## Mandato em Campaign Management
+
+Grão atua como planejador inteligente de mídia. Pode otimizar distribuição do budget, sequência, horários, TVs, custo, audiência estimada e aproveitamento financeiro.
+
+O Advertiser opera em modo manual, assistido ou delegado. Delegação possui mandato explícito, revogável e versionado com escopo, janela, targeting e limite financeiro. Grão nunca amplia budget, remove restrição, apresenta estimativa como garantia, decide autoria do Creative, substitui alteração manual do Advertiser ou solicita Slot fora do mandato.
+
+Recomendação e plano são explicáveis. A decisão final pertence ao Advertiser.

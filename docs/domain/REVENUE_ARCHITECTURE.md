@@ -44,3 +44,16 @@ Todo cálculo preserva os valores antes/depois de cada retenção, regra e vers�
 ## Limites de responsabilidade
 
 `Pricing` decide preço; `Evidence Ledger` prova o fato; `Settlement` decide elegibilidade financeira e composição; `Financial Platform` governa entrada, ledger, carteira e saída; `Insurance` administra fundo e sinistro; `Asaas` executa os rails quando instruído; `Quantum` ancora hashes, nunca dinheiro. Blockchain não custodia nem movimenta valor.
+
+## Overdelivery financiado pela plataforma
+
+Evidence válida sempre pode originar direito do parceiro, inclusive quando a exibição excedente decorre de erro da Mostarda. Nesse caso:
+
+- Advertiser não é cobrado;
+- CampaignBudget não é consumido;
+- Settlement calcula os direitos normalmente e marca a fonte `PLATFORM_FUNDED_OVERDELIVERY`;
+- Financial Platform materializa obrigação financiada pela Mostarda;
+- cada parceiro elegível recebe segundo o split vigente;
+- a causa e a classificação de responsabilidade permanecem correlacionadas.
+
+Erro interno nunca reduz o direito do parceiro nem apaga a Evidence.

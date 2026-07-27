@@ -1,5 +1,17 @@
 # AI Architecture
 
+## Moderação de Creative
+
+O serviço de IA produz somente:
+
+- `AUTO_APPROVED`;
+- `AUTO_REJECTED`;
+- `HUMAN_REVIEW_REQUIRED`.
+
+Incerteza, conflito, baixa confiança ou dados insuficientes produzem obrigatoriamente revisão humana. Limiar e modelo pertencem a policy versionada do serviço; Campaign preserva versões, score, explicação e decisão. Timeout nunca aprova conteúdo.
+
+Moderador humano pode aprovar, rejeitar, solicitar alteração e classificar caso especial. Advertiser mantém autoria e responsabilidade pelo conteúdo; IA e moderador validam conformidade.
+
 AI Orchestration fornece agentes especializados e o produto Grão. IA recomenda, interpreta e automatiza tarefas permitidas; os Bounded Contexts proprietários continuam decidindo preço, dinheiro, Evidence, permissão e estado.
 
 ## Pipeline de decisão

@@ -1,7 +1,121 @@
 # Edge Runtime
 
-Edge Runtime é o ambiente operacional identificado do MiniPC. Ele executa processos autorizados, reporta estado e aplica comandos operacionais assinados; não contém regras de negócio ou conhecimento de Campaign, Financeiro, Evidence, Settlement, preço ou anúncios.
+## Responsabilidade
 
-O runtime declara e preserva versões de Edge, Player, Canvas, Capability Manifest, OS e Firmware. `EdgeInstallation` possui estados `UNINSTALLED → INSTALLING → HEALTHY`; pode ficar `DEGRADED`, `UPDATING`, `ROLLING_BACK` ou `FAILED`. Health gate e política determinam transição; rollback cria nova observação e nunca remove versões anteriores.
+Edge Runtime é o envelope operacional identificado que roda no MiniPC. Seu owner de domínio é `EdgeInstallation`.
 
-O Supervisor controla processos críticos, Watchdog detecta ausência de progresso e Restart Policy limita tentativas, registra causa e escala diagnóstico. Sincronização é idempotente, ordenada por revisão operacional e resiliente a conectividade intermitente.
+Ele:
+
+- inicia e supervisiona processos autorizados;
+- mantém inventário de versão;
+- aplica Commands operacionais válidos;
+- reporta Current State, Heartbeat e sinais de Health;
+- preserva backlog operacional durante desconexão;
+- executa restart, diagnóstico, update e rollback conforme política.
+
+Ele não contém regras de Campaign, anúncio, Pricing, Financeiro, Evidence ou Settlement. Player e Canvas são conhecidos apenas como processos, versões e dependências operacionais; seu conteúdo interno permanece fora de TV Network.
+
+## Identidade e sessão
+
+Cada instalação possui `EdgeInstallationId` distinto do `DeviceIdentifier` e do `TVIdentifier`. Uma reinstalação que rompe a continuidade de identidade cria nova EdgeInstallation ou nova revisão conforme política; nunca reutiliza credencial revogada.
+
+Cada boot cria `bootSessionId` não reutilizável. Sequências de Heartbeat, Current State e logs operacionais são monotônicas dentro da sessão.
+
+## Componentes conceituais
+
+| Componente | Responsabilidade |
+| --- | --- |
+| Runtime Controller | aplica intenção operacional autorizada e reporta resultado |
+| Supervisor | conhece processos críticos, dependências e estados esperados |
+| Watchdog | verifica progresso real, não apenas existência do processo |
+| Restart Policy | limita, espaça e encerra tentativas de recuperação |
+| State Reporter | produz Current State versionado |
+| Sync Manager | reapresenta fatos pendentes sem criar duplicatas |
+| Version Inventory | declara Edge, Player, Canvas, Capability Manifest, OS e Firmware |
+| Security Guard | rejeita comando inválido, expirado, revogado ou incompatível |
+
+## Estado da EdgeInstallation
+
+```text
+UNINSTALLED → INSTALLING → HEALTHY
+HEALTHY ↔ DEGRADED
+HEALTHY/DEGRADED → UPDATING → HEALTHY/DEGRADED/FAILED
+UPDATING/FAILED → ROLLING_BACK → HEALTHY/DEGRADED/FAILED
+qualquer não final → QUARANTINED
+FAILED/QUARANTINED → INSTALLING, somente por recuperação autorizada
+qualquer não final → DECOMMISSIONED
+```
+
+`DECOMMISSIONED` é final. Estados operacionais não substituem HealthRecord: refletem a condição do Aggregate conforme fatos aceitos.
+
+## Supervisor
+
+Supervisor mantém catálogo versionado de processos críticos, dependências, condição esperada e ação permitida. Uma transição de processo registra estado anterior, estado observado, causa, tentativa, política, instante e resultado.
+
+Supervisor nunca interpreta o trabalho do Player. Pode concluir que o processo não progride; não pode concluir que um anúncio foi ou não exibido.
+
+## Watchdog e Restart Policy
+
+Watchdog observa sinais de progresso definidos para cada processo. `running` sem progresso pode ser falha.
+
+Ao detectar falha:
+
+1. registra `WatchdogStallDetected`;
+2. consulta Restart Policy;
+3. emite `RestartProcess` quando permitido;
+4. observa o resultado até timeout;
+5. repete somente dentro do orçamento da política;
+6. ao esgotar tentativas, cria diagnóstico e degrada, falha ou quarentena conforme severidade.
+
+Quantidade de tentativas, backoff, timeout e período de estabilidade são `OPEN`. Restart infinito, ocultação da causa e zerar contador por reinício do processo são proibidos.
+
+## Desired, Current e Observed State
+
+- `DesiredState`: intenção imutável e versionada publicada pelo Cloud para uma EdgeInstallation.
+- `CurrentState`: declaração autenticada do Edge sobre o que aplicou e executa.
+- `ObservedState`: projeção independente construída pelo TV Network a partir de sinais aceitos.
+
+Current State contém versões, processos, configuração operacional permitida, revisão Desired aplicada, conectividade e estado de sync. Não contém fila comercial, anúncio, preço ou Evidence.
+
+Edge aplica apenas revisão Desired:
+
+- destinada à sua identidade;
+- posterior à última revisão aplicada;
+- íntegra, autorizada e não expirada;
+- compatível com sua política e maintenance window;
+- sem conflito com operação de prioridade superior.
+
+Divergência não é corrigida por mutação direta. O Reconciler emite Command específico e aguarda novo Current/Observed State.
+
+## Conectividade e sincronização
+
+Conectividade possui estados conceituais `UNKNOWN`, `ONLINE`, `INTERMITTENT`, `OFFLINE` e `RECOVERING`, derivados por política.
+
+Fatos pendentes preservam identidade, ordering key e instante original. Na reconexão:
+
+- o Edge informa ponto de confirmação conhecido;
+- reapresenta fatos originais;
+- duplicatas são ignoradas deterministicamente;
+- gaps e descarte inevitável são declarados;
+- mensagens expiradas não são executadas;
+- Current State atual é enviado separadamente do replay histórico.
+
+Retenção, capacidade, prioridade entre classes operacionais e tratamento de pressão de armazenamento são `OPEN`. O runtime nunca fabrica confirmação e nunca altera evento antigo para fazê-lo parecer atual.
+
+## Comandos remotos e segurança
+
+Command remoto exige target, identidade, idempotency key, revisão esperada, TTL, motivo, política e autorização. Comando inválido produz rejeição auditável. Falha de autenticação, replay conflitante ou spoofing pode levar a quarentena.
+
+Quarentena bloqueia updates não essenciais e disponibilidade operacional, mas pode permitir diagnóstico mínimo autorizado. A política define o conjunto permitido.
+
+## Auditoria
+
+Boot, shutdown, mudança de versão, mudança de processo, restart, stall, aplicação Desired, sync, rejeição, update, rollback e quarentena produzem eventos. O histórico é append-only.
+
+## Exemplos
+
+**Válido:** Watchdog detecta Player vivo sem progresso, reinicia uma vez conforme política e registra recuperação observada.
+
+**Contraexemplo:** Supervisor marca uma exibição como concluída porque o processo Player não caiu. TV Network não conhece conclusão de Playback.
+
+**Contraexemplo:** Edge volta após período offline e executa Command remoto cujo TTL expirou. Comando expirado deve ser registrado e rejeitado.

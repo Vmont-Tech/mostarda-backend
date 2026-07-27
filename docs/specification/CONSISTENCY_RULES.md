@@ -27,6 +27,38 @@ Enquanto a especificação estiver `DRAFT`, os documentos aprovados existentes c
 - Exemplos não alteram a regra e devem ser identificados como exemplos.
 - Mudança de significado exige versão e registro; mudança editorial não reutiliza decisão para outro propósito.
 
+## Estrutura obrigatória de uma especificação de contexto
+
+Documentos de contexto não podem ser apenas inventários. Cada documento deve conter, quando aplicável:
+
+1. **Propósito e razão arquitetural:** qual problema resolve, por que o conceito existe e quais alternativas foram recusadas.
+2. **Escopo e fronteiras:** responsabilidades, não responsabilidades, owner e dependências permitidas.
+3. **Modelo de domínio:** Aggregates, entidades, Value Objects, políticas, Services conceituais e ownership de cada informação.
+4. **Invariantes:** regras verdadeiras antes e depois de qualquer transição.
+5. **Commands:** owner único, emissor, pré-condições, pós-condições, falhas, autorização, idempotência e auditoria.
+6. **Events:** produtor, consumidores, payload conceitual, ordering, versionamento, duplicidade, retry e compensações.
+7. **Máquinas de estado:** todos os estados, transições, Command causador, Event resultante, timeout, retry, recuperação e estados finais.
+8. **Fluxos:** happy path, falhas, concorrência, consistência eventual, indisponibilidade externa e recuperação.
+9. **Exemplos e contraexemplos:** ao menos um cenário válido e um inválido para cada regra crítica.
+10. **Decisões abertas:** somente valores ou políticas realmente não decididos; nunca usar `OPEN` para evitar definir comportamento estrutural.
+
+Um engenheiro sênior deve conseguir implementar o comportamento do contexto sem precisar decidir ownership, ordem, transição, concorrência ou compensação. Valores quantitativos ainda não aprovados devem ser representados por políticas versionadas, com o ponto de decisão explicitamente identificado.
+
+## Critério de profundidade
+
+Uma especificação é considerada completa somente quando responde:
+
+- quem pode iniciar a mudança;
+- qual Aggregate decide;
+- qual revisão/estado é esperado;
+- o que ocorre sob concorrência;
+- qual fato é publicado;
+- como duplicidade e entrega fora de ordem são tratadas;
+- quando ocorre timeout;
+- o que é compensado e o que jamais é revertido;
+- como auditoria, replay e rebuild preservam significado;
+- por que a separação arquitetural existe.
+
 ## Validação mínima
 
 - Nenhum Bounded Context possui dois owners.

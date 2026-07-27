@@ -53,13 +53,20 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `CampaignStarted` | Início da veiculação. |
 | `CampaignPaused` | Suspensa pelo Advertiser ou por regra. |
 | `CampaignResumed` | Retomada. |
-| `CampaignCompleted` | Concluída por entrega/orçamento. |
+| `CampaignCompleted` | Estratégia encerrada normalmente, sem nova utilização planejada ou obrigação de realocação aberta. |
+| `CampaignCancellationRequested` | Cancelamento iniciou coordenação assíncrona de Slots e reservas ainda revogáveis. |
+| `CampaignCancelled` | Campaign terminou por cancelamento; não equivale a conclusão normal. |
+| `CampaignStrategyRevised` | Advertiser ou delegado aprovou nova revisão da estratégia. |
+| `CampaignPauseCauseRemoved` | Uma causa específica foi removida; não implica retomada. |
+| `SlotReallocationRequested` | Falha não executada originou busca de nova oportunidade compatível. |
 | `CampaignExpired` | Encerrada por fim de janela. |
 | `CampaignBudgetExhausted` | Orçamento consumido por Evidences válidas. |
 | `CreativeAssetUploaded` | Creative Asset enviado. |
 | `CreativeAssetApproved` | Aprovado pela validação de IA. |
 | `CreativeAssetRejected` | Reprovado — não pode virar Slot. |
 | `SlotAllocated` | Slot reservado para uma TV com preço congelado. |
+| `SlotDispatchedToEdge` | Edge aceitou a distribuição do Slot e sua revisão; define cutoff de cancelamento imediato. |
+| `SlotDelivered` | Playback do Slot foi concluído fisicamente; não significa Evidence válida. |
 | `SlotRevoked` | Reserva cancelada. |
 | `SlotAccepted` / `SlotRejected` | Aceite/recusa local no Edge. |
 | `SlotExpiredLocally` | Slot expirou sem execução no Edge. |

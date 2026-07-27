@@ -38,6 +38,7 @@ A candidata a fonte normativa primária é [`specification/PLATFORM_SPECIFICATIO
 3. Leia `product/` para o negócio, `domain/` para o modelo e `execution/` para o comportamento.
 4. Leia `financial/` e `tv-network/` para os contextos estruturais especializados.
 5. Consulte `adr/` para entender **por que decidimos assim**.
+6. Leia `domain/CAMPAIGN_MANAGEMENT.md` antes de implementar Campaign, Slot, Creative, realocação ou concorrência de inventário.
 
 ## Regras da documentação
 

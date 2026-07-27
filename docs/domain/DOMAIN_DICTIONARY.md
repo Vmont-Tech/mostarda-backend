@@ -120,3 +120,18 @@ Projeção dos saldos Pending, Available, Blocked, Withdrawable e Negative deriv
 
 ## Withdrawal
 Solicitação e ciclo de retirada de saldo de parceiro, governados por Withdrawal Policy e executados pelo provider somente após aprovação/batch.
+
+## Slot Dispatched
+Estado que confirma que o Edge aceitou a distribuição de um Slot e sua revisão. É distinto de playback concluído e define o cutoff de cancelamento imediato.
+
+## Advertiser Account
+Conta financeira do Advertiser que mantém crédito interno reutilizável e sua trilha append-only. Não pertence ao Aggregate Campaign.
+
+## Slot Equivalence Policy
+Política versionada que define tolerâncias obrigatórias de categoria, geografia, tela, horário, preço e audiência esperada para realocação.
+
+## Configuration Service
+Capacidade Cloud que distribui parâmetros e versões aprovadas de políticas operacionais. Não cria regra de negócio nem fornece default implícito.
+
+## Campaign Execution Started
+Fato publicado uma única vez quando o primeiro Slot da Campaign é reservado. É distinto da ativação comercial no início da janela.
