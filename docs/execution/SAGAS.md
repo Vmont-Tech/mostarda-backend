@@ -182,28 +182,30 @@ Passos 4A e 4B não têm ordem normativa fixa enquanto `OPEN-011` estiver aberto
 **Replay:** não chama Asaas; consulta ledger de entrega/receipt.  
 **Resultado:** `EXECUTED` somente com comprovante reconciliado.
 
-## 8. Seguro
+## 8. Continuidade operacional (`Seguro` supersedido)
 
-**Objetivo:** decidir Claim e cumprir reparo/reposição por Insurance, sem usar Settlement de mídia.
+A Saga vigente coordena manutenção e disponibilidade como serviço. Nenhum fluxo `Insurance*` é autorizado.
 
-**Correlação:** ClaimId; obrigações por Reserve/Repair/Replacement/InsuranceSettlement IDs.  
-**Participantes:** InsuranceClaim, Coverage/Policy, InsuranceReserve/Fund, InsuranceRepair/Replacement, InsuranceSettlement e TV Network apenas para fatos operacionais permitidos.
+**Objetivo:** restaurar a operação da TV por diagnóstico, reparo, empréstimo temporário ou troca permanente, preservando custódia, propriedade e proveniência.
+
+**Correlação:** `MaintenanceCaseId`; operações correlatas usam `TemporaryReplacementId`, `PermanentExchangeId`, `AssetId` e `QuantumAnchorId`.
+**Participantes:** Hardware Continuity coordena; TV Network registra estado operacional; Financial executa obrigações autorizadas; AssetProvenance e Quantum preservam os fatos documentais.
 
 | Passo | Fato/condição de entrada | Command e owner | Event esperado | Falha/concorrência |
 | --- | --- | --- | --- | --- |
-| 1 | Ocorrência declarada | `FileInsuranceClaim → InsuranceClaim` | `InsuranceClaimFiled` | Duplicata retorna Claim |
-| 2 | Claim filed | `StartClaimAssessment` | `InsuranceClaimAssessmentStarted` | SLA numérico `OPEN-005`; atraso não presume decisão |
-| 3 | Lacuna/decisão | `RequestClaimInformation` ou `DecideInsuranceClaim` | request, `Approved/Denied` | Analista revalida policy/cobertura |
-| 4 | Claim aprovado | `CreateInsuranceReserve → InsuranceReserve` | `InsuranceReserveCreated` | Fonte do fundo `OPEN-009`; sem dupla reserva |
-| 5A | Reparo adequado | `AuthorizeRepair → InsuranceRepair` | `InsuranceRepairAuthorized` | Falha de fornecedor não muda Claim |
-| 5B | Troca adequada | `AuthorizeReplacement → InsuranceReplacement` | `InsuranceReplacementAuthorized` | Device novo tem identidade própria |
-| 6 | Obrigação aceita/concluída | `SettleInsuranceObligation` | `InsuranceSettlementExecuted` | Resultado financeiro unknown reconcilia |
-| 7 | Residual/cancelamento | `ReleaseInsuranceReserve` | `InsuranceReserveReleased` | Append-only |
+| 1 | Ocorrência humana ou técnica deduplicada | `OpenMaintenanceCase → MaintenanceCase` | `MaintenanceCaseOpened` | Mesma ocorrência retorna o caso existente |
+| 2 | Diagnóstico concluído | `AuthorizeRepair` ou decisão operacional de substituição | `RepairAuthorized` ou início do replacement | Limites e policy version são preservados |
+| 3A | TV ficará em reparo | `AssignTemporaryReplacement → TemporaryReplacement` | `TemporaryReplacementAssigned` | Ausência de ativo mantém caso aberto e notifica |
+| 3B | Perda total/equivalência aprovada | `ProposePermanentExchange → PermanentExchange` | `PermanentExchangeProposed` | Proposta não transfere propriedade |
+| 4 | Partes aceitaram a troca | `AcceptPermanentExchange` | `PermanentExchangeAccepted` | Assinatura inválida não avança |
+| 5 | Entrega, inspeção e transferências recíprocas comprovadas | `CompletePermanentExchange` | `PermanentExchangeCompleted`, `AssetOwnershipTransferred` | Falha parcial entra em `DISPUTED`; nunca presume conclusão |
+| 6 | TV temporária devolvida | `CompleteTemporaryReturn` | `TemporaryReplacementReturned` | Inspeção é append-only |
+| 7 | Ativo/peça reaproveitável | `RegisterDonorPart → CircularInventory` | `DonorPartRegistered` | Proveniência obrigatória |
 
-**Compensação:** negar/retirar libera reserva por Command; pagamento incorreto gera entry compensatória no Insurance Ledger.  
-**Ordering/gaps:** TV/health facts são referências; Insurance não lê base alheia.  
-**Replay:** não repete payout/reparo/reposição.  
-**Resultado:** Claim `SETTLED` somente após obrigação reconciliada.
+**Compensação:** obrigações financeiras incorretas recebem lançamentos compensatórios; propriedade e histórico nunca são sobrescritos.
+**Ordering/gaps:** fatos são ordenados por Aggregate; transferências exigem todos os fatos causais esperados.
+**Replay:** não repete reparo, entrega, assinatura, cobrança ou transferência.
+**Resultado:** manutenção encerra apenas com operação restaurada ou terminalidade explícita; troca permanente só conclui após entrega, inspeção e transferências recíprocas.
 
 ## 9. Atualização remota
 

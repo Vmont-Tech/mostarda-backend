@@ -200,22 +200,23 @@ Estados: `UNINSTALLED`, `INSTALLING`, `HEALTHY`, `DEGRADED`, `UPDATING`, `ROLLIN
 
 Proibido update sem política/janela/assinatura, rollback por sobrescrita histórica ou loop ilimitado.
 
-## InsuranceClaim
+## PermanentExchange (`InsuranceClaim` supersedido)
 
-Estados: `FILED`, `UNDER_REVIEW`, `APPROVED`, `DENIED`, `WITHDRAWN`, `REPAIR_AUTHORIZED`, `REPLACEMENT_AUTHORIZED`, `SETTLED`.
+Lifecycle vigente: `PROPOSED → SIGNING → DELIVERY_PENDING → INSPECTION → COMPLETED`, com saídas `CANCELLED/DISPUTED`. `COMPLETED` é final; correção usa novo fato. Nenhum estado ou transição `InsuranceClaim` é autorizado.
+
+Estados: `PROPOSED`, `SIGNING`, `DELIVERY_PENDING`, `INSPECTION`, `COMPLETED`, `CANCELLED`, `DISPUTED`.
 
 | De → Para | Ator e Command | Event | Gates/pré-condições | Timeout, retry e falha | Compensação/recuperação |
 | --- | --- | --- | --- | --- | --- |
-| inexistente → `FILED` | Segurado, `FileInsuranceClaim` | `InsuranceClaimFiled` | Policy/ocorrência/identidade presentes | Duplicata retorna claim original | Retirar ou avaliar |
-| `FILED` → `UNDER_REVIEW` | Insurance, `StartClaimAssessment` | `InsuranceClaimAssessmentStarted` | Assessor autorizado | SLA quantitativo `OPEN-005`; atraso não aprova/nega | Pedir complemento |
-| `UNDER_REVIEW` → `UNDER_REVIEW` | Analista, `RequestClaimInformation` | `InsuranceClaimInformationRequested` | Lacuna explícita | Retry da solicitação é idempotente | Complemento é novo fato |
-| `UNDER_REVIEW` → `APPROVED/DENIED` | Analista segregado, `DecideInsuranceClaim` | `InsuranceClaimApproved/Denied` | Cobertura, vigência, carência, adimplência, exclusões avaliadas | Resultado desconhecido consulta owner | Reserva só após APPROVED |
-| `APPROVED` → `REPAIR_AUTHORIZED` | Saga após Reserve, `AuthorizeRepair` no InsuranceRepair | `InsuranceRepairAuthorized` | Reserva committed, orçamento elegível | Falha não muda claim para SETTLED | Novo repair Aggregate |
-| `APPROVED` → `REPLACEMENT_AUTHORIZED` | Saga após Reserve, `AuthorizeReplacement` | `InsuranceReplacementAuthorized` | Reserva e equipment decision | Falha operacional preserva autorização | Novo replacement Aggregate |
-| autorizado → `SETTLED` | Insurance, `MarkInsuranceClaimSettled`, causado por `InsuranceSettlementExecuted` | `InsuranceClaimSettled` | Obrigação/receipts reconciliados | Resultado financeiro unknown não fecha | Compensação no Insurance Ledger |
-| `FILED/UNDER_REVIEW` → `WITHDRAWN` | Segurado/Insurance | evento explícito a sincronizar (`OPEN-033`) | Política permite e não há decisão final | Libera reserva se existir por Command separado | Final |
+| inexistente → `PROPOSED` | Operação, `ProposePermanentExchange` | `PermanentExchangeProposed` | Caso de manutenção, equivalência, ativos e termos registrados | Duplicata retorna proposta vigente | Expiração/cancelamento explícitos |
+| `PROPOSED` → `SIGNING` | Titulares, início do pacote de assinatura | fato de assinatura iniciado | Proposta vigente e signatários autorizados | Timeout não transfere propriedade | Renovar ou cancelar proposta |
+| `SIGNING` → `DELIVERY_PENDING` | Titulares, `AcceptPermanentExchange` | `PermanentExchangeAccepted` | Declarações e assinaturas válidas | Resultado desconhecido reconcilia com provedor | Falha preserva `SIGNING` |
+| `DELIVERY_PENDING` → `INSPECTION` | Operação registra entrega | fato de entrega registrado | Ambos os ativos/custódias identificados | Entrega parcial não avança | Caso pode ir a `DISPUTED` |
+| `INSPECTION` → `COMPLETED` | Operação, `CompletePermanentExchange` | `PermanentExchangeCompleted`, `AssetOwnershipTransferred` | Entrega, inspeção e transferências recíprocas comprovadas | Replay não repete transferência | Correção por novos fatos de provenance |
+| estado não final → `CANCELLED` | Ator autorizado | evento de cancelamento do Aggregate | Política permite; nenhuma transferência consumada | Retry idempotente | Final |
+| estado não final → `DISPUTED` | Governance/Operação por fato autorizado | evento de disputa | Contradição de entrega, assinatura, custódia ou proveniência | Não presume owner nem culpa | Governance resolve por decisão oficial |
 
-Finais: `DENIED`, `WITHDRAWN`, `SETTLED`. Proibido liquidar sem decisão e reserva, presumir cobertura enquanto em análise ou alterar uma decisão final.
+Finais: `COMPLETED` e `CANCELLED`. `DISPUTED` bloqueia conclusão até resolução autorizada. É proibido concluir troca por proposta, assinatura isolada ou entrega unilateral.
 
 ## Withdrawal
 
@@ -242,7 +243,7 @@ Estados: `REQUESTED`, `APPROVED`, `BATCHED`, `EXECUTING`, `EXECUTED`, `REJECTED`
 - `SplitShare CREDITED → PAID` dentro do Settlement.
 - `TV DECOMMISSIONED → ACTIVE`.
 - `Edge UPDATING → HEALTHY` apenas porque o processo reiniciou.
-- `InsuranceClaim DENIED → APPROVED` na mesma Claim.
+- `PermanentExchange CANCELLED → COMPLETED` na mesma troca.
 - `Withdrawal timeout → EXECUTED` por suposição.
 ## GovernanceCase
 

@@ -183,6 +183,12 @@ Se uma confirmação válida chega depois de a cobrança ter sido observada como
 
 ## 10. Fluxo de boleto
 
+Boleto não participa do checkout temporal. Emissão, pagamento pendente ou recebimento não reservam Slot e não congelam PricingQuote. Somente compensação reconhecida cria crédito antecipado; compra posterior usa AvailableBudget.
+
+### Regra transversal de hold e pagamento imediato
+
+Pré-seleção correlaciona `InventoryHoldId`, `PricingQuoteId` e `expiresAt`. PIX/cartão/débito somente confirmam a compra quando o fato aplicável é reconhecido antes da expiração. Confirmação tardia preserva o crédito do Advertiser, mas não ressuscita inventário.
+
 ### 10.1 Caso feliz
 
 1. É criada cobrança com vencimento explícito.

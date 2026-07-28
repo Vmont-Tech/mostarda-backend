@@ -79,7 +79,7 @@ Um Command DEVE alterar somente o Aggregate proprietário. Um Event é fato e N�
 
 ### SPEC-INV-005 — Versionamento
 
-Toda decisão financeira DEVE preservar as versões de Pricing, Settlement, Tax, Insurance e Split aplicáveis. Toda decisão de IA DEVE preservar Model, Prompt, Agent e Policy Version. Eventos e documentos auditáveis DEVEM possuir versão e hash.
+Toda decisão financeira DEVE preservar as versões de Pricing, Settlement, Tax e Split aplicáveis. Decisões do Plano de Continuidade DEVEM preservar `ServicePlanPriceVersion` e a versão da política operacional aplicável, sem integrar essas versões à Evidence de mídia. Toda decisão de IA DEVE preservar Model, Prompt, Agent e Policy Version. Eventos e documentos auditáveis DEVEM possuir versão e hash.
 
 ### SPEC-INV-006 — Split canônico
 
@@ -93,7 +93,7 @@ O valor líquido distribuível DEVE somar exatamente:
 | Vendedor responsável | 20% |
 | Influenciador | 10% |
 
-Ausência ou inelegibilidade de um recebedor NÃO redistribui sua parcela. A parcela fica `BLOCKED` ou `UNCLAIMED`, e as demais seguem seu ciclo. Alteração do split exige decisão arquitetural aprovada e nova versão de política.
+Ausência ou inelegibilidade de um recebedor NÃO redistribui sua parcela às demais linhas. A parcela fica `BLOCKED` ou `UNCLAIMED`, exceto a linha de Influenciador: sem influenciador elegível, os 10% têm como beneficiário o Fundo de Desenvolvimento de Influenciadores. O fundo é patrimônio restrito, nunca receita livre da Mostarda. Alteração do split exige decisão arquitetural aprovada e nova versão de política.
 
 ## 5. Arquitetura de contextos
 
@@ -108,7 +108,7 @@ Ausência ou inelegibilidade de um recebedor NÃO redistribui sua parcela. A par
 | Edge Runtime | Execução local autorizada, filas, Player/Canvas e fatos de playback | Regras comerciais, preço, split, prova Cloud e pagamento |
 | Telemetry | Sinais anônimos de ambiente e dispositivo | Evidence fiscal, preço final e decisão de playback |
 | Quantum Integration | Canonical package/hash, anchor e consulta pública NFC/QR | Campaign, anunciante, pessoa, preço e Edge |
-| Insurance | Fundo, policy, premium, reserve, claim, repair e replacement | Identidade da TV, Settlement comercial e Health bruto |
+| Hardware Continuity | Subscription, benefício, manutenção, TV temporária, troca permanente, inventário circular e proveniência | Health bruto, culpa, Campaign, Evidence e split |
 | AI Orchestration | Agentes, recomendações, explicações e Grão | Mutação direta de outros contextos e decisões financeiras finais |
 | Marketplace | Ads, Influencers, TV Owners e Rentals futuro | Reserva efetiva, preço final, cobrança e ledger |
 | CRM | Advertiser, vendedor, oportunidade e atribuição comercial | Autenticação, execução da Campaign e pagamento |
@@ -209,6 +209,18 @@ Se overdelivery possuir Evidence válida, parceiro recebe normalmente; Advertise
 
 Advertiser mantém autoridade final. Grão recomenda e otimiza, mas não publica, cancela, gasta ou altera sem consentimento explícito. IA analisa; conteúdo duvidoso exige humano. Moderador decide conformidade. Financial Platform governa budget/refund sem alterar lifecycle. Campaign é único owner de seus estados.
 
+### SPEC-PARTNER-001 — Modos da rede
+
+Freemium reserva 40% da capacidade de cada faixa classificada à programação local e 60% à Mostarda. Conteúdo local usa no máximo dois Slots consecutivos; conteúdo Mostarda pode formar bloco compatível com a duração autorizada. Modelo completo exige mini PC Mostarda em comodato e Plano de Continuidade. Mudança de modo possui vigência e nunca reclassifica fatos históricos.
+
+### SPEC-PARTNER-002 — Imutabilidade e decisão
+
+Slot confirmado NUNCA é deslocado por Campaign posterior. Scheduling reorganiza somente capacidade livre. Quando o pedido não couber, apresenta alternativas explicáveis e aguarda Advertiser ou agente autorizado. Sugestão não reserva; pré-seleção cria hold temporário e congela o PricingQuote pelo mesmo prazo.
+
+### SPEC-PARTNER-003 — Quota local e fallback
+
+Parceiro escolhe reter ou liberar capacidade ainda livre de seus 40%. Capacidade liberada e confirmada pela Mostarda não pode ser retomada. Capacidade retida sem Creative executa fallback institucional não monetizado. Enquanto hardware funcional permitir renderização, tela preta por falta de conteúdo é proibida.
+
 ## 7. Pricing
 
 ### SPEC-PRICE-001 — Cálculo
@@ -218,6 +230,8 @@ Pricing Engine DEVE calcular `PricingQuote` antes da alocação, usando somente 
 IA pode recomendar; `PricingPolicy` determinística decide. O quote DEVE registrar valor calculado/final, inputs normalizados, fatores, política, algoritmo, timestamp e validade. Após `PriceApplied`, o quote é imutável.
 
 Cada Venue DEVE possuir preço base e mínimo aplicável. Maior ocupação aumenta o preço e menor ocupação pode reduzi-lo, nunca abaixo do mínimo. Não existe leilão manual, negociação individual ou prioridade de inventário por preço.
+
+Dados declarados no onboarding alimentam somente preço-base provisório, normalizado contra benchmarks e com confiança limitada. Depois da ativação, flutuação automática decorre de oferta/demanda e ocupação. Telemetria, QR, tags e histórico podem causar reavaliação formal versionada, nunca recálculo leitura por leitura ou alteração de Quote histórico.
 
 ### SPEC-PRICE-002 — Orçamento
 
@@ -244,6 +258,8 @@ Essa separação existe porque execução física, validação probatória e anc
 ### SPEC-EVID-002 — Conteúdo mínimo
 
 EvidenceRecord DEVE correlacionar TV, Campaign, Slot, timestamp, duração, Creative Asset, preço calculado/final/cobrado, fatores dinâmicos, impostos, split e percentuais, versões de políticas/algoritmo, telemetria aplicável, `EvidenceConfidence`, Playback/Creative Checksum e versões de Player, Edge, modelo e OS.
+
+EvidenceRecord DEVE declarar `EvidencePurpose`: `MONETIZED_PLAYBACK`, `LOCAL_FREEMIUM_PLAYBACK`, `INSTITUTIONAL_PLAYBACK` ou `FALLBACK_PLAYBACK`. Todos preservam os campos probatórios físicos. Somente `MONETIZED_PLAYBACK` exige snapshots econômicos e pode ser elegível a Settlement. Demais propósitos usam `FinancialEligibility = NOT_APPLICABLE`, nunca preço zero.
 
 ### SPEC-EVID-003 — Validação e imutabilidade
 
@@ -353,11 +369,29 @@ Para esta versão draft, a janela de 30 dias é contada a partir do último `Wit
 
 WithdrawalBatch segue `OPEN → SEALED → SUBMITTED → RECONCILING → CLOSED`. Depois de `SEALED`, membros e valores não mudam. Resultado parcial pertence a cada Withdrawal; o Batch só fecha quando todos os itens estão em estado terminal ou explicitamente destacados para novo Batch. Reenvio usa a mesma identidade da tentativa externa quando o resultado é desconhecido; uma nova tentativa só é criada após confirmação de que a anterior não movimentou valor.
 
-## 12. Insurance
+### SPEC-FIN-005 — Checkout, hold e taxas
 
-Insurance é Bounded Context próprio. Aggregates mínimos: InsuranceFund/Ledger, Policy, Premium, Reserve, Claim, Repair, Replacement, Coverage, Settlement e History.
+Pré-seleção comercial congela InventoryHold e PricingQuote pelo mesmo prazo. Somente confirmação reconhecida antes da expiração converte o hold; confirmação tardia pode gerar crédito, mas nunca ressuscita Slot. Boleto serve apenas a aporte antecipado e não segura inventário.
 
-Elegibilidade de claim exige TV identificada, policy ativa, vigência, carência cumprida, prêmio adimplente e evento coberto. Fundo registra entradas, reservas, aplicações/rendimentos quando aprovados, saídas e auditoria append-only. Claim segue `FILED → UNDER_REVIEW → APPROVED/DENIED`; aprovado segue para reparo/reposição e settlement próprio. Insurance Settlement não é Settlement de mídia.
+O Advertiser escolhe o budget líquido. `CheckoutTotal = RequestedCampaignBudget + PaymentMethodFees + IssuanceFees + ApplicableTaxes`. Após compensação, AvailableBudget aumenta exatamente pelo RequestedCampaignBudget. Taxa é adicional, discriminada e nunca integra budget, preço ou split.
+
+## 12. Hardware Continuity e Fundo de Influenciadores
+
+### SPEC-CONT-001 — Supersessão
+
+O antigo conceito de Insurance é supersedido pelo Plano Mostarda de Continuidade Operacional. O plano é serviço mensal, não seguro, apólice, prêmio, indenização ou proteção mutualista. Seu preço piloto é R$24,90 por TV/mês sob `ServicePlanPriceVersion`.
+
+### SPEC-CONT-002 — Serviço
+
+Hardware Continuity governa subscription, benefício, manutenção, TV temporária pertencente à Mostarda, reparo, troca permanente, inventário circular e proveniência. Limites, carência, permanência e coparticipação são políticas versionadas. Substituta definitiva pode ser recondicionada, mas DEVE ser funcionalmente equivalente.
+
+### SPEC-CONT-003 — Propriedade
+
+Registro inicial cria `OWNERSHIP_DECLARED` com assinatura, serial, imagens, declaração, documento disponível, logs, hash e QuantumAnchor. Quantum prova integridade e anterioridade, não verdade material. Troca permanente coordena dois títulos: TV original para Mostarda e equivalente para parceiro, preservando contrato, entrega, aceite e histórico append-only.
+
+### SPEC-CONT-004 — Fundo de influenciadores
+
+Sem influenciador elegível, a linha de 10% pertence ao Fundo de Desenvolvimento de Influenciadores. Toda despesa exige finalidade autorizada, mais de 50% do equity total e pelo menos dois votos favoráveis distintos, com snapshot societário imutável. Financial executa; o comitê decide.
 
 ## 13. TV Network e Edge operacional
 
@@ -370,6 +404,8 @@ O contexto existe para responder uma pergunta exclusivamente operacional: “est
 ### SPEC-TV-002 — Identidade e lifecycle
 
 TVIdentifier é permanente e não reutilizável; dispositivos substituíveis possuem suas próprias identidades e vínculos históricos. A sequência canônica é `REGISTERED → INSTALLATION_PENDING → INSTALLED → PROVISIONING → ACTIVE`. A instalação física aceita é pré-condição do provisionamento lógico; capability e health são gates adicionais antes de `ACTIVE`. Depois de ativa, a TV pode alternar `ACTIVE ↔ SUSPENDED`, entrar em `MAINTENANCE` e termina em `DECOMMISSIONED`. Substituição cria novo vínculo e preserva o dispositivo anterior.
+
+Instalação pode ser autoguiada pelo parceiro sob sessão remota de técnico Mostarda. Prova de presença usa desafio temporário, serial, fotos/vídeo, checklist, assinatura e testes. Proprietário declara ownership; dono do local diferente atua somente como custodiante autorizado.
 
 `TVIdentifier`, `DeviceIdentifier` e `EdgeInstallationIdentifier` nunca são sinônimos. TV identifica o nó lógico permanente; Device identifica uma peça física; EdgeInstallation identifica uma instalação do runtime vinculada a exatamente um MiniPC durante sua vigência. A credencial operacional pertence à EdgeInstallation. Troca de MiniPC encerra o vínculo e a credencial anteriores e cria nova EdgeInstallation; não transfere a chave antiga nem recria a TV.
 
@@ -563,7 +599,7 @@ As decisões anteriormente registradas em `OPEN-006`, `OPEN-009`, `OPEN-016`, `O
 3. `PaymentReceived` não lança dinheiro; somente `PaymentCompensated` causa `PostPaymentLedgerEntry`, seguido por `IncreaseCampaignBudget`.
 4. Payment compensado cria crédito do Advertiser, não Platform Fee ou direito de parceiro.
 5. Evidence válida/ancorada e Settlement são condição para materializar SplitShares e Platform Fee.
-6. `Payment` governa cobrança; `PaymentLedger` governa fatos monetários reconhecidos, crédito do Advertiser, Insurance Fund, recovery de Advertiser/terceiro e recolhimento fiscal consolidado.
+6. `Payment` governa cobrança; `PaymentLedger` governa fatos monetários reconhecidos, crédito do Advertiser, receita/obrigações de continuidade, recovery de Advertiser/terceiro e recolhimento fiscal consolidado.
 7. `PartnerLedger` governa crédito/débito de Partner, NegativeBalance e recovery de `EDGE_PARTNER`.
 8. Financial nunca decide responsabilidade; `ResponsibilityDecisionPublished` seleciona o Command financeiro do owner competente.
 9. `NONE` e `MOSTARDA` não criam recebível contra terceiro.

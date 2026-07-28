@@ -89,6 +89,8 @@ Divergência não é corrigida por mutação direta. O Reconciler emite Command 
 
 ## Conectividade e sincronização
 
+Perda do Cloud não interrompe programação assinada e válida em cache. PlaybackEvents e Telemetry são enfileirados separadamente e sincronizados após reconexão. Edge nunca repete conteúdo além dos Slots autorizados. Esgotada a programação, Player usa fallback institucional local; tela preta por ausência de conteúdo é proibida enquanto o hardware puder renderizar.
+
 Conectividade possui estados conceituais `UNKNOWN`, `ONLINE`, `INTERMITTENT`, `OFFLINE` e `RECOVERING`, derivados por política.
 
 Fatos pendentes preservam identidade, ordering key e instante original. Na reconexão:

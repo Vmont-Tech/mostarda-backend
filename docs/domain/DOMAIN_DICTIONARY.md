@@ -44,7 +44,7 @@ Fluxo contínuo de dados operacionais emitidos pelo **Edge**: heartbeat, saúde 
 Mecanismo que define o **valor cobrado** por Slot com base em demanda, contexto (horário, localização), performance histórica do inventário e recomendação de IA. Aplicado no momento da alocação do Slot.
 
 ## Split Payment
-Divisão automática do valor líquido distribuível de uma Evidence entre participantes elegíveis, após taxas, impostos e retenções explícitas. A política canônica é **30% Mostarda, 20% Dono da TV, 20% Dono do Espaço, 20% Vendedor responsável e 10% Influenciador**. Fundo de Seguro não é sexto destinatário de split; seus créditos são lançamentos explícitos. Executada via **Asaas**.
+Divisão automática do valor líquido distribuível de uma Evidence entre participantes elegíveis, após taxas, impostos e retenções explícitas. A política canônica é **30% Mostarda, 20% Dono da TV, 20% Dono do Espaço, 20% Vendedor responsável e 10% Influenciador**. Quando não há influenciador elegível, os 10% constituem patrimônio restrito do Fundo de Desenvolvimento de Influenciadores; não se tornam receita livre nem um sexto destinatário. A execução financeira ocorre pelo Financial Platform via **Asaas**.
 
 ## Settlement
 Processo de liquidação financeira que consolida Evidences válidas em ciclos e dispara os **Split Payments** via **Asaas**. Nunca ocorre sem Evidence íntegra.
@@ -67,14 +67,14 @@ Interação física entre um usuário (via celular/tag NFC) e o ecossistema Most
 ## QR Interaction
 Interação por leitura de QR Code. Mesma regra do NFC: passa pelo **Quantum Registry**, nunca direto ao Edge.
 
-## Insurance Fund
-Livro-razão append-only do fundo de seguro. Registra entrada de prêmios, reservas, saídas e saldo sem se confundir com receita ou split de campanha.
+## Continuity Subscription
+Adesão versionada de uma TV ao Plano Mostarda de Continuidade Operacional. É serviço, não seguro.
 
-## Insurance Policy
-Contrato de cobertura de hardware de uma TV: vigência, carência, elegibilidade, limites, exclusões e adimplência.
+## Maintenance Case
+Caso de diagnóstico, reparo, TV temporária ou troca permanente, com benefício, custo e histórico auditáveis.
 
-## Insurance Claim
-Sinistro submetido para análise de cobertura, reparo ou reposição, com decisão e histórico auditáveis.
+## Influencer Development Fund
+Patrimônio restrito que recebe a linha de 10% quando não existe influenciador elegível.
 
 ## Split Policy Version
 Identificador imutável da regra de distribuição aplicada a uma Evidence e a uma linha de Settlement.

@@ -410,7 +410,7 @@ Qualquer um destes comportamentos invalida a implementação:
 3. Toda JournalTransaction é append-only e exige débitos iguais a créditos.
 4. `PaymentReceived` não produz lançamento; somente `PaymentCompensated` autoriza `PostPaymentLedgerEntry`.
 5. Payment compensado cria crédito do Advertiser; Platform Fee e Participant Payable somente nascem de Settlement.
-6. Insurance Fund é serializado pelo PaymentLedger; evento atrasado não desfaz consumo aceito.
+6. Receita e custos do Plano de Continuidade são lançamentos explícitos no PaymentLedger; evento atrasado não desfaz consumo aceito.
 7. `NONE` e `MOSTARDA` nunca criam RecoveryObligation contra terceiro.
 8. Sem TaxPolicy válida, nenhuma instrução bancária é enviada; Withdrawal falha como retryable e preserva a reserva.
 9. `responsibleSubjectId` é obrigatório para Advertiser/Edge Partner/terceiro e proibido para Mostarda/None.

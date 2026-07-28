@@ -14,6 +14,8 @@ A credencial operacional identifica uma `EdgeInstallation`, não a TV abstrata n
 
 ## Registro conceitual
 
+O registro físico inicial referencia `AssetProvenance` e estado `OWNERSHIP_DECLARED`, com serial, imagens, declaração assinada, documento disponível, logs e QuantumAnchor. Device Registry não garante verdade material nem armazena documento completo; preserva identidade e referência autoritativa.
+
 Cada `DeviceRegistration` preserva:
 
 - identificador permanente e tipo;

@@ -44,7 +44,8 @@
 | Creative Asset e elegibilidade | **Cloud** (Campaign Management) | Edge, AI Orchestration | Veredito técnico vem da IA, decisão é do contexto. |
 | TV e `TV ID` | **Cloud** (TV Network) | todos | Toda TV pertence a um parceiro. |
 | Venue | **Cloud** (TV Network) | Pricing Engine, Campaign Management | |
-| Seguro da TV | **Cloud** (TV Network) | Settlement | |
+| Continuidade de hardware | **Hardware Continuity** | TV Network, Financial, Quantum, Governance | serviço; não seguro |
+| Fundo de influenciadores | **InfluencerDevelopmentFund** | Settlement, Financial, comitê | patrimônio restrito |
 | Influencer e contrato de participação | **Cloud** (Influencer Network) | Settlement, Campaign Management | |
 | Conta comercial, pipeline, carteira do Vendedor | **Cloud** (CRM) | Settlement, Analytics | |
 | Identidade, papéis e permissões | **Cloud** (User Identity) | todos | |

@@ -71,19 +71,17 @@ A divisão de cada exibição respeita o modelo canônico vigente:
 Regras:
 
 - A soma **sempre** fecha 100% do valor líquido cobrado do anunciante.
-- Se um papel não participa daquela exibição, sua parcela permanece `BLOCKED` ou `UNCLAIMED`; ela não é redistribuída automaticamente.
+- Se um papel não participa daquela exibição, sua parcela permanece `BLOCKED` ou `UNCLAIMED` e não é redistribuída às demais linhas. Exceção normativa: sem Influenciador elegível, os 10% pertencem ao Fundo de Desenvolvimento de Influenciadores.
 - O split é calculado a partir da **evidência**, nunca a partir do orçamento planejado.
 - Alteração dos percentuais exige nova versão de política e decisão arquitetural aprovada.
 
-## Seguro da TV
+## Continuidade operacional da TV
 
-O contexto Insurance pode manter Fundo de Seguro da TV para coberturas aprovadas. A fonte e a forma de capitalização permanecem decisão normativa aberta e não podem ser inferidas como desconto por exibição. O fundo pode cobrir, conforme apólice:
+O conceito de seguro foi supersedido pelo Plano Mostarda de Continuidade Operacional, serviço mensal do modelo completo. Freemium não participa. O plano prioriza diagnóstico, reparo, TV temporária Mostarda e substituição equivalente, conforme limites versionados.
 
-- reposição em caso de dano/roubo elegível;
-- manutenção preventiva pactuada;
-- indisponibilidade prolongada por falha coberta.
+## Rede de parceiros
 
-O seguro é **parte do modelo**, não um add-on. O objetivo é reduzir o risco do dono da TV e manter o inventário saudável.
+Freemium reserva 40% de cada faixa à programação local e 60% à Mostarda. Conteúdo local ocupa até 30 segundos consecutivos. O parceiro controla a liberação de sua quota; conteúdo confirmado é imutável. Consulte [PARTNER_NETWORK_OPERATING_MODEL.md](PARTNER_NETWORK_OPERATING_MODEL.md).
 
 ## Anúncios de 15 segundos
 

@@ -102,7 +102,7 @@ Financial Platform não:
 | Evidence | fato `VALID`, não revertido e com anchor confirmado, ou rejeição definitiva | consumo ou liberação da reserva por Command ao `CampaignBudget` | playback isolado nunca consome budget |
 | Settlement | direito imutável por `SplitShare` | crédito único no `PartnerLedger` | Settlement nunca instrui pagamento |
 | Asaas | fatos externos de cobrança/transferência | instruções e reconciliação | provider não decide política ou saldo |
-| Insurance | nenhum acesso direto implícito | somente contratos explícitos futuros | fundo e claim pertencem a Insurance |
+| Hardware Continuity | cobrança/obrigação autorizada | lançamento explícito de receita/custo do serviço | Financial não decide manutenção, troca ou responsabilidade |
 | Quantum | nenhum | nenhum | blockchain nunca movimenta dinheiro |
 | Analytics | eventos financeiros | projeções descartáveis/reconstruíveis | Analytics nunca é fonte de saldo |
 
@@ -323,12 +323,12 @@ Financial valida o contrato e executa por Command próprio. Confidence nunca con
 
 ## 20. Sincronização normativa financeira
 
-O Financial Decision Register é a autoridade especializada para dinheiro, precisão, dupla entrada, reconhecimento, Insurance Fund, recovery, refund, fiscalidade e pagamento parcial.
+O Financial Decision Register é a autoridade especializada para dinheiro, precisão, dupla entrada, reconhecimento, continuidade operacional, recovery, refund, fiscalidade e pagamento parcial.
 
 - `PaymentReceived` não lança dinheiro.
 - `PaymentCompensated` causa `PostPaymentLedgerEntry`; entrada aceita causa `IncreaseCampaignBudget`.
 - Payment compensado cria crédito do Advertiser; Platform Fee e Participant Payable somente nascem de Settlement.
-- `PaymentLedger` governa fatos monetários reconhecidos, crédito do Advertiser, Insurance Fund, recovery de Advertiser/terceiro e pagamento fiscal consolidado.
+- `PaymentLedger` governa fatos monetários reconhecidos, crédito do Advertiser, receita/obrigações de continuidade, recovery de Advertiser/terceiro e pagamento fiscal consolidado.
 - `PartnerLedger` governa lançamentos e recovery de Edge Partner.
 - Evidence revertida sem decisão de Governance bloqueia cautelarmente a parcela; não causa compensação definitiva.
 - toda JournalTransaction é append-only, multilinhas e balanceada.

@@ -494,6 +494,10 @@ Novas exibições são interrompidas, Campaign é pausada e Advertiser é notifi
 
 ## 21. Estado decisório
 
+### 21.1 Grade de parceiros e blocos contíguos
+
+Slots permanecem atômicos em 15 segundos. Freemium local compõe no máximo dois consecutivos; Campaign Mostarda pode exigir bloco maior. Slot confirmado é imutável. Ausência de bloco produz sugestões explicáveis e nunca realocação silenciosa. Pré-seleção cria hold temporário; somente confirmação válida produz reserva definitiva. A autoridade detalhada é [PARTNER_NETWORK_OPERATING_MODEL.md](../product/PARTNER_NETWORK_OPERATING_MODEL.md).
+
 `OPEN-036..048` foram fechados pelo documento “Fechamento do Campaign Management”. Não permanecem decisões específicas abertas neste contexto. Parâmetros numéricos vivem em políticas operacionais versionadas e não alteram a semântica aqui definida.
 
 `OPEN-049` está `CLOSED` por `DEC-041`: Governance & Dispute Management, por GovernanceCase, é o owner exclusivo da classificação oficial.

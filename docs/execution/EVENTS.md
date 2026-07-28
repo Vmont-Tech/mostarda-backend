@@ -199,23 +199,24 @@ Ordering: por Aggregate owner (`TV`, `Device`, `Installation`, `EdgeInstallation
 | `UpdateRolledBack` | EdgeInstallation | UpdateRollout, Health | TV, failed version, restored version, reason | Preserva tentativa falha |
 | `RollbackFailed` | EdgeInstallation | Fleet, Operations | TV, versions, stage/cause | Leva a DEGRADED/FAILED; não inventa HEALTHY |
 
-## Insurance
+## Hardware Continuity (`Insurance*` supersedido)
 
-Ordering: por `PolicyId`, `ClaimId`, `ReserveId`, `RepairId`, `ReplacementId` ou `InsuranceSettlementId`. Insurance Settlement nunca é Settlement de mídia.
+Os Events vigentes estão definidos em [HARDWARE_CONTINUITY.md](../domain/HARDWARE_CONTINUITY.md). Nenhum Event `Insurance*` é autorizado. Ordering ocorre pelo identificador do Aggregate produtor; transferência e proveniência preservam `exchangeId`, `assetId`, `causationId` e revisões.
 
 | Event | Produtor único | Consumidores principais | Payload conceitual | Falha/duplicidade/replay |
 | --- | --- | --- | --- | --- |
-| `InsuranceClaimFiled` | InsuranceClaim | Claim assessment, Notifications | claim, policy/TV refs, occurrence, documents digest | Duplicata de solicitação retorna claim original |
-| `InsuranceClaimAssessmentStarted` | InsuranceClaim | Claimant, Operations | claim, assessor, policy version | Timeout permanece UNDER_REVIEW |
-| `InsuranceClaimInformationRequested` | InsuranceClaim | Claimant, Notifications | claim, missing items, reason | Complemento é novo fato, não edição |
-| `InsuranceClaimApproved` | InsuranceClaim | Reserve, Repair/Replacement workflow | claim, coverage decision, limits/policy version | Não cria reserva diretamente |
-| `InsuranceClaimDenied` | InsuranceClaim | Reserve release, Notifications | claim, reason, policy version | Final; nova Claim referencia a anterior |
-| `InsuranceReserveCreated` | InsuranceReserve | Repair/Replacement, Fund projection | reserve, claim, value, policy/source refs | Capitalização `OPEN-009`; dedupe por claim/decision |
-| `InsuranceReserveReleased` | InsuranceReserve | Fund projection, Analytics | reserve, released value, reason | Movimento append-only |
-| `InsuranceRepairAuthorized` | InsuranceRepair | Operations, InsuranceSettlement | repair, claim/reserve refs, quote | Duplicata não autoriza segundo reparo |
-| `InsuranceReplacementAuthorized` | InsuranceReplacement | TV Network, InsuranceSettlement | replacement, old/new device refs, reserve | TV Network recebe somente refs operacionais permitidas |
-| `InsuranceSettlementExecuted` | InsuranceSettlement | Insurance Fund/Ledger, Notifications | obligation, value, receipt, reserve refs | Resultado externo desconhecido reconcilia; replay não paga |
-| `InsuranceClaimSettled` | InsuranceClaim | Claimant, Analytics, Notifications | claim, insurance settlement ref, repair/replacement result, revision | Final; replay não repete obrigação |
+| `ContinuitySubscriptionActivated` | ContinuitySubscription | Financial, Operations, Analytics | subscription, TV, plan/price versions, competence | Dedupe pela ativação/competência |
+| `MaintenanceCaseOpened` | MaintenanceCase | Operations, Notifications | case, TV, occurrence, provenance refs | Duplicata retorna o caso existente |
+| `RepairAuthorized` | MaintenanceCase | Operations, Financial | case, diagnosis, authorization, limits/policy version | Replay não reautoriza despesa |
+| `TemporaryReplacementAssigned` | TemporaryReplacement | TV Network, Operations | assignment, case, temporary TV, custody | TV temporária continua Mostarda |
+| `TemporaryReplacementReturned` | TemporaryReplacement | Inventory, Operations | assignment, return, inspection | Correção é novo fato |
+| `PermanentExchangeProposed` | PermanentExchange | Signatures, Operations | exchange, old/new assets, equivalence, terms | Proposta expirada não transfere propriedade |
+| `PermanentExchangeAccepted` | PermanentExchange | Operations, AssetProvenance | exchange, signed declarations, signer refs | Duplicata preserva aceite original |
+| `PermanentExchangeCompleted` | PermanentExchange | TV Network, Financial, Analytics | exchange, delivery/inspection, reciprocal transfer refs | Final; replay não repete entrega |
+| `AssetOwnershipDeclared` | AssetProvenance | Quantum, Compliance | asset, declarant, declaration, evidence digest | Append-only; não prova magicamente verdade material |
+| `AssetOwnershipTransferred` | AssetProvenance | TV Network, Quantum, Compliance | asset, from/to, legal instrument, effective time | Uma transferência por revisão |
+| `DonorPartRegistered` | CircularInventory | Operations, Analytics | source asset, part identity/condition, provenance | Dedupe por origem+serial |
+| `AssetRetired` | CircularInventory | TV Network, Analytics | asset, reason, salvage refs | Estado final do ativo, não apaga histórico |
 
 ## Emergência e AI
 

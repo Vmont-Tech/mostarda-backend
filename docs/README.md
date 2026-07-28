@@ -17,7 +17,10 @@ A candidata a fonte normativa primária é [`specification/PLATFORM_SPECIFICATIO
 | `tv-network/`     | TV Network: ciclo de vida, dispositivos Edge, capacidade, saúde e frota. |
 | `governance/`     | Governance & Dispute Management: investigação, decisões oficiais, recursos e responsabilidade. |
 | `domain/REVENUE_ARCHITECTURE.md` | Contrato econômico: split, retenções, conciliação e exceções. |
-| `domain/INSURANCE.md` | Fundo de seguro, apólices, reservas, sinistros e reposições. |
+| `product/PARTNER_NETWORK_OPERATING_MODEL.md` | Freemium/completo, grade, checkout, Pricing, Evidence e offline. |
+| `domain/HARDWARE_CONTINUITY.md` | Serviço de continuidade, manutenção, substituição e proveniência. |
+| `domain/INFLUENCER_DEVELOPMENT_FUND.md` | Patrimônio restrito e governança dos 10%. |
+| `domain/INSURANCE.md` | Registro de supersessão do conceito antigo. |
 | `domain/TV_EDGE_MODEL.md` | Operação TV/Edge, recuperação e observabilidade. |
 | `adr/`            | Architecture Decision Records — decisões arquiteturais versionadas.                 |
 | `events/`         | Catálogo de eventos de domínio e contratos.                                         |

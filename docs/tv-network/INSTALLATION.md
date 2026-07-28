@@ -19,6 +19,8 @@ Uma Installation planejada contém:
 - riscos, dependências e motivo;
 - correlação com instalação anterior quando troca/reparo.
 
+Installation pode ser autoguiada pelo proprietário/custodiante com técnico Mostarda remoto. O pacote exige vídeo contínuo com desafio temporário, serial, fotos, declaração de defeitos, checklist, testes e assinatura. Proprietário declara ownership; dono do local diferente somente instala como custodiante autorizado.
+
 ## Lifecycle
 
 ```text
@@ -48,7 +50,7 @@ Itens, critérios e tolerâncias quantitativas são `OPEN` até versão aprovada
 
 ## Segregação de responsabilidade
 
-Técnico executa e declara checks; autoridade de aceite decide `AcceptInstallation`. A matriz de papéis e exceções é `OPEN`, mas autodeclaração não pode contornar check bloqueante.
+Parceiro executa checks guiados; técnico remoto registra/verifica; autoridade de aceite decide `AcceptInstallation`. Autodeclaração não contorna check bloqueante.
 
 Aceite permite iniciar provisioning; não ativa TV e não declara Health.
 

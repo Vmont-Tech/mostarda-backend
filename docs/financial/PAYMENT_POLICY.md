@@ -119,9 +119,11 @@ O Financial Platform não deve inferir compensação:
 
 A taxa é encargo adicional do Advertiser. Deve ser distinguível do valor destinado à Campaign.
 
+Para todo método, `CheckoutTotal = RequestedCampaignBudget + PaymentMethodFees + IssuanceFees + ApplicableTaxes`. Após compensação, somente `RequestedCampaignBudget` aumenta AvailableBudget. A Mostarda não absorve taxa e o Advertiser não recebe budget inferior ao solicitado.
+
 ### 8.2 Outros métodos
 
-Taxas, multas, juros e descontos para PIX/boleto não foram normativamente definidos. Não podem ser presumidos.
+Valores efetivos de PIX/boleto pertencem à versão da política/provedor, mas são sempre adicionais e discriminados. Boleto somente aporta saldo antecipado; nunca cria hold de inventário.
 
 ### 8.3 Regras gerais
 

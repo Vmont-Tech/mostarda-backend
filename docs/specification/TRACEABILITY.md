@@ -12,7 +12,8 @@
 | `SPEC-SETTLE-001..002` | `domain/REVENUE_ARCHITECTURE.md`, `AGGREGATES.md`; execution docs | ADR-005/007 |
 | `SPEC-FIN-001..004` | todos os documentos em `financial/` | ADR-007 |
 | `DEC-043`, Financial Decision Register | `PLATFORM_SPECIFICATION.md`; `financial/FINANCIAL_ARCHITECTURE.md`, `FINANCIAL_INVARIANTS.md`, `LEDGER.md`, `FINANCIAL_COMMANDS.md`, `FINANCIAL_EVENTS.md`, `CAMPAIGN_BUDGET.md`, `PARTNER_WALLET.md`, `WITHDRAWAL_POLICY.md`; Aggregate/Execution/Governance catalogs | ADR-007/009 |
-| Insurance | `domain/INSURANCE.md`, `DOMAIN_EVENTS.md`, execution Sagas/States | — |
+| `SPEC-CONT-001..004` | `domain/HARDWARE_CONTINUITY.md`, `INFLUENCER_DEVELOPMENT_FUND.md`, `INSURANCE.md`; catálogos Domain/Execution | — |
+| `SPEC-PARTNER-001..003` | `product/PARTNER_NETWORK_OPERATING_MODEL.md`, Campaign/Pricing/Evidence, TV Network e Financial | ADR-002/007/008 |
 | `SPEC-TV-001..005` | todos os documentos em `tv-network/` | ADR-008 |
 | AI e Grão | `domain/AI_ARCHITECTURE.md`, `GRAO.md`; ADR-006 | ADR-006 |
 | Marketplace/evolução | `domain/BOUNDED_CONTEXTS.md`, `DOMAIN_EVOLUTION.md` | — |
@@ -34,7 +35,9 @@
 | Saque | PartnerLedger → Wallet → Withdrawal → Asaas | Financial Architecture, Withdrawal Policy |
 | Frota | Register → Install → Provision → Health → Active | TV Network lifecycle/state machines |
 | Update | DesiredState → Wave → Health Gate → Apply/Rollback | TV Network update/rollback docs |
-| Seguro | Premium/Policy → Claim → Reserve → Repair/Replacement | Insurance, Execution Sagas |
+| Continuidade | Subscription → MaintenanceCase → reparo/TV temporária → PermanentExchange → QuantumAnchor | Hardware Continuity, TV Network, Institutional Domain |
+| Fundo de influenciadores | Evidence monetizada sem Influencer → SplitShare do fundo → voto ponderado → compromisso → execução/prestação de contas | Influencer Development Fund, Revenue Architecture, Financial |
+| Checkout temporal | sugestão → hold/quote congelados → pagamento imediato → confirmação/expiração | Partner Network Operating Model, Pricing, Payment Flow |
 | Governança | Fatos autoritativos → GovernanceCase → investigação/revisão humana → ResponsibilityDecisionPublished → Commands dos owners consumidores | Governance specification, Commands, Events, State Machine, Sagas |
 | Recurso | ResponsibilityDecisionPublished → Appeal → GovernanceCaseReevaluationStarted → nova revision → GovernanceCaseReevaluated → compensações append-only | Governance specification, Governance Saga, Financial/Settlement/Campaign |
 | Recovery financeiro | ResponsibilityDecisionPublished → Command específico por ResponsibleParty → PaymentLedger/PartnerLedger → obrigação/lançamento append-only | Financial Decision Register, Financial Commands/Events |

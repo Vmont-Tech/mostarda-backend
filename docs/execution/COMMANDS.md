@@ -169,20 +169,21 @@ TV Network não conhece Campaign, anúncio, preço, Evidence, Settlement ou Fina
 | `RecordUpdateResult` | `EdgeInstallation` | Edge/Supervisor após operação observada | `UPDATING`; resultado pertence ao mesmo package/attempt | Mantém versão nova para health gate ou registra falha | `UpdateApplied` ou `UpdateFailed` | Resultado desconhecido não é terminal; `tvId+updateAttempt` |
 | `RecordRollbackResult` | `EdgeInstallation` | Edge/Supervisor após operação observada | `ROLLING_BACK`; resultado pertence à mesma tentativa | `HEALTHY/DEGRADED/FAILED` | `UpdateRolledBack` ou `RollbackFailed` | Versões/health preservados; `tvId+rollbackAttempt` |
 
-## Insurance
+## Hardware Continuity (`Insurance*` supersedido)
+
+Os Commands normativos vigentes estão definidos em [HARDWARE_CONTINUITY.md](../domain/HARDWARE_CONTINUITY.md). Nenhum Command `Insurance*` é autorizado.
 
 | Command | Aggregate owner | Quem pode emitir | Pré-estado e pré-condições | Pós-estado/efeito | Events | Autorização, auditoria e idempotência |
 | --- | --- | --- | --- | --- | --- | --- |
-| `FileInsuranceClaim` | `InsuranceClaim` | Segurado/delegado | Policy referenciada; ocorrência identificada; solicitação não duplicada | `FILED` | `InsuranceClaimFiled` | Identidade/documentos; `policyId+claimantRequestId` |
-| `StartClaimAssessment` | `InsuranceClaim` | Insurance | `FILED`; assessor autorizado | `UNDER_REVIEW` | `InsuranceClaimAssessmentStarted` | Assessor/policy version; `claimId+reviewRevision` |
-| `RequestClaimInformation` | `InsuranceClaim` | Analista | `UNDER_REVIEW`; lacuna material explícita | Permanece `UNDER_REVIEW` aguardando complemento | `InsuranceClaimInformationRequested` | Lista e motivo; `claimId+requestRevision` |
-| `DecideInsuranceClaim` | `InsuranceClaim` | Analista segregado | `UNDER_REVIEW`; cobertura/carência/adimplência e fatos avaliados | `APPROVED` ou `DENIED` | `InsuranceClaimApproved` ou `InsuranceClaimDenied` | Decisão explicável; `claimId+decisionRevision` |
-| `CreateInsuranceReserve` | `InsuranceReserve` | Insurance após aprovação | Claim aprovado; fundo/política permitem; fonte de capitalização conforme `OPEN-009` | Reserva `COMMITTED` | `InsuranceReserveCreated` | Claim/coverage/fund refs; `claimId+reserveRevision` |
-| `AuthorizeRepair` | `InsuranceRepair` | Insurance | Claim aprovado; reserva comprometida; orçamento válido | `AUTHORIZED` | `InsuranceRepairAuthorized` | Orçamento/limites; `claimId+repairQuoteId` |
-| `AuthorizeReplacement` | `InsuranceReplacement` | Insurance | Claim aprovado; reserva; replacement elegível | `AUTHORIZED` | `InsuranceReplacementAuthorized` | Device antigo/novo e cobertura; `claimId+replacementDecision` |
-| `SettleInsuranceObligation` | `InsuranceSettlement` | Insurance | Reparo/reposição aceito; reserva e instrução financeira válidas | Settlement de seguro executado/registrado | `InsuranceSettlementExecuted` | Não usa Settlement de mídia; `insuranceObligationId` |
-| `ReleaseInsuranceReserve` | `InsuranceReserve` | Insurance | Obrigação cancelada/negada/concluída com residual | Nova liberação append-only | `InsuranceReserveReleased` | Motivo e valor; `reserveId+releaseDecision` |
-| `MarkInsuranceClaimSettled` | `InsuranceClaim` | Insurance consumindo `InsuranceSettlementExecuted` | Claim `REPAIR_AUTHORIZED/REPLACEMENT_AUTHORIZED`; obrigação e recibo reconciliados | `SETTLED` final | `InsuranceClaimSettled` | `claimId+insuranceSettlementId`; não altera ledger |
+| `ActivateContinuitySubscription` | `ContinuitySubscription` | Partner onboarding/billing autorizado | TV elegível, Complete Mode, preço e policy version vigentes | Assinatura `ACTIVE` | `ContinuitySubscriptionActivated` | `tvId+servicePlanPriceVersion+competence` |
+| `OpenMaintenanceCase` | `MaintenanceCase` | Parceiro, suporte ou monitoramento autorizado | TV e ocorrência identificadas; caso equivalente não aberto | Caso `OPEN` | `MaintenanceCaseOpened` | `tvId+occurrenceId` |
+| `AuthorizeRepair` | `MaintenanceCase` | Operação autorizada | Diagnóstico registrado; alternativa conforme policy | Reparo `AUTHORIZED` | `RepairAuthorized` | `maintenanceCaseId+decisionRevision` |
+| `AssignTemporaryReplacement` | `TemporaryReplacement` | Operação autorizada | Caso aberto; TV temporária Mostarda disponível | Empréstimo `ASSIGNED` | `TemporaryReplacementAssigned` | `maintenanceCaseId+temporaryTvId` |
+| `CompleteTemporaryReturn` | `TemporaryReplacement` | Operação autorizada | Equipamento devolvido e inspecionado | Empréstimo `RETURNED` | `TemporaryReplacementReturned` | `temporaryReplacementId+inspectionRevision` |
+| `ProposePermanentExchange` | `PermanentExchange` | Operação autorizada | Perda total/equivalência e ativos registrados | Troca `PROPOSED` | `PermanentExchangeProposed` | `maintenanceCaseId+proposalRevision` |
+| `AcceptPermanentExchange` | `PermanentExchange` | Titulares autorizados | Proposta vigente; declarações e assinaturas válidas | Troca `DELIVERY_PENDING` | `PermanentExchangeAccepted` | `exchangeId+signaturePackageId` |
+| `CompletePermanentExchange` | `PermanentExchange` | Operação após entrega e inspeção | Transferências recíprocas e custódia comprovadas | Troca `COMPLETED` | `PermanentExchangeCompleted`, fatos de provenance | `exchangeId+completionRevision` |
+| `RegisterDonorPart` | `CircularInventory` | Operação de hardware autorizada | Origem, integridade e ativo doador rastreáveis | Peça disponível ou destinada | `DonorPartRegistered` | `sourceAssetId+partSerial` |
 
 ## Emergência e IA
 

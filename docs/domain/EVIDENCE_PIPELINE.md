@@ -114,6 +114,10 @@ O Edge preserva o PlaybackEvent original. Retry:
 
 ## 6. EvidenceRecord
 
+### 6.0 Purpose e elegibilidade
+
+Toda execução comprovável gera EvidenceRecord com `EvidencePurpose`: `MONETIZED_PLAYBACK`, `LOCAL_FREEMIUM_PLAYBACK`, `INSTITUTIONAL_PLAYBACK` ou `FALLBACK_PLAYBACK`. Campos físicos são comuns. Somente o primeiro exige snapshot econômico e pode ser elegível a Settlement; os demais usam `FinancialEligibility = NOT_APPLICABLE`. Declaração humana nunca prova playback.
+
 ### 6.1 Identidade
 
 Um PlaybackEvent aceito para construção corresponde a no máximo um `EvidenceRecord`. A deduplicação primária usa `playbackEventId`; a unicidade de negócio também verifica Slot, tentativa e unidade de exibição.
@@ -133,7 +137,7 @@ O Builder não “completa” fatos por suposição. Ele correlaciona snapshots 
 | CampaignBudget | reserva/consumo correlacionado e valor autorizado |
 | Tax Policy | linhas, bases, retenções e versão aplicável |
 | Split Policy | cinco papéis, percentuais canônicos e versão |
-| Insurance Policy | referência/versionamento aplicável, sem inferir capitalização |
+| Continuity Service | não integra a prova de playback nem sua elegibilidade financeira; fatos de manutenção permanecem no contexto proprietário |
 | Telemetry | sinais permitidos, confiança e proveniência; nunca substitui playback |
 
 Ausência de uma fonte obrigatória não é preenchida com o valor atual. A Evidence aguarda, torna-se inválida ou entra em disputa conforme a natureza da lacuna.
@@ -158,7 +162,6 @@ EvidenceRecord registra, sem calcular por conta própria:
 - `PricingAlgorithmVersion`;
 - `SettlementPolicyVersion`;
 - `TaxPolicyVersion`;
-- `InsurancePolicyVersion`;
 - identificação da reserva de CampaignBudget.
 
 Registrar esses dados não cria SplitShare nem PartnerCredit. Settlement revalida elegibilidade e cria direitos; Evidence preserva a explicação do valor.

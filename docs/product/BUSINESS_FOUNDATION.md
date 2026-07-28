@@ -94,3 +94,7 @@ Sucesso não é somente faturamento; é uma rede saudável, líquida e confiáve
 ## 12. Modelo de negócio resumido
 
 **Parceiros-chave:** proprietários de TV e locais, anunciantes, agências, influenciadores, Asaas e Quantum. **Recursos-chave:** rede de telas, Edge/Player/Canvas, Evidence Ledger, dados de operação, marca e relacionamento local. **Atividades-chave:** ativação de telas, aquisição de demanda, alocação, prova, liquidação, suporte e qualidade da rede. **Estrutura de custos:** hardware/instalação quando aplicável, conectividade, cloud, meios de pagamento, operação de campo, suporte e aquisição. **Viabilidade:** cada canal deve medir CAC, ativação, retenção, receita e LTV; a expansão só avança quando a coorte demonstra economia unitária sustentável.
+
+## Modelo de adoção de parceiros
+
+Freemium reduz barreira por hardware próprio e quota local de 40% por faixa; Mostarda administra 60%. O modelo completo exige mini PC em comodato e Plano de Continuidade. A escassez está na grade, não no split. Taxas de pagamento são adicionais ao budget líquido solicitado. Consulte [PARTNER_NETWORK_OPERATING_MODEL.md](PARTNER_NETWORK_OPERATING_MODEL.md).

@@ -24,7 +24,7 @@ Financial Platform:
 | Responsabilidade | Aggregate owner |
 | --- | --- |
 | lifecycle da cobrança externa | `Payment` |
-| fatos financeiros de pagamento, crédito do anunciante, tesouraria, Insurance Fund, recovery de Advertiser/terceiro e recolhimento fiscal consolidado | `PaymentLedger` |
+| fatos financeiros de pagamento, crédito do anunciante, tesouraria, continuidade operacional, recovery de Advertiser/terceiro e recolhimento fiscal consolidado | `PaymentLedger` |
 | buckets financeiros de uma Campaign | `CampaignBudget` |
 | créditos, débitos, reservas de saque, NegativeBalance e recovery de Edge Partner | `PartnerLedger` |
 | lifecycle de um saque | `Withdrawal` |
@@ -204,37 +204,11 @@ Obrigações do mesmo devedor são amortizadas FIFO por `createdAt`, com desempa
 
 `PartnerLedger` amortiza obrigação de Edge Partner atomicamente quando aplica crédito futuro ao NegativeBalance. Advertiser e terceiro possuem Commands específicos no PaymentLedger e fontes de amortização próprias; nenhum crédito de Campaign é consumido por inferência.
 
-## 9. Insurance Fund
+## 9. Continuidade operacional
 
-`PaymentLedger` é owner transacional exclusivo do Insurance Fund e serializa capitalização, reserva, consumo, liberação e recomposição.
+`DEC-048` supersede o Insurance Fund. A mensalidade do Plano de Continuidade é receita de serviço e nunca CampaignBudget, SplitShare ou patrimônio restrito. Payment/PaymentLedger preservam finalidade, preço/policy version, TV e competência; contabilidade reconhece receita e obrigações operacionais sem criar Aggregate securitário.
 
-- contribuição recorrente inicial: `0.0000`;
-- cap inicial sem FinancialPolicy válida: `0.0000 BRL`;
-- alteração exige `UpdateFinancialPolicy → FinancialPolicyChanged`;
-- prioridade é a ordem de aceitação serializada no PaymentLedger;
-- evento atrasado não desfaz consumo anterior;
-- falta de cobertura não é automaticamente “irrecuperável”.
-
-Quando há terceiro devedor e direito de regresso, uso do fundo pode reconhecer:
-
-```text
-DR ACT_RECOVERY_RECEIVABLE
-CR ACT_INSURANCE_RESERVE
-```
-
-Para `MOSTARDA` ou `NONE`, não existe recovery receivable contra terceiro:
-
-```text
-DR EXP_UNRECOVERABLE_LOSS
-CR ACT_INSURANCE_RESERVE ou ACT_BANK_SETTLED
-```
-
-conforme a fonte efetivamente consumida. Write-off de recebível exige `WriteOffUncollectibleRecovery`, autorização financeira segregada e lançamento:
-
-```text
-DR EXP_UNRECOVERABLE_LOSS
-CR ACT_RECOVERY_RECEIVABLE
-```
+Reparo, logística, TV temporária, mini PC e inventário circular são custos do serviço. Hardware Continuity autoriza o caso; Financial registra e executa. Recovery por dano imputável continua exigindo decisão do owner competente e, quando baseado em responsabilidade, `ResponsibilityDecisionPublished`.
 
 ## 10. Withdrawal e fiscalidade
 

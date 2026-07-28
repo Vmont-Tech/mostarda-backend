@@ -27,8 +27,8 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 
 - **Responsabilidade:** ciclo de vida e disponibilidade operacional da frota — **TV**, **Venue**, Device Registry, EdgeInstallation, Capability Registry, health, heartbeat, manutenção, rollout, rollback e Fleet.
 - **Pertence:** cadastro e identidade (`TV ID`), vínculo TV↔Venue↔proprietários, atributos de contexto do Venue, instalação/provisionamento, inventário, estado operacional, Capability declarativa, Desired/Current/Observed State, conectividade e manutenção. Ver [`../tv-network/TV_NETWORK_ARCHITECTURE.md`](../tv-network/TV_NETWORK_ARCHITECTURE.md).
-- **NÃO pertence:** software embarcado e fila local (Edge Runtime), saúde em tempo real (Telemetry), preço do inventário (Pricing Engine), pagamento ao parceiro (Settlement) ou fundo/cobertura/sinistro (Insurance).
-- **Conversa com:** Edge Runtime, Telemetry, Insurance, Notifications e Analytics por fatos operacionais; não conhece Campaign, Pricing, Evidence, Settlement ou Financial Platform.
+- **NÃO pertence:** software embarcado e fila local (Edge Runtime), saúde em tempo real (Telemetry), preço do inventário (Pricing Engine), pagamento ao parceiro (Settlement) ou autorização de benefício/manutenção (Hardware Continuity).
+- **Conversa com:** Edge Runtime, Telemetry, Hardware Continuity, Notifications e Analytics por fatos operacionais; não conhece Campaign, Pricing, Evidence, Settlement ou Financial Platform.
 - **Proprietário:** Cloud.
 
 ## 3. Edge Runtime
@@ -66,7 +66,7 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 ## 7. Settlement
 
 - **Responsabilidade:** liquidação — consolidar Evidences válidas em ciclos, calcular o split canônico 30/20/20/20/10 e criar direitos financeiros.
-- **Pertence:** ciclo de liquidação, memória de cálculo do split, impostos e retenções explícitas, disputas financeiras e notas fiscais. Fundo, cobertura e sinistro pertencem a Insurance.
+- **Pertence:** ciclo de liquidação, memória de cálculo do split, impostos e retenções explícitas, disputas financeiras e notas fiscais. O Fundo de Desenvolvimento de Influenciadores recebe a parcela restrita quando não houver influenciador elegível; continuidade de hardware é outro contexto.
 - **NÃO pertence:** validade da Evidence (Evidence Ledger), preço (Pricing Engine), ledger/carteira/saque (Financial Platform), rails de pagamento (Asaas), qualquer trilha de valor em blockchain.
 - **Conversa com:** Evidence Ledger, Quantum Integration (confirmação de ancoragem), Financial Platform, TV Network, Influencer Network, User Identity, Notifications e Analytics.
 - **Proprietário:** Cloud.
@@ -137,19 +137,19 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 
 ---
 
-## 16. Insurance
+## 16. Hardware Continuity
 
-- **Responsabilidade:** fundo, apólice, prêmio/mensalidade, reserva, cobertura, sinistro, reparo, reposição e liquidação de seguro.
-- **Pertence:** os Aggregates definidos em [`INSURANCE.md`](./INSURANCE.md), inclusive saldo e histórico append-only do fundo.
-- **NÃO pertence:** identidade/elegibilidade da TV (TV Network), pagamento de campanha (Settlement), saúde bruta do dispositivo (Telemetry) ou prova de exibição (Evidence Ledger).
-- **Conversa com:** TV Network, Telemetry, Settlement, Notifications e User Identity, sempre por contratos/eventos.
+- **Responsabilidade:** subscription, benefício, manutenção, TV temporária, troca permanente, inventário circular e proveniência.
+- **Pertence:** Aggregates definidos em [`HARDWARE_CONTINUITY.md`](./HARDWARE_CONTINUITY.md).
+- **NÃO pertence:** Health bruto, culpa, Campaign, Evidence, split ou operação securitária.
+- **Conversa com:** TV Network, Financial, Quantum, Governance, Notifications e User Identity por contratos.
 - **Proprietário:** Cloud.
 
 ## 17. Financial Platform
 
 - **Responsabilidade:** entrada compensada, Payment Ledger, Campaign Budget, Partner Account/Ledger/Wallet, Withdrawal, batches e políticas financeiras.
-- **NÃO pertence:** preço (Pricing), prova (Evidence), direito/split (Settlement), execução física, blockchain ou decisão de cobertura de seguro.
-- **Conversa com:** Asaas via adapter, Campaign Management, Settlement, Insurance, User Identity, Notifications e Analytics.
+- **NÃO pertence:** preço (Pricing), prova (Evidence), direito/split (Settlement), execução física, blockchain ou decisão de manutenção/benefício.
+- **Conversa com:** Asaas via adapter, Campaign Management, Settlement, Hardware Continuity, User Identity, Notifications e Analytics.
 - **Proprietário:** Cloud (regras e ledger) / Asaas (execução de cobrança e transferência).
 
 ## 18. Configuration Service

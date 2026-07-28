@@ -474,3 +474,7 @@ Ordem de aquisição e formação de preço são decisões distintas. Pricing En
 Realocação nunca reutiliza Quote anterior. Cada candidato recebe novo Quote, mas só é elegível quando satisfaz a `SlotEquivalencePolicy` preservada na obrigação.
 
 O preço candidato deve estar dentro da tolerância versionada e nunca pode exceder o limite autorizado sem novo consentimento do Advertiser. Ausência de policy/versão bloqueia a realocação; código não aplica tolerância implícita.
+
+## 20. Bootstrap e recalibração de TVs parceiras
+
+Dados declarados no onboarding geram somente preço-base provisório normalizado por coorte e confiança limitada. Depois da ativação, a dinâmica automática usa oferta, demanda e ocupação. Telemetria, QR, tags e histórico justificam somente reavaliação formal versionada; nunca alteram Quote aplicado. Mini PC oficial aumenta confiança, não preço por si só.

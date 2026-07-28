@@ -14,10 +14,10 @@ Cada Aggregate tem **uma raiz**, protege **invariantes** e é a única porta de 
 ## TV Aggregate — contexto TV Network
 
 - **Root:** `TV` (identidade `TVIdentifier`)
-- **Entidades internas:** Device (mini PC), Screen, DeclaredCapability, TagBinding. `InsurancePolicy` é Aggregate do contexto Insurance; TV mantém apenas referência de cobertura.
+- **Entidades internas:** Device (mini PC), Screen, DeclaredCapability, TagBinding. Continuidade é Aggregate de Hardware Continuity; TV mantém apenas referência de subscription.
 - **Value Objects:** `TVIdentifier`, `GeoLocation` (via Venue), `DeviceHealth`, `TimeSlot` (operação/manutenção)
 - **Invariantes:** toda TV pertence a **um** Dono da TV e está em **um** Venue; `TV ID` imutável e não reutilizável; só recebe Slots compatíveis com suas Capabilities declaradas; TV suspensa não recebe Slot.
-- **Eventos:** `TvRegistered`, `TvProvisioned`, `TvActivated`, `TvSuspended`, `TvReactivated`, `TvDecommissioned`, `TvAssignedToVenue`, `TvOwnershipTransferred`, `InsurancePolicyAttached`, `NfcTagLinked`.
+- **Eventos:** `TvRegistered`, `TvProvisioned`, `TvActivated`, `TvSuspended`, `TvReactivated`, `TvDecommissioned`, `TvAssignedToVenue`, `TvOwnershipTransferred`, `ContinuitySubscriptionAttached`, `NfcTagLinked`.
 
 ## TVCapability Aggregate — contexto Edge Runtime
 
@@ -57,7 +57,7 @@ Especificação integral: [`CAMPAIGN_MANAGEMENT.md`](./CAMPAIGN_MANAGEMENT.md).
 
 - **Root:** `Evidence`
 - **Entidades internas:** ValidationRecord, AnchoringRecord, DisputeRecord
-- **Value Objects:** `TVIdentifier`, `CampaignIdentifier`, `SlotIdentifier`, `EvidenceHash`, `DeviceSignature`, `Money` (calculado, final e efetivamente cobrado), `PlaybackDuration`, `AssetReference`, `AnchoringReceipt`, `EvidenceConfidence`, `PlaybackChecksum`, `CreativeChecksum`, `PlayerVersion`, `EdgeVersion`, `AIModelVersion`, `OSVersion`, `PricingPolicyVersion`, `PricingAlgorithmVersion`, `SettlementPolicyVersion`, `TaxPolicyVersion`, `InsurancePolicyVersion`, `SplitPolicyVersion`, `TaxBreakdown`, `SplitShare`.
+- **Value Objects:** `TVIdentifier`, `CampaignIdentifier`, `SlotIdentifier`, `EvidenceHash`, `DeviceSignature`, `Money` (calculado, final e efetivamente cobrado), `PlaybackDuration`, `AssetReference`, `AnchoringReceipt`, `EvidenceConfidence`, `PlaybackChecksum`, `CreativeChecksum`, `PlayerVersion`, `EdgeVersion`, `AIModelVersion`, `OSVersion`, `PricingPolicyVersion`, `PricingAlgorithmVersion`, `SettlementPolicyVersion`, `TaxPolicyVersion`, `SplitPolicyVersion`, `TaxBreakdown`, `SplitShare`.
 - **Invariantes:** representa exatamente **15s** de exibição; campos obrigatórios do ADR-003 sempre presentes; contém preço calculado, final e cobrado, preço dinâmico/fatores, impostos, split aplicado, percentuais, versões de política/algoritmo, timestamp, TV, Slot, Campaign, playback, telemetria, hash, documento associado e Quantum Anchor; registra `EvidenceConfidence`, checksums de playback e criativo e versões de Player, Edge, IA e sistema operacional; assinatura válida é condição para `VALID`; unicidade por Slot executado; **append-only** — correção apenas por `EvidenceReversed`; sem status `VALID` + ancoragem confirmada não há liquidação.
 - **Eventos:** `EvidenceGenerated`, `EvidenceValidated`, `EvidenceRejected`, `EvidenceDuplicateDetected`, `EvidenceHashed`, `EvidenceRegistered`, `EvidenceDisputed`, `EvidenceDisputeResolved`, `EvidenceReversed`, `LedgerSnapshotAnchored`.
 
@@ -67,13 +67,21 @@ Especificação integral: [`CAMPAIGN_MANAGEMENT.md`](./CAMPAIGN_MANAGEMENT.md).
 - **Entidades internas:** SplitLine, FinancialRight, Invoice, Charge, SettlementDispute
 - **Value Objects:** `SettlementCycle`, `Money`, `SplitShare`, `SplitShareStatus`, `SplitPolicyVersion`, `SettlementPolicyVersion`, `TaxPolicyVersion`, `Retention`, `TaxBreakdown`, `AsaasFee`.
 - **Invariantes:** consome apenas Evidences `VALID` e ancoradas; após taxas, impostos e retenções explícitas, o valor líquido distribuível é dividido exatamente em **30% Mostarda, 20% Proprietário da TV, 20% Proprietário do Local, 20% Vendedor responsável e 10% Influenciador**; soma das cinco `SplitShare` = valor líquido distribuível; cada parcela possui status próprio `READY`/`BLOCKED`/`UNCLAIMED`/`CREDITED`; ausência de beneficiário não redistribui percentual nem bloqueia as demais parcelas; `CREDITED` cria direito para Financial Platform, não pagamento; ciclo fechado é imutável; falha de ancoragem ou disputa da Evidence bloqueia as parcelas afetadas; nenhuma trilha de valor em blockchain. Ver [`REVENUE_ARCHITECTURE.md`](./REVENUE_ARCHITECTURE.md).
-- **Eventos:** `SettlementCycleOpened`, `SettlementCycleClosed`, `SettlementAuthorized`, `SettlementBlocked`, `SplitCalculated`, `SettlementExecuted`, `PartnerCreditRequested`, `InvoiceIssued`, `ChargeRegistered`, `ChargePaid`, `ChargeOverdue`, `InsuranceFundCredited`, `SettlementDisputeOpened`, `SettlementDisputeResolved`.
+- **Eventos:** `SettlementCycleOpened`, `SettlementCycleClosed`, `SettlementAuthorized`, `SettlementBlocked`, `SplitCalculated`, `SettlementExecuted`, `PartnerCreditRequested`, `InfluencerFundCreditRequested`, `InvoiceIssued`, `ChargeRegistered`, `ChargePaid`, `ChargeOverdue`, `SettlementDisputeOpened`, `SettlementDisputeResolved`.
 
 ## Financial Platform Aggregates — contexto Financial Platform
 
 - **Roots:** `Payment`, `PartnerAccount`, `PartnerLedger`, `PartnerWallet`, `Withdrawal`, `WithdrawalBatch`, `CampaignBudget`, `PaymentLedger`, `FinancialPolicy`, `WithdrawalPolicy`.
 - **Invariantes:** `Payment` governa exclusivamente o lifecycle externo e nunca grava Ledger; PartnerLedger e PaymentLedger são append-only; Wallet é projeção do PartnerLedger; CampaignBudget só aumenta depois de `PaymentCompensated` e de entrada aceita no PaymentLedger; Withdrawal sempre aplica WithdrawalPolicy; chargebacks e recuperações são novos lançamentos; Settlement apenas origina direitos.
-- **Entidades financeiras:** PaymentLedger contém crédito do Advertiser, recovery de `ADVERTISER`/`INTEGRATED_THIRD_PARTY` e estado transacional do Insurance Fund; PartnerLedger contém recovery de `EDGE_PARTNER`. `MOSTARDA` e `NONE` nunca criam RecoveryObligation contra terceiro.
+- **Entidades financeiras:** PaymentLedger contém crédito do Advertiser, receita/obrigações de continuidade e recovery de `ADVERTISER`/`INTEGRATED_THIRD_PARTY`; PartnerLedger contém recovery de `EDGE_PARTNER`. `MOSTARDA` e `NONE` nunca criam RecoveryObligation contra terceiro.
+
+## Hardware Continuity
+
+Aggregates: `ContinuitySubscription`, `MaintenanceCase`, `TemporaryReplacement`, `PermanentExchange`, `ContinuityBenefitAccount`, `CircularInventory` e `AssetProvenance`.
+
+## Influencer Development Fund
+
+Aggregate: `InfluencerDevelopmentFund`, owner do ledger restrito, compromissos, despesas e decisões de voto.
 - **Contabilidade:** toda `JournalTransaction` é append-only, multilinhas e exige `sum(debits) = sum(credits)`; regras completas em [`../financial/FINANCIAL_DECISION_REGISTER.md`](../financial/FINANCIAL_DECISION_REGISTER.md).
 - **Eventos:** catálogo em [`../financial/FINANCIAL_EVENTS.md`](../financial/FINANCIAL_EVENTS.md).
 

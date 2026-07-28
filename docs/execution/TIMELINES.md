@@ -298,34 +298,31 @@ Playback → Evidence VALID → QuantumAnchor CONFIRMED
 
 Settlement termina no direito; nunca termina em pagamento.
 
-## 10. Seguro
+## 10. Continuidade operacional
 
 ```text
-Claimant ──C:FileInsuranceClaim──> InsuranceClaim [FILED]
-                                     └─E:InsuranceClaimFiled
-Insurance ──C:StartClaimAssessment──> [UNDER_REVIEW]
-                                      └─E:InsuranceClaimAssessmentStarted
-             ├─ C:RequestClaimInformation ──> remains UNDER_REVIEW
-             └─ C:DecideInsuranceClaim
-                    ├─ [DENIED] ──E:InsuranceClaimDenied
-                    └─ [APPROVED] ──E:InsuranceClaimApproved
-                           │ C:CreateInsuranceReserve
-                           ▼
-                     InsuranceReserve [COMMITTED]
-                           ├─ C:AuthorizeRepair ─────> InsuranceRepair
-                           └─ C:AuthorizeReplacement > InsuranceReplacement
-                                      │
-                                      ▼
-                           C:SettleInsuranceObligation
-                                      │
-                                      ▼
-                           E:InsuranceSettlementExecuted
-                                      │
-                                      ▼
-                           InsuranceClaim [SETTLED]
+Occurrence ──C:OpenMaintenanceCase──> MaintenanceCase [OPEN]
+                                          └─E:MaintenanceCaseOpened
+Diagnosis
+  ├─ C:AuthorizeRepair ───────────────> E:RepairAuthorized
+  │      └─ if downtime:
+  │           C:AssignTemporaryReplacement
+  │             └─E:TemporaryReplacementAssigned
+  │             └─ repair completed
+  │             └─C:CompleteTemporaryReturn
+  │                 └─E:TemporaryReplacementReturned
+  └─ total loss:
+         C:ProposePermanentExchange ──> [PROPOSED]
+         C:AcceptPermanentExchange ───> [DELIVERY_PENDING]
+         delivery + inspection + reciprocal ownership transfers
+         C:CompletePermanentExchange ─> [COMPLETED]
+              ├─E:PermanentExchangeCompleted
+              ├─E:AssetOwnershipTransferred (old TV → Mostarda)
+              ├─E:AssetOwnershipTransferred (equivalent TV → partner)
+              └─Quantum anchors append-only provenance
 ```
 
-Capitalização do Insurance Fund segue `DEC-043`: contribuição recorrente inicial zero e mudança somente por FinancialPolicy versionada. Insurance Settlement nunca é Settlement de mídia.
+O fluxo é serviço de continuidade, não seguro. Replay nunca repete cobrança, reparo, entrega, assinatura ou transferência.
 
 ## 11. Atualização remota e rollback
 
@@ -499,7 +496,7 @@ PROIBIDO: timeout ─> new idempotency key ─> second effect
 | TV activation | `TvActivated` | missing installation/provision/capability/health gate |
 | Update | target `UpdateApplied` + acceptable health | failed/rolled back/unknown target |
 | Emergency | confirmation per TV and clear/restore | partial/unknown TV |
-| Insurance | `InsuranceSettlementExecuted` + Claim settled | under review/reserve/financial unknown |
+| Hardware Continuity | operação restaurada ou `PermanentExchangeCompleted` com transferências recíprocas | diagnóstico, entrega, assinatura ou proveniência incompletos |
 ## Timeline — incidente, julgamento e consequência
 
 ```text

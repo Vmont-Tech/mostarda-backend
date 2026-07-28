@@ -33,7 +33,7 @@ Este registro conecta regras vigentes, ADRs e supersessões. O status `ACCEPTED`
 | `DEC-011` | Assets de Facets representam conhecimento, políticas, capacidades e estado | Assets/Facets | ACCEPTED |
 | `DEC-012` | Grão é produto pessoal explicável; IA não decide por outros contextos | Grão + AI Architecture | ACCEPTED |
 | `DEC-013` | QR contém token opaco e é resolvido no Cloud | Institutional Domain | ACCEPTED |
-| `DEC-014` | Seguro é Bounded Context próprio, não atributo da TV | Insurance | ACCEPTED |
+| `DEC-014` | Seguro é Bounded Context próprio, não atributo da TV | Insurance | SUPERSEDED por `DEC-048` |
 | `DEC-015` | Escala preserva conceitos de 100 a 1.000.000 de TVs | Scalability | ACCEPTED |
 | `DEC-016` | Installation física aceita precede Provisioning lógico e ambos são gates de ativação | TV Network + Specification | ACCEPTED no draft |
 | `DEC-017` | TV, Device e EdgeInstallation possuem identidades distintas; credencial pertence à EdgeInstallation e não é transferida em substituição | Device Registry + Specification | ACCEPTED no draft |
@@ -62,9 +62,19 @@ Este registro conecta regras vigentes, ADRs e supersessões. O status `ACCEPTED`
 | `DEC-040` | Matriz Advertiser/Grão/IA/Moderador/Financial/Campaign define autoridade e proibições | Fechamento do Campaign Management (`OPEN-048`) | ACCEPTED no draft |
 | `DEC-041` | Governance & Dispute Management, por GovernanceCase, é o único owner do julgamento oficial; decisões são revisions append-only publicadas por ResponsibilityDecisionPublished e consumidores não reinterpretam | Fechamento de `OPEN-049`; Governance specification | ACCEPTED no draft |
 | `DEC-042` | ReevaluateGovernanceCase inicia reavaliação por GovernanceCaseReevaluationStarted; nova ResponsibilityDecisionPublished precede GovernanceCaseReevaluated, que representa exclusivamente a conclusão e retorno a DECIDED | Semântica normativa da reavaliação de GovernanceCase | ACCEPTED no draft |
-| `DEC-043` | Financial Platform usa BRL/4 casas, dupla entrada append-only, reconhecimento somente após compensação/Settlement, recovery por owner específico, Insurance Fund no PaymentLedger e bloqueio fiscal sem TaxPolicy | `financial/FINANCIAL_DECISION_REGISTER.md`; encerra `OPEN-006/009/016..020/025` | ACCEPTED |
+| `DEC-043` | Financial Platform usa BRL/4 casas, dupla entrada append-only, reconhecimento somente após compensação/Settlement, recovery por owner específico, Insurance Fund no PaymentLedger e bloqueio fiscal sem TaxPolicy | `financial/FINANCIAL_DECISION_REGISTER.md`; encerra `OPEN-006/009/016..020/025` | ACCEPTED, exceto trecho Insurance supersedido por `DEC-048` |
+| `DEC-044` | Freemium reserva 40% de cada faixa à programação local, limitada a dois Slots consecutivos, e 60% à Mostarda; Slots confirmados são imutáveis | Partner Network Operating Model | ACCEPTED |
+| `DEC-045` | Sugestão não reserva; pré-seleção cria InventoryHold e PricingQuote coexpirantes; decisão permanece com Advertiser/agente autorizado | Partner Network Operating Model | ACCEPTED |
+| `DEC-046` | Budget solicitado é líquido; taxas e tributos são adicionais e discriminados no checkout; boleto não reserva inventário | Partner Network Operating Model + Payment Policy | ACCEPTED; especializa `DEC-006` |
+| `DEC-047` | Toda execução gera EvidenceRecord tipada; somente `MONETIZED_PLAYBACK` possui extensão econômica/elegibilidade financeira | Partner Network Operating Model + Evidence Pipeline | ACCEPTED |
+| `DEC-048` | Antigo Insurance é supersedido pelo Plano Mostarda de Continuidade Operacional, serviço mensal não securitário | Hardware Continuity | ACCEPTED; supersede `DEC-014` e a parte Insurance de `DEC-043` |
+| `DEC-049` | Sem influenciador elegível, os 10% pertencem ao Fundo de Desenvolvimento de Influenciadores, patrimônio restrito governado por maioria do equity e dois votos | Influencer Development Fund | ACCEPTED; especializa `DEC-001` |
+| `DEC-050` | Mini PC completo é propriedade Mostarda em comodato gratuito; instalação pode ser remota assistida; proveniência/troca são assinadas e ancoradas no Quantum | Hardware Continuity + Partner Network Operating Model | ACCEPTED |
+| `DEC-051` | Edge executa cache autorizado offline, sincroniza fatos depois e usa fallback institucional quando a programação se esgota; tela preta por falta de conteúdo é proibida | Partner Network Operating Model | ACCEPTED |
 
 ## Conflitos conhecidos a sincronizar
+
+`DEC-048` torna referências a `InsuranceFund`, apólice, prêmio e sinistro dívida documental histórica quando presentes em relatórios de auditoria já emitidos. Documentos normativos ativos devem usar Hardware Continuity; relatórios históricos não são reescritos.
 
 | ID | Documento | Divergência | Decisão vigente |
 | --- | --- | --- | --- |

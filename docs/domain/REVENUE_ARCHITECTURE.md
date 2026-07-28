@@ -17,14 +17,16 @@ Para cada valor líquido elegível de uma Evidence, aplica-se exatamente:
 
 Não há percentual configurável por padrão, arredondamento que mude o total ou destinatário implícito. A política é versionada (`SplitPolicyVersion`), mas uma nova versão só pode existir por decisão arquitetural aprovada; a versão canônica inicial é `SPLIT-30-20-20-20-10`. A Evidence guarda a versão e todas as cinco linhas de split.
 
+Sem influenciador elegível, a linha de 10% tem como beneficiário o `InfluencerDevelopmentFund`. Isso não redistribui percentual nem cria receita livre da Mostarda; especializa o destinatário da quinta linha conforme `DEC-049`.
+
 Cada `SplitShare` possui ciclo próprio e status `READY`, `BLOCKED`, `UNCLAIMED`, `PAID` ou `FAILED`. Ausência, remoção ou inelegibilidade de um beneficiário torna **somente sua parcela** `UNCLAIMED` ou `BLOCKED`; as demais parcelas `READY` continuam liquidáveis. Uma parcela nunca é redistribuída silenciosamente, e o `Settlement` nunca é bloqueado como um todo por um único recebedor.
 
 ## Ordem do cálculo e auditabilidade
 
 1. O Pricing Engine calcula e congela o `PricingQuote` ao alocar o Slot: preço calculado, fatores, `PricingPolicyVersion` e versão de algoritmo.
-2. A Evidence append-only registra preço calculado, preço final, preço efetivamente cobrado, impostos, descontos autorizados, moeda, precisão, split aplicado, percentuais, `SplitPolicyVersion`, `PricingPolicyVersion`, `SettlementPolicyVersion`, `TaxPolicyVersion`, `InsurancePolicyVersion`, TV, Slot, Campaign, playback, telemetria, hash, documento associado e Quantum Anchor.
+2. A Evidence append-only registra preço calculado, preço final, preço efetivamente cobrado, impostos, descontos autorizados, moeda, precisão, split aplicado, percentuais, `SplitPolicyVersion`, `PricingPolicyVersion`, `SettlementPolicyVersion`, `TaxPolicyVersion`, TV, Slot, Campaign, playback, telemetria, hash, documento associado e Quantum Anchor.
 3. Somente Evidence `VALID`, não revertida, sem disputa e com ancoragem confirmada torna-se elegível.
-4. O Settlement forma o valor bruto elegível, registra impostos, retenções e reserva de seguro como linhas explícitas; obtém o valor líquido distribuível, aplica os cinco percentuais e cria direitos financeiros. Nenhum custo é escondido dentro de uma `SplitShare`.
+4. O Settlement forma o valor bruto elegível, registra impostos e retenções como linhas explícitas; obtém o valor líquido distribuível, aplica os cinco percentuais e cria direitos financeiros. Na ausência de influenciador elegível, a respectiva parcela é direito restrito do Fundo de Desenvolvimento de Influenciadores. Nenhum custo é escondido dentro de uma `SplitShare`.
 5. Financial Platform transforma cada direito em `PartnerLedgerCredit`; Partner Wallet e Withdrawal Policy governam a saída. Asaas cobra e transfere somente quando instruído pelo Financial Platform.
 
 Todo cálculo preserva os valores antes/depois de cada retenção, regra e versão utilizada. Reexecuções são idempotentes por `SettlementCycle + EvidenceId + SplitPolicyVersion`.
@@ -43,7 +45,7 @@ Todo cálculo preserva os valores antes/depois de cada retenção, regra e vers�
 
 ## Limites de responsabilidade
 
-`Pricing` decide preço; `Evidence Ledger` prova o fato; `Settlement` decide elegibilidade financeira e composição; `Financial Platform` governa entrada, ledger, carteira e saída; `Governance & Dispute Management` julga responsabilidade; `Insurance` administra fundo e sinistro; `Asaas` executa os rails quando instruído; `Quantum` ancora hashes, nunca dinheiro. Blockchain não custodia nem movimenta valor.
+`Pricing` decide preço; `Evidence Ledger` prova o fato; `Settlement` decide elegibilidade financeira e composição; `Financial Platform` governa entrada, ledger, carteira e saída; `Governance & Dispute Management` julga responsabilidade; `Hardware Continuity` governa serviço e manutenção; `Asaas` executa os rails quando instruído; `Quantum` ancora hashes, nunca dinheiro. Blockchain não custodia nem movimenta valor.
 
 ## Overdelivery financiado pela plataforma
 

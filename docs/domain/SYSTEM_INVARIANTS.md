@@ -10,7 +10,7 @@ Estas regras são não negociáveis. Toda decisão, contrato, implementação, m
 6. Uma parcela de split tem ciclo próprio; indisponibilidade de um recebedor não bloqueia nem redistribui as demais.
 7. QR nunca contém destino final ou URL de anunciante: contém somente token opaco, resolvido pelo Cloud.
 8. Todo evento possui contexto proprietário, identificador, timestamp e versão de schema.
-9. Toda decisão financeira preserva `PricingPolicyVersion`, `SettlementPolicyVersion`, `TaxPolicyVersion`, `InsurancePolicyVersion` e `SplitPolicyVersion` aplicáveis.
+9. Toda decisão financeira preserva `PricingPolicyVersion`, `SettlementPolicyVersion`, `TaxPolicyVersion` e `SplitPolicyVersion` aplicáveis.
 10. Toda decisão de IA preserva `ModelVersion`, `PromptVersion`, `AgentVersion` e `PolicyVersion`, além da explicação e dos insumos permitidos.
 11. Todo documento auditável possui hash; formato de transporte nunca é identidade da prova.
 12. Facets são independentes, isoladas, versionáveis e hot-swappable; não compartilham estado ou dependência direta.
