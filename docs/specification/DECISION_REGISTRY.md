@@ -62,13 +62,14 @@ Este registro conecta regras vigentes, ADRs e supersessões. O status `ACCEPTED`
 | `DEC-040` | Matriz Advertiser/Grão/IA/Moderador/Financial/Campaign define autoridade e proibições | Fechamento do Campaign Management (`OPEN-048`) | ACCEPTED no draft |
 | `DEC-041` | Governance & Dispute Management, por GovernanceCase, é o único owner do julgamento oficial; decisões são revisions append-only publicadas por ResponsibilityDecisionPublished e consumidores não reinterpretam | Fechamento de `OPEN-049`; Governance specification | ACCEPTED no draft |
 | `DEC-042` | ReevaluateGovernanceCase inicia reavaliação por GovernanceCaseReevaluationStarted; nova ResponsibilityDecisionPublished precede GovernanceCaseReevaluated, que representa exclusivamente a conclusão e retorno a DECIDED | Semântica normativa da reavaliação de GovernanceCase | ACCEPTED no draft |
+| `DEC-043` | Financial Platform usa BRL/4 casas, dupla entrada append-only, reconhecimento somente após compensação/Settlement, recovery por owner específico, Insurance Fund no PaymentLedger e bloqueio fiscal sem TaxPolicy | `financial/FINANCIAL_DECISION_REGISTER.md`; encerra `OPEN-006/009/016..020/025` | ACCEPTED |
 
 ## Conflitos conhecidos a sincronizar
 
 | ID | Documento | Divergência | Decisão vigente |
 | --- | --- | --- | --- |
 | `SYNC-001` | `product/PRODUCT_BIBLE.md` | Percentuais/redistribuição antigos | RESOLVED por sincronização com `DEC-001` |
-| `SYNC-002` | `product/PRODUCT_BIBLE.md` | Capitalização presumida do seguro | RESOLVED; fonte permanece `OPEN-009` |
+| `SYNC-002` | `product/PRODUCT_BIBLE.md` | Capitalização presumida do seguro | RESOLVED por `DEC-043`; contribuição inicial zero e mudança somente por FinancialPolicy versionada |
 | `SYNC-003` | ADR-003/ADR-005 históricos | Linguagem associa Settlement diretamente a Asaas | ADR-007 supersede essa parte; ADRs históricos não são editados |
 | `SYNC-004` | `domain/DOMAIN_PRINCIPLES.md`, `WORLDS.md`, `DOMAIN_DICTIONARY.md` | Linguagem antiga sugere Evidence nascendo/assinada no Edge | `DEC-002`: Edge cria PlaybackEvent; EvidenceRecord nasce no Cloud |
 | `SYNC-005` | documentos antigos de QR/Quantum | Alguns trechos sugerem resolução final no Quantum | `DEC-013`: QR contém token e Cloud resolve destino; Quantum fornece consulta/âncora permitida |
@@ -81,7 +82,7 @@ Este registro conecta regras vigentes, ADRs e supersessões. O status `ACCEPTED`
 | `SYNC-013` | Commands/Sagas de Evidence | Ordem Builder/Validator/Ledger diverge | Spec: cria PENDING, valida, então torna VALID |
 | `SYNC-014` | Command de emergência | Um Command aparece com dois owners | Owner único ou Saga com Commands separados (`OPEN-027`) |
 | `SYNC-015` | CampaignBudget docs | Estados/buckets e ownership de ContractValue divergem | `SPEC-FIN-002`: Campaign é owner de ContractValue; CampaignBudget referencia o contrato e governa Available/Reserved/Consumed |
-| `SYNC-016` | Financial Commands | Command de PaymentLedger descreve efeito em CampaignBudget | `SPEC-FIN-002`: Payment, PaymentLedger e CampaignBudget recebem Commands distintos, ligados por Events |
+| `SYNC-016` | Financial Commands | Command de PaymentLedger descreve efeito em CampaignBudget | RESOLVED por `DEC-043`: Payment, PaymentLedger e CampaignBudget recebem Commands distintos, ligados por Events |
 | `SYNC-017` | WithdrawalBatch docs | Open/Close/Seal/Execute possuem semânticas conflitantes | `SPEC-FIN-004`: `OPEN → SEALED → SUBMITTED → RECONCILING → CLOSED`, com resultado por Withdrawal |
 | `SYNC-018` | Player/Playback e Evidence/Anchor state machines | Lifecycles/owners estão sobrepostos | `OPEN-028/034` |
 

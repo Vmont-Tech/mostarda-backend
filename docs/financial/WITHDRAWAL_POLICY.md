@@ -98,6 +98,8 @@ Uma Withdrawal deve preservar:
 
 `EXECUTED` e `REJECTED` são finais para aquela solicitação. `FAILED` é final quando sua disposição é `FINAL`; com disposição `RETRYABLE`, permanece não terminal, conserva a reserva e só transita por `RetryWithdrawal`. Resultado desconhecido não é `FAILED`: permanece `EXECUTING` em reconciliação.
 
+Ausência de `TaxPolicyVersion` válida é falha confirmável anterior à instrução bancária: nenhuma transferência é enviada; produz `WithdrawalFailed(reason=MISSING_TAX_POLICY, disposition=RETRYABLE)`; conserva a reserva; exige policy válida e `RetryWithdrawal`. O estado `FAILED_TAX_POLICY_MISSING` é proibido.
+
 ## 7. Transições
 
 | Origem | Command | Pré-condição resumida | Destino | Event |

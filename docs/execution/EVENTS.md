@@ -271,3 +271,19 @@ Producer único: `GovernanceCase`. Ordering: `governanceCaseId + aggregateRevisi
 | `GovernanceCaseClosed` | Audit, Analytics, Notifications |
 
 `ResponsibilityAssigned` e `ResponsibilityReassigned` são proibidos. Replay preserva Event ID e nunca repete consequência externa. Contrato integral: [`../governance/GOVERNANCE_EVENTS.md`](../governance/GOVERNANCE_EVENTS.md).
+
+## Financial Platform — producers consolidados
+
+| Event | Producer único |
+| --- | --- |
+| `AdvertiserUnusedCreditRefunded` | PaymentLedger |
+| `PartnerRecoveryObligationRegistered` | PartnerLedger |
+| `AdvertiserRecoveryObligationRegistered` | PaymentLedger |
+| `ThirdPartyRecoveryObligationRegistered` | PaymentLedger |
+| `ParticipantPayoutHeld` | PartnerLedger |
+| `TaxPaymentExecuted` | PaymentLedger |
+| `PaymentReconciliationRequired/Completed` | PaymentLedger |
+| `PartnerLedgerReconciliationRequired/Completed` | PartnerLedger |
+| `WithdrawalReconciliationRequired/Completed` | Withdrawal |
+
+`PaymentReceived` não é Event contábil. `FinancialPolicyUpdated`, `WithdrawalExecutionFailed` e `FAILED_TAX_POLICY_MISSING` são proibidos.

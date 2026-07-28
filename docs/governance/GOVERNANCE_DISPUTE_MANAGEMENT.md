@@ -151,6 +151,8 @@ Valores normativos:
 
 Cada decisão possui exatamente um responsibleParty. `NONE` significa que nenhum participante do ecossistema é oficialmente responsabilizado, como em força maior comprovada. Responsabilidade compartilhada é proibida.
 
+`responsibleSubjectId` identifica a contraparte concreta: é obrigatório para `ADVERTISER`, `EDGE_PARTNER` e `INTEGRATED_THIRD_PARTY`, e proibido/nulo para `MOSTARDA` e `NONE`. O valor é imutável dentro da revision. Governance autoriza consequências, mas nunca escolhe conta contábil, cria Ledger Entry ou executa recovery.
+
 #### ResponsibilityCategory
 
 Valores normativos:

@@ -75,7 +75,7 @@ Representa uma instrução de cobrança ao provider, incluindo método e composi
 
 ### 5.5 Budget allocation
 
-É a correlação entre um lançamento compensado e um `CampaignBudget`. Pagamentos parciais, excedentes, duplicados ou destinados a mais de uma Campaign permanecem `OPEN-025`; nenhuma alocação pode ser inferida silenciosamente.
+É a correlação explícita entre um lançamento compensado e um `CampaignBudget`. Pagamento parcial usa somente o valor compensado/alocado; excedente e duplicata permanecem crédito do Advertiser. Nenhuma alocação pode ser inferida silenciosamente.
 
 ## 6. Valores que devem permanecer separados
 
@@ -89,7 +89,7 @@ Cada cobrança deve distinguir conceitualmente:
 - moeda;
 - versão das políticas.
 
-A contabilização definitiva gross/net, regras fiscais e precisão monetária permanecem `OPEN-006`, `OPEN-018` e `OPEN-019`.
+A contabilização gross/net, regras fiscais e precisão monetária seguem o Financial Decision Register.
 
 Enquanto abertas:
 
@@ -112,7 +112,7 @@ Enquanto abertas:
 | `DISPUTED` | pagamento sujeito a disputa | não cria novo crédito |
 | `FAILED` | tentativa falhou sem compensação | não |
 
-A eventual reversão posterior de um Payment compensado não apaga `COMPENSATED`; produz fato compensatório. O lifecycle exato de refund/chargeback permanece `OPEN-016`.
+A eventual reversão posterior de um Payment compensado não apaga `COMPENSATED`; produz bloqueio e, após decisão autorizativa, fato compensatório.
 
 `DISPUTED` representa exclusivamente o lifecycle financeiro do Payment. Financial publica esse fato e jamais conclui responsabilidade. Julgamento e eventual consequência baseada em culpa pertencem a Governance & Dispute Management.
 
@@ -179,7 +179,7 @@ Duas notificações da mesma compensação representam um fato. A segunda deve p
 
 ### 9.4 Evento tardio
 
-Se uma confirmação válida chega depois de a cobrança ter sido observada como expirada/cancelada ou disputada, o Payment não pode ignorá-la nem aplicá-la cegamente. Ele registra a ocorrência para auditoria e abre reconciliação; saldo não é liberado automaticamente. Refund/chargeback e alocação posterior permanecem `OPEN-016/025`.
+Se uma confirmação válida chega depois de a cobrança ter sido observada como expirada/cancelada ou disputada, o Payment não pode ignorá-la nem aplicá-la cegamente. Ele registra a ocorrência para auditoria e abre reconciliação; saldo não é liberado automaticamente.
 
 ## 10. Fluxo de boleto
 
@@ -204,7 +204,7 @@ Juros, multa e tratamento fiscal, se aprovados, devem ser linhas explícitas. N�
 
 ### 10.3 Boleto pago em duplicidade ou a maior
 
-A alocação de pagamento duplicado/excedente permanece `OPEN-025`. É proibido:
+A alocação de pagamento duplicado/excedente segue `LIA_ADVERTISER_CREDIT`. É proibido:
 
 - aumentar automaticamente o mesmo budget duas vezes;
 - distribuir excedente entre Campaigns por heurística;
@@ -256,7 +256,7 @@ Chargeback posterior nunca apaga:
 - Settlement ou SplitShare;
 - PartnerLedgerCredit.
 
-Ele gera fatos e lançamentos compensatórios correlacionados. Como alocar a perda quando o budget já foi consumido e/ou parceiros já receberam permanece `OPEN-016/017`. Até a decisão:
+Ele gera fatos correlacionados e bloqueio cautelar. A perda só é alocada após `ResponsibilityDecisionPublished`. Até a decisão:
 
 - não reescrever histórico;
 - não redistribuir perda silenciosamente;
@@ -297,7 +297,7 @@ Nova parcela compensada remove somente a causa financeira. Campaign retoma autom
 
 ## 13. Pagamentos parciais
 
-A política definitiva para pagamento menor que a obrigação permanece `OPEN-025`.
+Pagamento menor que a obrigação libera somente o valor compensado e explicitamente alocado.
 
 Invariantes enquanto aberta:
 
@@ -335,7 +335,7 @@ O fluxo mínimo é:
 6. aplicar somente política aprovada aos saldos derivados;
 7. preservar a necessidade de reconciliação se os valores já foram consumidos.
 
-Detalhes de alocação permanecem `OPEN-016/017/018`.
+Detalhes de alocação seguem o owner indicado por `ResponsibleParty` e o Financial Decision Register.
 
 ## 16. Falhas distribuídas
 
@@ -367,7 +367,7 @@ Mesmo fato externo, mesma identidade: um lançamento.
 
 ### 17.2 Duas alocações
 
-Um lançamento não pode financiar duas Campaigns além de seu valor. Como pagamentos multi-Campaign serão modelados permanece `OPEN-025`.
+Um lançamento não pode financiar duas Campaigns além de seu valor. Cada alocação multi-Campaign possui identidade e valor explícitos; heurística é proibida.
 
 ### 17.3 Compensação e chargeback simultâneos
 
@@ -461,4 +461,4 @@ O provider comunica recebimento, mas ainda não compensação. O Payment pode av
 
 ## 24. Decisões abertas aplicáveis
 
-Este fluxo permanece condicionado a `OPEN-005`, `OPEN-006`, `OPEN-016` a `OPEN-020`, `OPEN-025`, `OPEN-030` e `OPEN-031` da [PLATFORM_SPECIFICATION.md](../specification/PLATFORM_SPECIFICATION.md).
+Este fluxo permanece condicionado a `OPEN-005`, `OPEN-030` e `OPEN-031`. As decisões financeiras foram encerradas por `DEC-043`.

@@ -554,7 +554,24 @@ GovernanceCaseReevaluated nunca representa início. Commands expressam intençã
 
 Os contratos completos estão em [`../governance/GOVERNANCE_DISPUTE_MANAGEMENT.md`](../governance/GOVERNANCE_DISPUTE_MANAGEMENT.md).
 
-## 21. Decisões abertas
+## 21. Decisões financeiras consolidadas
+
+As decisões anteriormente registradas em `OPEN-006`, `OPEN-009`, `OPEN-016`, `OPEN-017`, `OPEN-018`, `OPEN-019`, `OPEN-020` e `OPEN-025` foram encerradas pela decisão consolidada do fundador em [FINANCIAL_DECISION_REGISTER.md](../financial/FINANCIAL_DECISION_REGISTER.md). São normativos:
+
+1. BRL e escala contábil de quatro casas, Half-Even para operação individual e Hamilton-Hare para split 1:N.
+2. Ledger append-only de dupla entrada; toda transação fecha débitos e créditos.
+3. `PaymentReceived` não lança dinheiro; somente `PaymentCompensated` causa `PostPaymentLedgerEntry`, seguido por `IncreaseCampaignBudget`.
+4. Payment compensado cria crédito do Advertiser, não Platform Fee ou direito de parceiro.
+5. Evidence válida/ancorada e Settlement são condição para materializar SplitShares e Platform Fee.
+6. `Payment` governa cobrança; `PaymentLedger` governa fatos monetários reconhecidos, crédito do Advertiser, Insurance Fund, recovery de Advertiser/terceiro e recolhimento fiscal consolidado.
+7. `PartnerLedger` governa crédito/débito de Partner, NegativeBalance e recovery de `EDGE_PARTNER`.
+8. Financial nunca decide responsabilidade; `ResponsibilityDecisionPublished` seleciona o Command financeiro do owner competente.
+9. `NONE` e `MOSTARDA` não criam recebível contra terceiro.
+10. Ausência de TaxPolicy válida bloqueia a execução bancária com `WithdrawalFailed(MISSING_TAX_POLICY, RETRYABLE)`.
+
+Os parâmetros quantitativos permanecem em policies versionadas. Validação fiscal/jurídica é gate de produção e não autoriza fallback inventado.
+
+## 22. Decisões abertas
 
 | ID | Decisão pendente | Impacto | Regra provisória |
 | --- | --- | --- | --- |
@@ -563,17 +580,9 @@ Os contratos completos estão em [`../governance/GOVERNANCE_DISPUTE_MANAGEMENT.m
 | `OPEN-003` | Controles formais LGPD, segurança e incidentes | Compliance | Minimização, consentimento e auditoria já obrigatórios |
 | `OPEN-004` | Tolerância técnica exata dos 15 segundos | Evidence e Player | Unidade de 15s obrigatória; tolerância não inventada |
 | `OPEN-005` | SLO/SLA numéricos de Edge, Evidence, Anchor e financeiro | Operação e seguro | Health/lacunas explícitos; sem número presumido |
-| `OPEN-006` | Regras fiscais detalhadas, notas e tratamento tributário | Financial/Settlement | Registrar versões/linhas; validar com especialista |
 | `OPEN-007` | Critérios quantitativos de HealthScore e rollout | TV Network | Política versionada e explicável, sem limiar inventado |
 | `OPEN-008` | Mínimo/máximo de Withdrawal | Financial Platform | Apenas frequência de 30 dias e taxa R$2 estão aprovadas |
-| `OPEN-009` | Fonte e forma de capitalização do Insurance Fund | Insurance | Fundo/ledger separados; não inferir percentual de split |
 | `OPEN-010` | Critérios quantitativos de avanço do GTM | Produto | Medir baseline antes de fixar CAC/conversão |
-| `OPEN-016` | Refund/chargeback/disputa após compensação e orçamento já consumido | Financial/Settlement | Somente lançamentos compensatórios |
-| `OPEN-017` | Alocação de chargeback/saldo negativo entre participantes | Financial Platform | Não alterar Evidence, Settlement ou SplitShare |
-| `OPEN-018` | Contabilização gross/net, taxas por meio e impostos | Financial Platform | Taxa de cartão não reduz orçamento contratado |
-| `OPEN-019` | Precisão monetária, moeda, arredondamento e residual do split | Pricing/Settlement/Financial | Split fecha 100%; não inventar precisão |
-| `OPEN-020` | Modelo contábil e invariantes de conservação do Ledger | Financial Platform | Append-only e saldo derivado obrigatórios |
-| `OPEN-025` | Pagamento parcial/excedente/duplicado e alocação entre Campaigns | Payment/CampaignBudget | Só compensado aumenta saldo |
 | `OPEN-027` | Matriz completa Command → pré/pós-estado → Event e owner único | Execution Model | Invariantes existentes continuam obrigatórios |
 | `OPEN-028` | Separação dos lifecycles Evidence validity e Quantum anchor; reversão tardia | Evidence/Quantum/Financial | São owners distintos; compensação append-only |
 | `OPEN-029` | Ordering de PlaybackEvents, gaps e eventos offline atrasados | Edge/Evidence | Idempotência e lacunas explícitas |
@@ -582,6 +591,6 @@ Os contratos completos estão em [`../governance/GOVERNANCE_DISPUTE_MANAGEMENT.m
 | `OPEN-032` | Segregação de funções para finanças, reversão, emergência e manutenção | Identity/Contexts | Owner revalida autorização |
 | `OPEN-033` | Completar Commands/Events ausentes e remover wildcards | Execution Model | Nenhum evento implícito é contrato de implementação |
 | `OPEN-034` | Relação entre Playback attempt e PlayerSession | Player/Execution | Ambos preservam tentativa e fatos, sem owner duplo |
-## 22. Documentos normativos relacionados
+## 23. Documentos normativos relacionados
 
 O mapa de rastreabilidade completo está em [`TRACEABILITY.md`](./TRACEABILITY.md), o registro de decisões em [`DECISION_REGISTRY.md`](./DECISION_REGISTRY.md) e o processo de sincronização em [`CONSISTENCY_RULES.md`](./CONSISTENCY_RULES.md).

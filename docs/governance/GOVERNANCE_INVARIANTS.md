@@ -7,6 +7,8 @@
 3. Contextos de origem publicam fatos e nunca julgamento.
 4. Consumidores não reinterpretam responsibleParty, category ou decisão.
 5. IA nunca executa PublishDecision.
+6. Toda revision com parte externa responsabilizada contém `responsibleSubjectId`; `MOSTARDA` e `NONE` proíbem esse campo.
+7. Governance nunca executa consequência financeira.
 
 ## 2. Evidência e investigação
 

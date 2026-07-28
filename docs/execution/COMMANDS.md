@@ -240,3 +240,19 @@ Owner único de todos os Commands: `GovernanceCase`.
 | `CloseGovernanceCase` | DECIDED | CLOSED | `GovernanceCaseClosed` |
 
 Todos exigem actor, autorização, expected revision, idempotency key, correlation e causation. Contrato integral: [`../governance/GOVERNANCE_COMMANDS.md`](../governance/GOVERNANCE_COMMANDS.md).
+
+## Financial Platform — contratos consolidados
+
+| Command | Owner único | Resultado |
+| --- | --- | --- |
+| `RefundAdvertiserUnusedCredit` | PaymentLedger | `AdvertiserUnusedCreditRefunded` |
+| `RegisterPartnerRecoveryObligation` | PartnerLedger | `PartnerRecoveryObligationRegistered` |
+| `RegisterAdvertiserRecoveryObligation` | PaymentLedger | `AdvertiserRecoveryObligationRegistered` |
+| `RegisterThirdPartyRecoveryObligation` | PaymentLedger | `ThirdPartyRecoveryObligationRegistered` |
+| `UpdateFinancialPolicy` | FinancialPolicy | `FinancialPolicyChanged` |
+| `ReconcilePaymentOperation` | PaymentLedger | `PaymentReconciliationRequired/Completed` |
+| `ReconcileWithdrawalOperation` | Withdrawal | `WithdrawalReconciliationRequired/Completed` |
+| `ExecuteTaxPayment` | PaymentLedger | `TaxPaymentExecuted` |
+| `HoldParticipantPayout` | PartnerLedger | `ParticipantPayoutHeld` |
+
+Commands genéricos de recovery/reconciliação não aceitam novos dispatches. `CreditPartner`, `ConfirmPaymentCompensation`, `FinancialPolicyChanged` e `WithdrawalFailed` permanecem canônicos.

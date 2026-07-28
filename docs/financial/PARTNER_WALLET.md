@@ -226,6 +226,8 @@ O rebuild usa uma fronteira consistente. Entradas posteriores são aplicadas dep
 
 ## 15. Consistência eventual
 
+Recovery de Edge Partner pertence ao PartnerLedger. A obrigação contratual e o NegativeBalance referenciam a mesma origem; crédito futuro amortiza ambos atomicamente e nunca cobra duas vezes. Obrigações são aplicadas FIFO por `createdAt`, com desempate por `obligationId`.
+
 É esperado que a Wallet fique temporariamente atrás do PartnerLedger.
 
 Durante esse período:

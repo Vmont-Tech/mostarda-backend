@@ -71,8 +71,10 @@ Especificação integral: [`CAMPAIGN_MANAGEMENT.md`](./CAMPAIGN_MANAGEMENT.md).
 
 ## Financial Platform Aggregates — contexto Financial Platform
 
-- **Roots:** `PartnerAccount`, `PartnerLedger`, `PartnerWallet`, `Withdrawal`, `WithdrawalBatch`, `CampaignBudget`, `PaymentLedger`, `FinancialPolicy`, `WithdrawalPolicy`.
-- **Invariantes:** PartnerLedger e PaymentLedger são append-only; Wallet é projeção do PartnerLedger; CampaignBudget só aumenta por pagamento compensado e só consome AvailableBudget; Withdrawal sempre aplica WithdrawalPolicy; chargebacks e recuperações são novos lançamentos; Settlement apenas origina direitos.
+- **Roots:** `Payment`, `PartnerAccount`, `PartnerLedger`, `PartnerWallet`, `Withdrawal`, `WithdrawalBatch`, `CampaignBudget`, `PaymentLedger`, `FinancialPolicy`, `WithdrawalPolicy`.
+- **Invariantes:** `Payment` governa exclusivamente o lifecycle externo e nunca grava Ledger; PartnerLedger e PaymentLedger são append-only; Wallet é projeção do PartnerLedger; CampaignBudget só aumenta depois de `PaymentCompensated` e de entrada aceita no PaymentLedger; Withdrawal sempre aplica WithdrawalPolicy; chargebacks e recuperações são novos lançamentos; Settlement apenas origina direitos.
+- **Entidades financeiras:** PaymentLedger contém crédito do Advertiser, recovery de `ADVERTISER`/`INTEGRATED_THIRD_PARTY` e estado transacional do Insurance Fund; PartnerLedger contém recovery de `EDGE_PARTNER`. `MOSTARDA` e `NONE` nunca criam RecoveryObligation contra terceiro.
+- **Contabilidade:** toda `JournalTransaction` é append-only, multilinhas e exige `sum(debits) = sum(credits)`; regras completas em [`../financial/FINANCIAL_DECISION_REGISTER.md`](../financial/FINANCIAL_DECISION_REGISTER.md).
 - **Eventos:** catálogo em [`../financial/FINANCIAL_EVENTS.md`](../financial/FINANCIAL_EVENTS.md).
 
 ## Influencer Aggregate — contexto Influencer Network

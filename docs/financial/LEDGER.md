@@ -122,7 +122,7 @@ Campos não aplicáveis permanecem ausentes de forma explícita; não recebem va
 | PartnerLedger | chargeback/recuperação | fato financeiro + origem | reconhece obrigação compensatória |
 | PartnerLedger | recuperação de negativo | novo crédito + saldo negativo | aplica ordem normativa sem editar créditos |
 
-O modelo contábil definitivo, inclusive se cada fato exige partidas espelhadas, permanece `OPEN-020`.
+O modelo contábil definitivo é de dupla entrada multilinhas conforme [FINANCIAL_DECISION_REGISTER.md](./FINANCIAL_DECISION_REGISTER.md); toda transação exige débitos iguais a créditos.
 
 ## 8. Invariantes de lançamento
 
@@ -139,7 +139,7 @@ O modelo contábil definitivo, inclusive se cada fato exige partidas espelhadas,
 11. Ledger não aceita direito sem owner de origem.
 12. Replay não cria cópia.
 
-Precisão e arredondamento permanecem `OPEN-019`.
+Precisão e arredondamento seguem BRL `DECIMAL(18,4)`, Half-Even para operação individual e Hamilton-Hare para split 1:N.
 
 ## 9. Aceitação de PaymentLedgerEntry
 
@@ -210,7 +210,7 @@ Uma compensação:
 - publica Event próprio;
 - participa do saldo somente conforme o modelo aprovado.
 
-Regras completas de chargeback/refund e alocação permanecem `OPEN-016/017`.
+Chargeback/refund e recovery seguem os owners e a decisão de Governance definidos no Financial Decision Register.
 
 ## 12. Saldo negativo
 
@@ -224,7 +224,7 @@ Regras aprovadas:
 - Partner não saca enquanto o valor elegível está absorvido pelo negativo;
 - histórico mostra origem do débito e créditos usados na recuperação.
 
-A alocação exata de chargeback entre participantes permanece `OPEN-017`.
+A alocação de responsabilidade decorre exclusivamente de `ResponsibilityDecisionPublished`; Financial não escolhe responsável.
 
 ## 13. Ordering
 
@@ -400,4 +400,10 @@ A Wallet é perdida/corrompida. Ela é recalculada do PartnerLedger. Nenhum novo
 
 ## 24. Decisões abertas
 
-O modelo deve respeitar `OPEN-015` a `OPEN-020`, `OPEN-022`, `OPEN-024`, `OPEN-030`, `OPEN-031` e `OPEN-035` da [PLATFORM_SPECIFICATION.md](../specification/PLATFORM_SPECIFICATION.md).
+O modelo respeita o Financial Decision Register e permanece condicionado somente às OPENs ainda listadas na Platform Specification.
+
+## 25. JournalTransaction normativa
+
+Todo fato monetário reconhecido cria uma `JournalTransaction` append-only com uma ou mais `JournalLine`. Cada linha possui conta, natureza débito/crédito, valor BRL em quatro casas e dimensões causais. A transação é rejeitada quando não fecha, mistura moedas, repete causa/finalidade ou usa conta incompatível.
+
+Rebuild e replay nunca geram nova transação.

@@ -11,6 +11,7 @@
 | Quantum/QR/NFC | `domain/INSTITUTIONAL_DOMAIN.md`, `WORLDS.md`, `DOMAIN_EVENTS.md` | ADR-004 |
 | `SPEC-SETTLE-001..002` | `domain/REVENUE_ARCHITECTURE.md`, `AGGREGATES.md`; execution docs | ADR-005/007 |
 | `SPEC-FIN-001..004` | todos os documentos em `financial/` | ADR-007 |
+| `DEC-043`, Financial Decision Register | `PLATFORM_SPECIFICATION.md`; `financial/FINANCIAL_ARCHITECTURE.md`, `FINANCIAL_INVARIANTS.md`, `LEDGER.md`, `FINANCIAL_COMMANDS.md`, `FINANCIAL_EVENTS.md`, `CAMPAIGN_BUDGET.md`, `PARTNER_WALLET.md`, `WITHDRAWAL_POLICY.md`; Aggregate/Execution/Governance catalogs | ADR-007/009 |
 | Insurance | `domain/INSURANCE.md`, `DOMAIN_EVENTS.md`, execution Sagas/States | — |
 | `SPEC-TV-001..005` | todos os documentos em `tv-network/` | ADR-008 |
 | AI e Grão | `domain/AI_ARCHITECTURE.md`, `GRAO.md`; ADR-006 | ADR-006 |
@@ -36,7 +37,9 @@
 | Seguro | Premium/Policy → Claim → Reserve → Repair/Replacement | Insurance, Execution Sagas |
 | Governança | Fatos autoritativos → GovernanceCase → investigação/revisão humana → ResponsibilityDecisionPublished → Commands dos owners consumidores | Governance specification, Commands, Events, State Machine, Sagas |
 | Recurso | ResponsibilityDecisionPublished → Appeal → GovernanceCaseReevaluationStarted → nova revision → GovernanceCaseReevaluated → compensações append-only | Governance specification, Governance Saga, Financial/Settlement/Campaign |
+| Recovery financeiro | ResponsibilityDecisionPublished → Command específico por ResponsibleParty → PaymentLedger/PartnerLedger → obrigação/lançamento append-only | Financial Decision Register, Financial Commands/Events |
+| Fiscal | Withdrawal → TaxPolicy gate → WithdrawalExecuted/Failed → retenção → ExecuteTaxPayment | Withdrawal Policy, Financial Decision Register |
 
 ## Lacunas
 
-Toda decisão listada na seção “Decisões abertas” da especificação permanece sem artefato derivado definitivo. Quando uma `OPEN-*` for fechada, esta matriz deve indicar os documentos e ADRs impactados antes de qualquer implementação.
+As `OPEN-006/009/016..020/025` possuem artefato derivado definitivo em `DEC-043`. As demais decisões listadas na seção “Decisões abertas” da Specification continuam sem artefato definitivo.

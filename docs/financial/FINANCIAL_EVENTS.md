@@ -506,7 +506,7 @@ Mudança de significado exige novo Event, não apenas novo campo.
 
 ### FinancialReconciliationRequired
 
-- **Produtor:** owner que detectou divergência.
+- **Status:** contrato lógico superseded por `PaymentReconciliationRequired`, `PartnerLedgerReconciliationRequired` e `WithdrawalReconciliationRequired`, cada qual com producer único.
 - **Consumidores:** operação financeira autorizada.
 - **Payload:** escopo, identidades, divergência, fatos presentes/ausentes.
 - **Ordering:** por operação.
@@ -514,7 +514,7 @@ Mudança de significado exige novo Event, não apenas novo campo.
 
 ### FinancialReconciliationCompleted
 
-- **Produtor:** owner da reconciliação/decisão.
+- **Status:** contrato lógico superseded por Events de conclusão especializados por owner.
 - **Consumidores:** Aggregates por novos Commands, auditoria.
 - **Payload:** diagnóstico, decisão, fatos usados, Commands compensatórios requeridos.
 - **Ordering:** após abertura.
@@ -558,9 +558,27 @@ São produzidos pelo Aggregate financeiro executor, nunca pelo GovernanceCase, e
 
 | Event | Producer | Significado |
 | --- | --- | --- |
-| `PlatformLossRecorded` | ledger financeiro | perda autorizada foi materializada |
+| `PlatformLossRecorded` | PaymentLedger | perda autorizada foi materializada |
 | `PartnerCompensated` | PartnerLedger | compensação foi registrada |
-| `AdvertiserRefundRecorded` | AdvertiserAccount/Payment | obrigação de refund foi registrada |
-| `ResponsiblePartyRecoveryRecorded` | ledger financeiro | recovery foi registrado |
+| `AdvertiserRefundRecorded` | PaymentLedger | obrigação de refund foi registrada |
+| `ResponsiblePartyRecoveryRecorded` | PartnerLedger | recovery de Edge Partner foi registrado |
 
 Reentrega da decisão não republica efeito. Nova revision cria Event/entry compensatório quando necessário e nunca substitui o anterior.
+
+## Eventos financeiros consolidados
+
+| Event | Producer único | Significado |
+| --- | --- | --- |
+| `AdvertiserUnusedCreditRefunded` | `PaymentLedger` | crédito não usado foi devolvido |
+| `PartnerRecoveryObligationRegistered` | `PartnerLedger` | obrigação contra Edge Partner foi registrada |
+| `AdvertiserRecoveryObligationRegistered` | `PaymentLedger` | recebível contra Advertiser foi registrado |
+| `ThirdPartyRecoveryObligationRegistered` | `PaymentLedger` | recebível contra terceiro integrado foi registrado |
+| `ParticipantPayoutHeld` | `PartnerLedger` | valor foi bloqueado cautelarmente |
+| `TaxPaymentExecuted` | `PaymentLedger` | lote de retenções foi recolhido |
+| `PaymentReconciliationRequired/Completed` | `PaymentLedger` | reconciliação de pagamento |
+| `PartnerLedgerReconciliationRequired/Completed` | `PartnerLedger` | reconciliação de Ledger do Partner |
+| `WithdrawalReconciliationRequired/Completed` | `Withdrawal` | reconciliação de saque |
+
+`FinancialPolicyChanged` permanece canônico. `FinancialPolicyUpdated`, `WithdrawalExecutionFailed`, `FAILED_TAX_POLICY_MISSING` e aliases genéricos de recovery são proibidos.
+
+`PaymentReceived` nunca é Event contábil. `PaymentCompensated` autoriza `PostPaymentLedgerEntry`.

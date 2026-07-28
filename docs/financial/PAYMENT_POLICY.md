@@ -129,8 +129,7 @@ Taxas, multas, juros e descontos para PIX/boleto não foram normativamente defin
 - taxa não pode alterar preço de Slot;
 - taxa não pode alterar split;
 - taxa deve preservar versão e origem;
-- momento de reconhecimento contábil e gross/net permanece `OPEN-018`;
-- tratamento tributário permanece `OPEN-006`.
+- reconhecimento contábil, gross/net e tratamento tributário seguem o Financial Decision Register.
 
 ## 9. Parcelamento
 
@@ -148,7 +147,7 @@ Se um provider adiantar recursos por relação externa, isso não altera automat
 
 ## 10. Pagamento parcial, excedente e duplicado
 
-A regra completa permanece `OPEN-025`.
+A regra completa de parcial/excedente/duplicidade está em `DEC-043`.
 
 Contrato mínimo enquanto aberta:
 
@@ -200,7 +199,7 @@ O Financial Platform deve:
 5. publicar Event próprio;
 6. aplicar compensação somente conforme política aprovada.
 
-Alocação de perdas e tratamento quando budget/direitos já foram consumidos permanecem `OPEN-016/017`.
+Alocação de perdas exige `ResponsibilityDecisionPublished` e Command do owner financeiro correspondente.
 
 ## 14. Retry
 

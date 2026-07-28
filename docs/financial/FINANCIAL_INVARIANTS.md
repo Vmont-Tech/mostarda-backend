@@ -141,7 +141,7 @@ total compensado + ajustes de crédito
 = available + reserved + consumed + ajustes de débito
 ```
 
-O modelo contábil completo permanece `OPEN-020`.
+O modelo contábil completo é definido pelo Financial Decision Register.
 
 ## 5. PartnerLedger e Wallet
 
@@ -357,7 +357,7 @@ Enquanto uma regra permanece `OPEN`:
 - não se escolhe o comportamento mais permissivo;
 - a especificação oficial é atualizada antes destes derivados.
 
-Aplicam-se especialmente `OPEN-005/006/008`, `OPEN-016` a `OPEN-020`, `OPEN-025`, `OPEN-030` a `OPEN-032`.
+Aplicam-se `OPEN-005/008` e `OPEN-030` a `OPEN-032`. As antigas `OPEN-006`, `OPEN-009`, `OPEN-016` a `OPEN-020` e `OPEN-025` foram encerradas pelo Financial Decision Register.
 
 ## 12. Contraexemplos constitucionais
 
@@ -402,3 +402,17 @@ Qualquer um destes comportamentos invalida a implementação:
 8. Confidence nunca altera valor, elegibilidade, prioridade ou execução.
 9. Nova decisão gera lançamento compensatório; nenhum entry histórico é editado.
 10. Resultado desconhecido é reconciliado antes de retry.
+
+## 15. Invariantes contábeis consolidados
+
+1. Moeda normativa é BRL; Ledger persiste quatro casas.
+2. Operação individual usa Half-Even; split 1:N usa Hamilton-Hare com desempate por ParticipantId.
+3. Toda JournalTransaction é append-only e exige débitos iguais a créditos.
+4. `PaymentReceived` não produz lançamento; somente `PaymentCompensated` autoriza `PostPaymentLedgerEntry`.
+5. Payment compensado cria crédito do Advertiser; Platform Fee e Participant Payable somente nascem de Settlement.
+6. Insurance Fund é serializado pelo PaymentLedger; evento atrasado não desfaz consumo aceito.
+7. `NONE` e `MOSTARDA` nunca criam RecoveryObligation contra terceiro.
+8. Sem TaxPolicy válida, nenhuma instrução bancária é enviada; Withdrawal falha como retryable e preserva a reserva.
+9. `responsibleSubjectId` é obrigatório para Advertiser/Edge Partner/terceiro e proibido para Mostarda/None.
+
+Detalhamento normativo: [FINANCIAL_DECISION_REGISTER.md](./FINANCIAL_DECISION_REGISTER.md).

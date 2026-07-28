@@ -83,7 +83,7 @@ Ele não pode:
 
 ## 5. Equações mínimas
 
-Enquanto o modelo contábil completo permanece `OPEN-020`, estas relações são obrigatórias:
+Sob o modelo contábil completo de `DEC-043`, estas relações são obrigatórias:
 
 - `AvailableBudget >= 0`;
 - `ReservedBudget >= 0`;
@@ -95,7 +95,7 @@ Enquanto o modelo contábil completo permanece `OPEN-020`, estas relações são
 - o mesmo compromisso não pode ser consumido duas vezes;
 - taxa externa não entra na capacidade da Campaign.
 
-Precisão, arredondamento e moeda permanecem `OPEN-019`. Nenhuma implementação pode satisfazer uma equação criando residual sem lançamento/origem.
+Precisão, arredondamento e moeda seguem o Financial Decision Register. Nenhuma implementação pode satisfazer uma equação criando residual sem lançamento/origem.
 
 ## 6. Identidade das obrigações
 
@@ -199,7 +199,7 @@ Chaveada pelo PaymentLedgerEntry e budget alvo. Retry idêntico retorna a decis�
 - política ausente;
 - conflito de versão.
 
-Pagamentos parciais, excedentes e alocação ambígua permanecem `OPEN-025`.
+Pagamentos parciais aumentam budget somente pelo valor compensado e explicitamente alocado; excedente/duplicado permanece crédito do Advertiser.
 
 ## 11. AuthorizeBudgetReservation
 
@@ -332,6 +332,10 @@ Contrato mínimo:
 ## 15. Depletion e reação da Campaign
 
 `CampaignBudgetDepleted` informa ausência de saldo disponível para novas autorizações. Ele não altera Campaign.
+
+Campaign Management consome esse fato e envia `AddCampaignPauseCause(BUDGET_DEPLETED)` à Campaign. Novo `CampaignBudgetIncreased` causa remoção dessa causa; retomada só ocorre quando nenhuma outra causa permanece. Campaign nunca consulta CampaignBudget sincronicamente e `PAUSED_NO_BUDGET` é proibido.
+
+Pagamento parcial somente aumenta AvailableBudget depois de `PaymentCompensated`, entrada aceita no PaymentLedger e `IncreaseCampaignBudget`. Excedente/duplicado permanece crédito do Advertiser e não é alocado por heurística.
 
 Campaign Management pode emitir seu próprio Command para pausar execução. Ao receber novo crédito:
 

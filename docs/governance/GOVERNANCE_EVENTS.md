@@ -1,5 +1,7 @@
 # Governance Events
 
+`ResponsibilityDecisionPublished` inclui `responsibleSubjectId` obrigatório para `ADVERTISER`, `EDGE_PARTNER` e `INTEGRATED_THIRD_PARTY`, e ausente para `MOSTARDA` e `NONE`. Consumidores rejeitam payload contraditório e não inferem identidade.
+
 ## 1. Envelope obrigatório
 
 Todo Event contém:

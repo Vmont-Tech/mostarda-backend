@@ -325,7 +325,7 @@ Insurance ──C:StartClaimAssessment──> [UNDER_REVIEW]
                            InsuranceClaim [SETTLED]
 ```
 
-Fonte de capitalização permanece `OPEN-009`. Insurance Settlement nunca é Settlement de mídia.
+Capitalização do Insurance Fund segue `DEC-043`: contribuição recorrente inicial zero e mudança somente por FinancialPolicy versionada. Insurance Settlement nunca é Settlement de mídia.
 
 ## 11. Atualização remota e rollback
 
@@ -531,4 +531,22 @@ T16 PublishDecision revision N+1
 T17 ResponsibilityDecisionPublished revision N+1
 T18 GovernanceCaseReevaluated
 T19 Commands compensatórios append-only
+```
+
+## Timeline financeira consolidada
+
+```text
+PaymentReceived ──> sem lançamento
+PaymentCompensated
+  └─> PostPaymentLedgerEntry ──> PaymentLedgerEntryPosted
+       └─> IncreaseCampaignBudget ──> CampaignBudgetIncreased
+
+EvidenceValidated + AnchoringConfirmed
+  └─> SettlementExecuted + PartnerCreditRequested por SplitShare
+       └─> CreditPartner ──> PartnerCredited
+
+EvidenceReversed
+  └─> HoldParticipantPayout
+       └─> ResponsibilityDecisionPublished
+            └─> Command financeiro específico por ResponsibleParty
 ```

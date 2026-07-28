@@ -200,7 +200,7 @@ A resposta a mesma chave com payload divergente e o prazo de retenção das chav
 | consumidor indisponível | produtor permanece concluído; entrega pode ser refeita |
 | projeção inconsistente | reconstruir do Ledger/Event history sem editar origem |
 | tentativa de transferência sem resposta | manter resultado desconhecido e reconciliar antes de repetir |
-| chargeback após compensação | novo lançamento compensatório; regra completa permanece `OPEN-016/017` |
+| chargeback após compensação | bloqueio cautelar até decisão; depois, novo lançamento/recovery no owner definido por `DEC-043` |
 | saldo insuficiente por concorrência | rejeitar uma das solicitações; nunca criar saldo negativo de budget |
 | política alterada durante operação | preservar versão capturada na decisão original |
 
@@ -223,7 +223,7 @@ São invariantes:
 - mudanças de política não reclassificam o passado durante replay;
 - qualquer divergência entre rebuild e estado publicado gera diagnóstico e reconciliação auditada.
 
-O modelo contábil detalhado e suas equações de conservação permanecem `OPEN-020`.
+O modelo contábil detalhado e suas equações de conservação são definidos pelo Financial Decision Register.
 
 ## 13. Auditoria
 
@@ -288,7 +288,7 @@ Uma Withdrawal autorizada é enviada ao provider e a resposta é perdida. O sist
 
 ## 17. Decisões abertas
 
-Este contexto não pode encerrar por suposição as decisões `OPEN-005`, `OPEN-006`, `OPEN-008`, `OPEN-016` a `OPEN-020`, `OPEN-025` e `OPEN-030` a `OPEN-032` registradas em [PLATFORM_SPECIFICATION.md](../specification/PLATFORM_SPECIFICATION.md).
+Este contexto não pode encerrar por suposição `OPEN-005`, `OPEN-008` e `OPEN-030` a `OPEN-032`. As antigas `OPEN-006`, `OPEN-009`, `OPEN-016` a `OPEN-020` e `OPEN-025` foram encerradas pelo [FINANCIAL_DECISION_REGISTER.md](./FINANCIAL_DECISION_REGISTER.md).
 
 Quando uma dessas decisões for aprovada, a especificação oficial deve ser alterada primeiro e estes documentos derivados devem ser sincronizados.
 
@@ -320,3 +320,15 @@ Somente `ResponsibilityDecisionPublished` autoriza materializar consequência ba
 - policy financeira aplicável.
 
 Financial valida o contrato e executa por Command próprio. Confidence nunca controla execução. Nova revision não edita lançamento anterior; causa entry compensatória.
+
+## 20. Sincronização normativa financeira
+
+O Financial Decision Register é a autoridade especializada para dinheiro, precisão, dupla entrada, reconhecimento, Insurance Fund, recovery, refund, fiscalidade e pagamento parcial.
+
+- `PaymentReceived` não lança dinheiro.
+- `PaymentCompensated` causa `PostPaymentLedgerEntry`; entrada aceita causa `IncreaseCampaignBudget`.
+- Payment compensado cria crédito do Advertiser; Platform Fee e Participant Payable somente nascem de Settlement.
+- `PaymentLedger` governa fatos monetários reconhecidos, crédito do Advertiser, Insurance Fund, recovery de Advertiser/terceiro e pagamento fiscal consolidado.
+- `PartnerLedger` governa lançamentos e recovery de Edge Partner.
+- Evidence revertida sem decisão de Governance bloqueia cautelarmente a parcela; não causa compensação definitiva.
+- toda JournalTransaction é append-only, multilinhas e balanceada.

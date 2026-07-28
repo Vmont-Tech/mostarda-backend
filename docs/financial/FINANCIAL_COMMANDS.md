@@ -177,7 +177,7 @@ Timeout de chamada não é resultado de domínio.
 - **Eventos:** `PaymentLedgerCompensatingEntryPosted`.
 - **Idempotência:** original + fato compensatório.
 - **Falhas:** origem ausente, valor sem política, duplicidade.
-- **Observação:** tratamento completo permanece `OPEN-016/018/020`.
+- **Observação:** tratamento completo segue o Financial Decision Register.
 
 ## 6. Commands de CampaignBudget
 
@@ -474,7 +474,8 @@ Timeout de chamada não é resultado de domínio.
 
 ### 10.2 ReconcileFinancialOperation
 
-- **Owner:** Aggregate correspondente à operação reconciliada; nunca um owner genérico que edita todos.
+- **Status:** superseded para novas emissões por `ReconcilePaymentOperation` e `ReconcileWithdrawalOperation`.
+- **Owner:** nenhum novo dispatch é permitido para este contrato genérico.
 - **Emissor:** processo/papel financeiro autorizado.
 - **Pré-condições:** divergência identificada; evidências externas/internas; escopo.
 - **Efeito:** diagnóstico ou Command compensatório posterior ao owner correto.
@@ -536,7 +537,7 @@ Todos exigem `governanceCaseId`, `decisionId`, `decisionRevision` e Event ID cau
 
 ### RecordPlatformLoss
 
-- **Owner:** ledger financeiro aplicável.
+- **Owner:** `PaymentLedger`.
 - **Precondições:** decisão oficial e lançamento causal identificados.
 - **Efeito:** `PlatformLossEntry` append-only.
 - **Idempotência:** decisionId + revision + obrigação.
@@ -552,7 +553,7 @@ Todos exigem `governanceCaseId`, `decisionId`, `decisionRevision` e Event ID cau
 
 ### RefundAdvertiserByResponsibility
 
-- **Owner:** `AdvertiserAccount`/`Payment`, conforme rail e policy.
+- **Owner:** `PaymentLedger`.
 - **Precondições:** decisão oficial autoriza `AdvertiserRefund`; origem reconciliada.
 - **Efeito:** crédito interno ou instrução de refund auditável.
 - **Idempotência:** decisionId + revision + refund obligation.
@@ -560,8 +561,72 @@ Todos exigem `governanceCaseId`, `decisionId`, `decisionRevision` e Event ID cau
 
 ### RecoverFromResponsibleParty
 
-- **Owner:** ledger da obrigação.
+- **Status:** superseded para novas emissões pelos Commands específicos de recovery.
+- **Owner:** nenhum novo dispatch genérico é permitido.
 - **Precondições:** decisão oficial e recovery permitido pela policy.
 - **Efeito:** recovery entry append-only.
 - **Idempotência:** decisionId + revision + recovery obligation.
 - **Falhas:** autorização ausente, duplicidade ou valor não reconciliado.
+
+## Commands financeiros consolidados
+
+Todos carregam idempotency key, expected revision, causation/correlation, valor BRL em quatro casas e policy versions aplicáveis.
+
+### RefundAdvertiserUnusedCredit
+
+- **Owner:** `PaymentLedger`.
+- **Pré-condições:** crédito disponível em `LIA_ADVERTISER_CREDIT`; origem compensada; nenhuma aplicação/refund anterior.
+- **Efeito:** JournalTransaction de refund.
+- **Evento:** `AdvertiserUnusedCreditRefunded`.
+
+### RegisterPartnerRecoveryObligation
+
+- **Owner:** `PartnerLedger`.
+- **Pré-condições:** decisão atribui `EDGE_PARTNER`; subject corresponde ao Partner; entry original e valor reconciliados.
+- **Evento:** `PartnerRecoveryObligationRegistered`.
+- **Idempotência:** decisionId + revision + originalFinancialEntryId.
+
+### RegisterAdvertiserRecoveryObligation
+
+- **Owner:** `PaymentLedger`.
+- **Pré-condições:** decisão atribui `ADVERTISER`; responsibleSubjectId e direito de regresso identificados.
+- **Evento:** `AdvertiserRecoveryObligationRegistered`.
+- **Idempotência:** decisionId + revision + originalFinancialEntryId.
+
+### RegisterThirdPartyRecoveryObligation
+
+- **Owner:** `PaymentLedger`.
+- **Pré-condições:** decisão atribui `INTEGRATED_THIRD_PARTY`; subject e direito de regresso identificados.
+- **Evento:** `ThirdPartyRecoveryObligationRegistered`.
+- **Idempotência:** decisionId + revision + originalFinancialEntryId.
+
+### UpdateFinancialPolicy
+
+- **Owner:** `FinancialPolicy`.
+- **Pré-condições:** nova versão prospectiva, aprovadores e vigência.
+- **Evento:** `FinancialPolicyChanged`.
+
+### ReconcilePaymentOperation
+
+- **Owner:** `PaymentLedger`.
+- **Eventos:** `PaymentReconciliationRequired` ou `PaymentReconciliationCompleted`.
+
+### ReconcileWithdrawalOperation
+
+- **Owner:** `Withdrawal`.
+- **Eventos:** `WithdrawalReconciliationRequired`, `WithdrawalExecuted` ou `WithdrawalFailed`, conforme fato autoritativo.
+
+### ExecuteTaxPayment
+
+- **Owner:** `PaymentLedger`.
+- **Pré-condições:** lote fiscal e retenções identificados, ainda não recolhidos.
+- **Efeito:** `DR LIA_TAX_HOLDING / CR ACT_BANK_SETTLED`.
+- **Evento:** `TaxPaymentExecuted`.
+
+### HoldParticipantPayout
+
+- **Owner:** `PartnerLedger`.
+- **Pré-condições:** Evidence revertida, parcelas/valor correlacionados e ausência de decisão definitiva.
+- **Efeito:** bloqueio cautelar append-only, limitado ao valor.
+- **Evento:** `ParticipantPayoutHeld`.
+- **Timeout:** mantém bloqueio e publica `PartnerLedgerReconciliationRequired(GOVERNANCE_TIMEOUT)`; nunca libera automaticamente.

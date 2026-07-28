@@ -360,3 +360,23 @@ ResponsibilityDecisionPublished
 ```
 
 A decisão recorrida e seus efeitos permanecem. A nova revisão causa lançamentos, direitos ou estados compensatórios; nenhuma Saga edita Aggregate alheio.
+
+## Sagas financeiras consolidadas
+
+```text
+PaymentReceived → sem movimentação
+PaymentCompensated → PostPaymentLedgerEntry
+PaymentLedgerEntryPosted → IncreaseCampaignBudget
+CampaignBudgetDepleted → AddCampaignPauseCause(BUDGET_DEPLETED)
+CampaignBudgetIncreased → RemoveCampaignPauseCause(BUDGET_DEPLETED)
+```
+
+```text
+EvidenceReversed
+→ HoldParticipantPayout nas SplitShares correlacionadas
+→ aguardar ResponsibilityDecisionPublished
+→ Command específico por ResponsibleParty
+→ lançamento/recovery append-only no owner
+```
+
+Sem decisão, a Saga não compensa. Timeout mantém bloqueio e abre reconciliação. Sem TaxPolicy válida, nenhuma instrução bancária é emitida; `WithdrawalFailed(MISSING_TAX_POLICY, RETRYABLE)` preserva a reserva.

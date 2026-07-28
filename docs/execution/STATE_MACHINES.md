@@ -269,3 +269,9 @@ OPEN
 | DECIDED → CLOSED | CloseGovernanceCase | GovernanceCaseClosed | nunca fechar por timeout | terminal |
 
 `UNKNOWN` não existe no modelo de Governance. Incerteza mantém INVESTIGATING ou UNDER_REVIEW sem publicação. Especificação integral: [`../governance/GOVERNANCE_STATE_MACHINE.md`](../governance/GOVERNANCE_STATE_MACHINE.md).
+
+## Refinamentos financeiros consolidados
+
+- `MISSING_TAX_POLICY` não cria estado. Antes de instrução bancária, produz `WithdrawalFailed` com disposição `RETRYABLE`; reserva permanece e somente `RetryWithdrawal` retorna a `EXECUTING`.
+- `ParticipantPayoutHeld` cria bloqueio append-only por origem, valor e revisão. Expiração da policy publica `PartnerLedgerReconciliationRequired(GOVERNANCE_TIMEOUT)` e mantém o bloqueio.
+- Campaign usa `PAUSED` com causa `BUDGET_DEPLETED`; `PAUSED_NO_BUDGET` é proibido.
