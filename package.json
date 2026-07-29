@@ -11,6 +11,8 @@
     "node": ">=24"
   },
   "scripts": {
+    "dev:api": "node --experimental-strip-types --watch apps/cloud-api/src/main.ts",
+    "start:api": "node --experimental-strip-types apps/cloud-api/src/main.ts",
     "test": "node --experimental-strip-types --test \"tests/**/*.test.ts\"",
     "test:docs": "node --test \"tests/documentation/*.test.mjs\"",
     "test:conformance": "node --experimental-strip-types --test \"tests/conformance/*.test.ts\"",
@@ -19,5 +21,8 @@
   "devDependencies": {
     "@types/node": "^24.10.1",
     "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "fastify": "^5.8.5"
   }
 }
