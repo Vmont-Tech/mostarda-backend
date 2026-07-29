@@ -1,0 +1,23 @@
+{
+  "name": "mostarda-platform",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --experimental-strip-types --test \"tests/**/*.test.ts\"",
+    "test:docs": "node --test \"tests/documentation/*.test.mjs\"",
+    "test:conformance": "node --experimental-strip-types --test \"tests/conformance/*.test.ts\"",
+    "typecheck": "tsc --project tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "typescript": "5.9.3"
+  }
+}
