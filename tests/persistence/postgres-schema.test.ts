@@ -12,6 +12,10 @@ const projectionInvalidationMigrationUrl = new URL(
   "../../migrations/005_projection_invalidation.sql",
   import.meta.url,
 );
+const projectionInvalidationHistoryMigrationUrl = new URL(
+  "../../migrations/006_projection_invalidation_history.sql",
+  import.meta.url,
+);
 
 test("event store migration enforces append-only identity and revision constraints", async () => {
   const sql = await readFile(migrationUrl, "utf8");
@@ -146,4 +150,14 @@ test("PostgreSQL invalidation is transactional and locked", async () => {
   assert.match(source, /async invalidate\(/);
   assert.match(source, /projection_invalidations/);
   assert.match(source, /FOR UPDATE/);
+});
+
+test("projection invalidation history retains every composite generation identity", async () => {
+  const sql = await readFile(projectionInvalidationHistoryMigrationUrl, "utf8");
+
+  assert.match(sql, /DROP CONSTRAINT IF EXISTS projection_invalidations_pkey/);
+  assert.match(
+    sql,
+    /PRIMARY KEY \(projection_name, projection_version, rebuild_id\)/,
+  );
 });

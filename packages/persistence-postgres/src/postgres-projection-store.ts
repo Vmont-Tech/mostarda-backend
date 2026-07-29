@@ -174,6 +174,9 @@ export class PostgresProjectionStore<TState> {
           canonical.rebuildId,
         );
       }
+      if (await this.#isInvalidated(client, canonical)) {
+        throw new ProjectionInvalidationConflict(canonical);
+      }
       const current = await this.#lockedCurrent(
         client,
         candidate.projectionName,
@@ -243,10 +246,8 @@ export class PostgresProjectionStore<TState> {
           `INSERT INTO projection_invalidations (
              projection_name, projection_version, rebuild_id
            ) VALUES ($1, $2, $3)
-           ON CONFLICT (projection_name) DO UPDATE
-           SET projection_version = EXCLUDED.projection_version,
-               rebuild_id = EXCLUDED.rebuild_id,
-               invalidated_at = clock_timestamp()`,
+           ON CONFLICT (projection_name, projection_version, rebuild_id)
+           DO UPDATE SET invalidated_at = clock_timestamp()`,
           [
             expected.projectionName,
             expected.projectionVersion,
@@ -261,8 +262,14 @@ export class PostgresProjectionStore<TState> {
         `SELECT projection_name, projection_version, rebuild_id
            FROM projection_invalidations
           WHERE projection_name = $1
+            AND projection_version = $2
+            AND rebuild_id = $3
           FOR UPDATE`,
-        [expected.projectionName],
+        [
+          expected.projectionName,
+          expected.projectionVersion,
+          expected.rebuildId,
+        ],
       );
       const row = invalidated.rows[0];
       if (
@@ -326,6 +333,26 @@ export class PostgresProjectionStore<TState> {
       throw new ProjectionIdentityMismatch(rebuild.rebuildId);
     }
     throw new ProjectionCandidateNotFound(rebuild.rebuildId);
+  }
+
+  async #isInvalidated(
+    client: PoolClient,
+    identity: ProjectionRebuildIdentity,
+  ): Promise<boolean> {
+    const result = await client.query(
+      `SELECT rebuild_id
+         FROM projection_invalidations
+        WHERE projection_name = $1
+          AND projection_version = $2
+          AND rebuild_id = $3
+        FOR UPDATE`,
+      [
+        identity.projectionName,
+        identity.projectionVersion,
+        identity.rebuildId,
+      ],
+    );
+    return result.rowCount !== 0;
   }
 
   async #lockedCurrent(

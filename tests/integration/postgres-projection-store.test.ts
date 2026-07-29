@@ -69,6 +69,13 @@ test(
           import.meta.url,
         ),
       );
+      await applySqlMigration(
+        pool,
+        new URL(
+          "../../migrations/006_projection_invalidation_history.sql",
+          import.meta.url,
+        ),
+      );
 
       await context.test(
         "staging leaves the head unchanged and current returns the full candidate",
@@ -215,6 +222,11 @@ test(
 
           await store.invalidate(firstIdentity);
           await store.invalidate(firstIdentity);
+          assert.equal(await store.current("fixture"), null);
+          await assert.rejects(
+            store.promote(first),
+            (error) => error instanceof ProjectionInvalidationConflict,
+          );
           assert.equal(await store.current("fixture"), null);
 
           await store.stage(newer);

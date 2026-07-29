@@ -90,7 +90,7 @@ export class InMemoryProjectionStore<TState>
 {
   readonly #candidates = new Map<string, ProjectionRebuild<TState>>();
   readonly #current = new Map<string, ProjectionRebuild<TState>>();
-  readonly #invalidated = new Map<string, ProjectionRebuildIdentity>();
+  readonly #invalidated = new Set<string>();
 
   async stage(rebuild: ProjectionRebuild<TState>): Promise<void> {
     if (rebuild.rebuildStatus !== "COMPLETED_AWAITING_PROMOTION") {
@@ -141,6 +141,9 @@ export class InMemoryProjectionStore<TState>
         rebuild.rebuildId,
       );
     }
+    if (this.#invalidated.has(key)) {
+      throw new ProjectionInvalidationConflict(rebuild);
+    }
 
     const current = this.#current.get(candidate.projectionName);
     if (
@@ -170,15 +173,11 @@ export class InMemoryProjectionStore<TState>
         throw new ProjectionInvalidationConflict(expected);
       }
       this.#current.delete(expected.projectionName);
-      this.#invalidated.set(expected.projectionName, structuredClone(expected));
+      this.#invalidated.add(this.#candidateKey(expected));
       return;
     }
 
-    const invalidated = this.#invalidated.get(expected.projectionName);
-    if (
-      invalidated !== undefined &&
-      this.#hasIdentity(invalidated, expected)
-    ) {
+    if (this.#invalidated.has(this.#candidateKey(expected))) {
       return;
     }
     throw new ProjectionInvalidationConflict(expected);

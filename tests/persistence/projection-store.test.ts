@@ -213,9 +213,10 @@ test("promotion rejects supplied content that diverges from the staged candidate
   assert.equal(await store.current("fixture"), null);
 });
 
-test("invalidation removes only the current head and preserves its staged candidate", async () => {
+test("an invalidated generation cannot resurrect but a new generation can promote", async () => {
   const store = new InMemoryProjectionStore<FixtureState>();
   const candidate = rebuild("candidate-1", 3n);
+  const replacement = rebuild("candidate-2", 4n);
   await store.stage(candidate);
   await store.promote(candidate);
 
@@ -226,8 +227,15 @@ test("invalidation removes only the current head and preserves its staged candid
   });
 
   assert.equal(await store.current("fixture"), null);
-  await store.promote(candidate);
-  assert.deepEqual(await store.current("fixture"), candidate);
+  await assert.rejects(
+    store.promote(candidate),
+    (error) => error instanceof ProjectionInvalidationConflict,
+  );
+  assert.equal(await store.current("fixture"), null);
+
+  await store.stage(replacement);
+  await store.promote(replacement);
+  assert.deepEqual(await store.current("fixture"), replacement);
 });
 
 test("repeated invalidation of the same current generation is idempotent", async () => {
@@ -267,6 +275,29 @@ test("stale invalidation cannot remove a newer projection head", async () => {
     (error) => error instanceof ProjectionInvalidationConflict,
   );
   assert.deepEqual(await store.current("fixture"), newer);
+});
+
+test("invalidation history permanently rejects every tombstoned generation", async () => {
+  const store = new InMemoryProjectionStore<FixtureState>();
+  const first = rebuild("candidate-1", 3n);
+  const second = rebuild("candidate-2", 4n);
+  for (const candidate of [first, second]) {
+    await store.stage(candidate);
+    await store.promote(candidate);
+    await store.invalidate({
+      projectionName: candidate.projectionName,
+      projectionVersion: candidate.projectionVersion,
+      rebuildId: candidate.rebuildId,
+    });
+  }
+
+  for (const candidate of [first, second]) {
+    await assert.rejects(
+      store.promote(candidate),
+      (error) => error instanceof ProjectionInvalidationConflict,
+    );
+  }
+  assert.equal(await store.current("fixture"), null);
 });
 
 test("invalidation fails explicitly when no matching generation is current or tombstoned", async () => {
