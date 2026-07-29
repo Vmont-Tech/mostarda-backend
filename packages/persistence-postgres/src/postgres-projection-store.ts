@@ -9,6 +9,7 @@ import {
   ProjectionCheckpointRegression,
   ProjectionIdentityMismatch,
 } from "../../persistence/src/index.ts";
+import { canonicalizeProjectionCandidate } from "./projection-candidate-validation.ts";
 
 interface ProjectionRow<TState> {
   projection_name: string;
@@ -63,6 +64,7 @@ export class PostgresProjectionStore<TState> {
     if (rebuild.rebuildStatus !== "COMPLETED_AWAITING_PROMOTION") {
       throw new TypeError("Only complete Projection rebuilds can be staged.");
     }
+    const candidate = canonicalizeProjectionCandidate(rebuild);
 
     const inserted = await this.#pool.query(
       `INSERT INTO projection_rebuilds (
@@ -75,14 +77,14 @@ export class PostgresProjectionStore<TState> {
        DO NOTHING
        RETURNING projection_name`,
       [
-        rebuild.projectionName,
-        rebuild.projectionVersion,
-        rebuild.rebuildId,
-        JSON.stringify(rebuild.state),
-        rebuild.checkpoint.toString(),
-        rebuild.asOf,
-        JSON.stringify(rebuild.staleness),
-        rebuild.rebuildStatus,
+        candidate.projectionName,
+        candidate.projectionVersion,
+        candidate.rebuildId,
+        JSON.stringify(candidate.state),
+        candidate.checkpoint.toString(),
+        candidate.asOf,
+        JSON.stringify(candidate.staleness),
+        candidate.rebuildStatus,
       ],
     );
     if (inserted.rowCount === 1) {
@@ -96,23 +98,26 @@ export class PostgresProjectionStore<TState> {
           AND projection_version = $2
           AND rebuild_id = $3`,
       [
-        rebuild.projectionName,
-        rebuild.projectionVersion,
-        rebuild.rebuildId,
+        candidate.projectionName,
+        candidate.projectionVersion,
+        candidate.rebuildId,
       ],
     );
     const row = existing.rows[0];
     if (
       row !== undefined &&
-      isDeepStrictEqual(toProjectionRebuild(row), rebuild)
+      isDeepStrictEqual(
+        canonicalizeProjectionCandidate(toProjectionRebuild(row)),
+        candidate,
+      )
     ) {
       return;
     }
 
     throw new ProjectionCandidateConflict(
-      rebuild.projectionName,
-      rebuild.projectionVersion,
-      rebuild.rebuildId,
+      candidate.projectionName,
+      candidate.projectionVersion,
+      candidate.rebuildId,
     );
   }
 
@@ -137,15 +142,16 @@ export class PostgresProjectionStore<TState> {
   }
 
   async promote(rebuild: ProjectionRebuild<TState>): Promise<void> {
+    const canonical = canonicalizeProjectionCandidate(rebuild);
     const client = await this.#pool.connect();
     try {
       await client.query("BEGIN");
       await client.query(
         "SELECT pg_advisory_xact_lock(hashtextextended($1, 1))",
-        [rebuild.projectionName],
+        [canonical.projectionName],
       );
 
-      const candidate = await this.#lockedCandidate(client, rebuild);
+      const candidate = await this.#lockedCandidate(client, canonical);
       const current = await this.#lockedCurrent(
         client,
         candidate.projectionName,
@@ -191,7 +197,10 @@ export class PostgresProjectionStore<TState> {
 
   async #lockedCandidate(
     client: PoolClient,
-    rebuild: ProjectionRebuild<TState>,
+    rebuild: Pick<
+      ProjectionRebuild<unknown>,
+      "projectionName" | "projectionVersion" | "rebuildId"
+    >,
   ): Promise<ProjectionRebuild<TState>> {
     const result = await client.query<ProjectionRow<TState>>(
       `SELECT ${projectionColumns}
