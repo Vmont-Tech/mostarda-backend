@@ -18,6 +18,30 @@ async function sourceFiles(directory) {
   return nested.flat();
 }
 
+function importedWorkspacePackage(sourceFile, specifier) {
+  if (specifier.startsWith("@mostarda/")) {
+    return specifier.split("/")[1] ?? null;
+  }
+  if (!specifier.startsWith(".")) {
+    return null;
+  }
+
+  const resolved = path.resolve(path.dirname(sourceFile), specifier);
+  const relative = path.relative(path.resolve("packages"), resolved);
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
+    return null;
+  }
+  return relative.split(path.sep)[0] ?? null;
+}
+
+function moduleSpecifiers(source) {
+  return [
+    ...source.matchAll(
+      /(?:import|export)\s+(?:type\s+)?(?:[^"'`]*?\s+from\s+)?["']([^"']+)["']/g,
+    ),
+  ].map((match) => match[1]);
+}
+
 test("Governance domain remains independent from infrastructure and frameworks", async () => {
   const files = await sourceFiles("packages/governance/src");
 
@@ -41,6 +65,30 @@ test("transversal kernel does not know any bounded context", async () => {
       /governance|campaign|financial|settlement|pricing|telemetry/i,
       `${file} contains bounded-context knowledge`,
     );
+  }
+});
+
+test("PostgreSQL projection adapter imports no bounded-context package", async () => {
+  const transversalPackages = new Set([
+    "kernel",
+    "persistence",
+    "persistence-postgres",
+  ]);
+  const files = (await sourceFiles("packages/persistence-postgres/src")).filter(
+    (file) => path.basename(file).includes("projection"),
+  );
+
+  assert.notEqual(files.length, 0, "PostgreSQL projection adapter is missing");
+  for (const file of files) {
+    const source = await readFile(file, "utf8");
+    for (const specifier of moduleSpecifiers(source)) {
+      const workspacePackage = importedWorkspacePackage(file, specifier);
+      if (workspacePackage === null) continue;
+      assert.ok(
+        transversalPackages.has(workspacePackage),
+        `${file} imports bounded-context package ${workspacePackage}`,
+      );
+    }
   }
 });
 

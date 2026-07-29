@@ -339,3 +339,48 @@ Uma terceira passagem encerrou quatro bypasses residuais:
 
 O número probatório final desta passagem é 65 testes backend: 64 aprovados e 1
 integração PostgreSQL suspensa por ausência de `DATABASE_URL`.
+
+## 18. Fundação do armazenamento atômico de Projection
+
+O design aprovado em
+`docs/superpowers/specs/2026-07-29-atomic-projection-store-design.md` adotou
+staging genérico de candidatos completos e promoção por troca transacional do
+head. O state permanece opaco e nenhuma Projection, Read Model, Event ou schema
+de domínio foi criado.
+
+Os commits que materializaram e corrigiram esta fundação antes da certificação
+foram:
+
+- `62e3d08`: contrato transversal e implementação em memória;
+- `5cf566c`: lockfile reproduzível com todos os links dos workspaces npm,
+  inclusive `generation`, `governance` e `persistence-postgres`;
+- `000f851`: identidade composta do candidato e conflitos explícitos;
+- `eb4f37c`: migration append-only, adapter PostgreSQL e teste de integração
+  condicionado a `DATABASE_URL`;
+- `6c29c5c`: preservação da representação JSONB-safe do candidato e rejeição
+  explícita de representações não canônicas.
+
+As provas comportamentais cobrem staging sem alteração do head, promoção
+atômica, retry idempotente, conflito de conteúdo sob a mesma identidade,
+isolamento por Projection, recusa de checkpoint regressivo e cópias isoladas.
+A prova arquitetural adicional inspeciona imports do adapter de Projection e
+permite somente os pacotes transversais `kernel`, `persistence` e
+`persistence-postgres`; a independência do kernel em relação a Bounded Contexts
+continua coberta pela mesma suíte.
+
+Na execução desta rodada, `npm run test:all` descobriu 117 testes: 115
+aprovados e 2 explicitamente suspensos. O detalhamento foi:
+
+- suíte TypeScript: 107 testes, 105 aprovados e 2 suspensos;
+- fronteiras arquiteturais: 4 testes aprovados;
+- documentação: 6 testes aprovados.
+
+Os dois testes suspensos são as integrações PostgreSQL de Event Store e de
+Projection Store, ambas com a razão explícita `DATABASE_URL is not available`.
+O Docker/PostgreSQL vivo continua indisponível neste ambiente; portanto não há
+prova operacional real do adapter. `npm run typecheck` e `git diff --check`
+também foram executados nesta rodada.
+
+Este registro certifica somente a fundação técnica e suas provas locais. Ele não
+declara certificação de produção, não substitui execução contra PostgreSQL real
+e não autoriza nem afirma a existência de Projections de domínio.

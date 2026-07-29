@@ -20,12 +20,12 @@ head corrente, com monotonicidade de checkpoint e retry idempotente.
 - Modify: `packages/persistence/src/index.ts`
 - Test: `tests/persistence/projection-store.test.ts`
 
-- [ ] Escrever testes que demonstrem staging sem promoção, promoção atômica,
+- [x] Escrever testes que demonstrem staging sem promoção, promoção atômica,
       retry idempotente e recusa de checkpoint regressivo.
-- [ ] Executar o teste e confirmar falha por módulo ausente.
-- [ ] Implementar `InMemoryProjectionStore` e erros técnicos mínimos.
-- [ ] Executar o teste e confirmar aprovação.
-- [ ] Commitar `feat: add atomic projection store contract`.
+- [x] Executar o teste e confirmar falha por módulo ausente.
+- [x] Implementar `InMemoryProjectionStore` e erros técnicos mínimos.
+- [x] Executar o teste e confirmar aprovação.
+- [x] Commitar `feat: add atomic projection store contract`.
 
 ### Task 2: Migration e adapter PostgreSQL
 
@@ -37,15 +37,15 @@ head corrente, com monotonicidade de checkpoint e retry idempotente.
 - Test: `tests/persistence/postgres-schema.test.ts`
 - Test: `tests/integration/postgres-projection-store.test.ts`
 
-- [ ] Escrever teste estático para tabelas, FKs e constraints da migration.
-- [ ] Executar e confirmar falha pela migration ausente.
-- [ ] Criar a migration append-only de candidatos e head único.
-- [ ] Escrever teste de integração condicionado a `DATABASE_URL`.
-- [ ] Executar e confirmar falha por adapter ausente quando PostgreSQL existir,
+- [x] Escrever teste estático para tabelas, FKs e constraints da migration.
+- [x] Executar e confirmar falha pela migration ausente.
+- [x] Criar a migration append-only de candidatos e head único.
+- [x] Escrever teste de integração condicionado a `DATABASE_URL`.
+- [x] Executar e confirmar falha por adapter ausente quando PostgreSQL existir,
       ou skip explícito quando indisponível.
-- [ ] Implementar staging, leitura e promoção numa transação PostgreSQL.
-- [ ] Executar testes de persistência e typecheck.
-- [ ] Commitar `feat: add postgres atomic projection store`.
+- [x] Implementar staging, leitura e promoção numa transação PostgreSQL.
+- [x] Executar testes de persistência e typecheck.
+- [x] Commitar `feat: add postgres atomic projection store`.
 
 ### Task 3: Certificação e registro notarial
 
@@ -53,9 +53,9 @@ head corrente, com monotonicidade de checkpoint e retry idempotente.
 - Modify: `tests/architecture/boundaries.test.mjs`
 - Modify: `docs/architecture/IMPLEMENTATION_NOTARIAL_LOG.md`
 
-- [ ] Adicionar prova de que o adapter não importa Bounded Context.
-- [ ] Executar o teste e confirmar o comportamento esperado.
-- [ ] Registrar decisões, testes, limitações e ausência de PostgreSQL vivo.
-- [ ] Executar `npm run test:all`, `npm run typecheck` e `git diff --check`.
+- [x] Adicionar prova de que o adapter não importa Bounded Context.
+- [x] Executar o teste e confirmar o comportamento esperado.
+- [x] Registrar decisões, testes, limitações e ausência de PostgreSQL vivo.
+- [x] Executar `npm run test:all`, `npm run typecheck` e `git diff --check`.
 - [ ] Solicitar revisão independente e corrigir achados.
-- [ ] Commitar `docs: certify atomic projection store foundation`.
+- [x] Commitar `docs: certify atomic projection store foundation`.
