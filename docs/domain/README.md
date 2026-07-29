@@ -19,3 +19,10 @@ Fonte única da verdade do modelo de domínio. Ordem de leitura:
 15. [`GRAO.md`](./GRAO.md) — produto de inteligência pessoal
 16. [`INSTITUTIONAL_DOMAIN.md`](./INSTITUTIONAL_DOMAIN.md) — mundos físico, digital e institucional
 17. [`SCALABILITY.md`](./SCALABILITY.md) — escala de 100 a 1.000.000 de TVs
+18. [`DOMAIN_EVOLUTION.md`](./DOMAIN_EVOLUTION.md) — expansão futura sem rigidez de domínio
+19. [`SYSTEM_INVARIANTS.md`](./SYSTEM_INVARIANTS.md) — regras não negociáveis da plataforma
+20. [`EVIDENCE_PIPELINE.md`](./EVIDENCE_PIPELINE.md) — fatos de playback, prova Cloud e ancoragem
+21. [`PLAYER.md`](./PLAYER.md) e [`CANVAS.md`](./CANVAS.md) — execução multimídia e composição visual
+22. [`PRICING_ENGINE.md`](./PRICING_ENGINE.md) — cálculo dinâmico e congelamento de preço
+23. [`AI_ARCHITECTURE.md`](./AI_ARCHITECTURE.md) — agentes, prompts, memória, conhecimento e políticas
+24. [`../tv-network/TV_NETWORK_ARCHITECTURE.md`](../tv-network/TV_NETWORK_ARCHITECTURE.md) — contexto proprietário da frota e disponibilidade operacional

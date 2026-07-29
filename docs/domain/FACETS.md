@@ -8,6 +8,10 @@ Cada Facet é uma capacidade pequena, independente, isolada, substituível, vers
 
 Uma Facet declara `FacetId`, versão semântica, contrato de entrada/saída, schema e compatibilidade de Assets, requisitos de recurso, telemetria, assinatura e estratégia de rollback. A ativação exige verificação de assinatura e health gate; em falha, o Player Supervisor retorna à última versão saudável. Facets nunca compartilham estado, banco, cache ou chamadas diretas: colaboram exclusivamente por contratos declarativos, eventos ou Assets explicitamente publicados pelo container.
 
+## Modelo interno da Facet
+
+Toda Facet explicita quatro superfícies: **Assets** (conhecimento, configuração e estado que possui), **Services** (operações internas oferecidas pelo contrato), **Policies** (regras versionadas aplicadas pelos Services) e **Events** (fatos publicados após uma transição). Aggregate é uma técnica de consistência quando a Facet precisa de identidade e invariantes; não substitui nem reduz as quatro superfícies. Nenhuma Facet acessa Assets ou Services internos de outra.
+
 ## Regras
 
 1. Uma Facet tem **responsabilidade única** e é substituível sem quebrar a Capability ou a identidade `TV ID`.

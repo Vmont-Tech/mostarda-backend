@@ -29,13 +29,15 @@
 | QR (emissão, alvo, validade) | **Cloud** | Edge (renderiza), Quantum (resolve) | Todo QR pertence à Campaign. |
 | NFC Interaction | **Quantum** | Cloud | Edge nunca responde NFC. |
 | QR Interaction (histórico público) | **Quantum** | Cloud | |
-| Evidence | **Cloud** (Evidence Ledger) | Settlement, Analytics, Campaign Management | Nasce no Edge, é materializada no Cloud. |
+| Playback Event / Playback Signature | **Edge** | Cloud (Evidence Ledger), Telemetry | Fato assinado; não é Evidence. |
+| Evidence Record | **Cloud** (Evidence Ledger) | Settlement, Analytics, Campaign Management | Construído e materializado no Cloud a partir de fatos e contexto validados. |
 | Status da Evidence | **Cloud** (Evidence Ledger) | Settlement | |
 | Hash (ancoragem pública) | **Quantum** | Cloud | Cálculo no Edge/Cloud; **registro** é do Quantum. |
 | Snapshot do Ledger | **Cloud** (Evidence Ledger) | Quantum (ancora) | |
-| Split e repasses | **Asaas** | Cloud (Settlement) | Regra do split é do Cloud; execução é do Asaas. |
+| Split e direitos financeiros | **Cloud** (Settlement) | Financial Platform | Settlement calcula; não paga. |
+| Partner Ledger / Wallet / Withdrawal | **Cloud** (Financial Platform) | Asaas (execução instruída) | Ledger é append-only e Wallet é derivada. |
 | Nota fiscal | **Asaas** | Cloud | |
-| Ciclo de liquidação | **Cloud** (Settlement) | Asaas | |
+| Ciclo de liquidação | **Cloud** (Settlement) | Financial Platform | Cria direitos; não instrui transferência. |
 | Preço / CPM / multiplicadores | **Pricing Engine** | Campaign Management, Marketplace, Evidence Ledger | Edge nunca calcula preço. |
 | Campanha | **Cloud** (Campaign Management) | todos | Toda Campaign pertence a um Advertiser. |
 | Slots (alocação e revogação) | **Cloud** (Campaign Management) | Edge, Pricing Engine | |

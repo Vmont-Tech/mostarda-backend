@@ -24,10 +24,10 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 
 ## 2. TV Network
 
-- **Responsabilidade:** inventário físico — **TV**, **Venue**, Dono da TV, Dono do espaço, seguro do hardware.
-- **Pertence:** cadastro e identidade (`TV ID`), vínculo TV↔Venue↔proprietários, atributos de contexto do Venue, estado comercial (ativa, suspensa, em manutenção), elegibilidade da TV para receber Slots, contrato de seguro da TV.
+- **Responsabilidade:** ciclo de vida e disponibilidade operacional da frota — **TV**, **Venue**, Device Registry, EdgeInstallation, Capability Registry, health, heartbeat, manutenção, rollout, rollback e Fleet.
+- **Pertence:** cadastro e identidade (`TV ID`), vínculo TV↔Venue↔proprietários, atributos de contexto do Venue, instalação/provisionamento, inventário, estado operacional, Capability declarativa, Desired/Current/Observed State, conectividade e manutenção. Ver [`../tv-network/TV_NETWORK_ARCHITECTURE.md`](../tv-network/TV_NETWORK_ARCHITECTURE.md).
 - **NÃO pertence:** software embarcado e fila local (Edge Runtime), saúde em tempo real (Telemetry), preço do inventário (Pricing Engine), pagamento ao parceiro (Settlement) ou fundo/cobertura/sinistro (Insurance).
-- **Conversa com:** Campaign Management, Pricing Engine, Edge Runtime, Telemetry, Settlement, Marketplace.
+- **Conversa com:** Edge Runtime, Telemetry, Insurance, Notifications e Analytics por fatos operacionais; não conhece Campaign, Pricing, Evidence, Settlement ou Financial Platform.
 - **Proprietário:** Cloud.
 
 ## 3. Edge Runtime
@@ -58,17 +58,17 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 
 - **Responsabilidade:** **Dynamic Pricing** — definir o `valor cobrado` de um Slot no instante da alocação.
 - **Pertence:** CPM base, multiplicadores de demanda/horário/contexto/ocupação, tabelas de piso e teto, registro auditável do preço aplicado.
-- **NÃO pertence:** cobrança, split, emissão de nota (Settlement/Asaas), decisão de qual TV usar (Campaign Management + AI Orchestration).
+- **NÃO pertence:** cobrança, split, emissão de nota (Settlement/Financial Platform/Asaas), decisão de qual TV usar (Campaign Management + AI Orchestration).
 - **Conversa com:** Campaign Management, TV Network, Telemetry, AI Orchestration, Evidence Ledger (fornece valor congelado), Analytics.
 - **Proprietário:** Cloud.
 
 ## 7. Settlement
 
-- **Responsabilidade:** liquidação — consolidar Evidences válidas em ciclos e disparar **Split Payment** via **Asaas** segundo o split canônico 30/20/20/20/10.
-- **Pertence:** ciclo de liquidação, memória de cálculo do split, taxas, impostos e retenções explícitas, disputas financeiras, reconciliação de webhooks, notas fiscais. Fundo, cobertura e sinistro pertencem a Insurance.
-- **NÃO pertence:** validade da Evidence (Evidence Ledger), preço (Pricing Engine), rails de pagamento (Asaas), qualquer trilha de valor em blockchain.
-- **Conversa com:** Evidence Ledger, Quantum Integration (confirmação de ancoragem), TV Network, Influencer Network, User Identity, Notifications, Analytics; externamente **apenas** com Asaas via Adapter.
-- **Proprietário:** Cloud (regras) / Asaas (execução financeira).
+- **Responsabilidade:** liquidação — consolidar Evidences válidas em ciclos, calcular o split canônico 30/20/20/20/10 e criar direitos financeiros.
+- **Pertence:** ciclo de liquidação, memória de cálculo do split, impostos e retenções explícitas, disputas financeiras e notas fiscais. Fundo, cobertura e sinistro pertencem a Insurance.
+- **NÃO pertence:** validade da Evidence (Evidence Ledger), preço (Pricing Engine), ledger/carteira/saque (Financial Platform), rails de pagamento (Asaas), qualquer trilha de valor em blockchain.
+- **Conversa com:** Evidence Ledger, Quantum Integration (confirmação de ancoragem), Financial Platform, TV Network, Influencer Network, User Identity, Notifications e Analytics.
+- **Proprietário:** Cloud.
 
 ## 8. Quantum Integration
 
@@ -143,6 +143,13 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 - **NÃO pertence:** identidade/elegibilidade da TV (TV Network), pagamento de campanha (Settlement), saúde bruta do dispositivo (Telemetry) ou prova de exibição (Evidence Ledger).
 - **Conversa com:** TV Network, Telemetry, Settlement, Notifications e User Identity, sempre por contratos/eventos.
 - **Proprietário:** Cloud.
+
+## 17. Financial Platform
+
+- **Responsabilidade:** entrada compensada, Payment Ledger, Campaign Budget, Partner Account/Ledger/Wallet, Withdrawal, batches e políticas financeiras.
+- **NÃO pertence:** preço (Pricing), prova (Evidence), direito/split (Settlement), execução física, blockchain ou decisão de cobertura de seguro.
+- **Conversa com:** Asaas via adapter, Campaign Management, Settlement, Insurance, User Identity, Notifications e Analytics.
+- **Proprietário:** Cloud (regras e ledger) / Asaas (execução de cobrança e transferência).
 
 ## Mapa de contexto (resumo)
 

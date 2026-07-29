@@ -8,11 +8,17 @@ Fase atual: **fundação e documentação**. Nenhum código de aplicação foi i
 
 Toda a documentação vive em [`/docs`](./docs). Comece por:
 
+- [`docs/specification/PLATFORM_SPECIFICATION.md`](./docs/specification/PLATFORM_SPECIFICATION.md) — documento-mestre oficial em revisão
 - [`docs/README.md`](./docs/README.md) — índice geral
 - [`docs/product/VISION.md`](./docs/product/VISION.md)
 - [`docs/product/PRODUCT_BIBLE.md`](./docs/product/PRODUCT_BIBLE.md)
+- [`docs/product/BUSINESS_FOUNDATION.md`](./docs/product/BUSINESS_FOUNDATION.md) — constituição de negócio
+- [`docs/product/GO_TO_MARKET.md`](./docs/product/GO_TO_MARKET.md) — estratégia do piloto e liquidez inicial
 - [`docs/architecture/ARCHITECTURE_OVERVIEW.md`](./docs/architecture/ARCHITECTURE_OVERVIEW.md)
 - [`docs/domain/DOMAIN_DICTIONARY.md`](./docs/domain/DOMAIN_DICTIONARY.md)
+- [`docs/execution/`](./docs/execution) — modelo comportamental: Commands, Events, State Machines e Sagas
+- [`docs/financial/FINANCIAL_ARCHITECTURE.md`](./docs/financial/FINANCIAL_ARCHITECTURE.md) — entrada, orçamento, ledger, carteira e saque
+- [`docs/tv-network/TV_NETWORK_ARCHITECTURE.md`](./docs/tv-network/TV_NETWORK_ARCHITECTURE.md) — frota, Edge, saúde, atualização e operação remota
 - [`docs/adr/`](./docs/adr) — Architecture Decision Records
 
 ## Princípios não-negociáveis

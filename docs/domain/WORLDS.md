@@ -77,14 +77,14 @@ A Mostarda opera em três mundos com responsabilidades distintas. Confundir esse
 │ Blockchain: prova apenas    │
 │ Asaas: cobrança e split     │
 └─────────────────────────────┘
-       │ AnchoringConfirmed / PayoutConfirmed
+       │ AnchoringConfirmed / WithdrawalExecuted
        ▼ retorna ao MUNDO DIGITAL como estado auditável
 ```
 
 ### Fluxos canônicos
 
 1. **Exibição → prova → dinheiro**
-   Físico exibe e assina → Digital valida e materializa a Evidence → Institucional ancora o hash → Digital autoriza o ciclo → Asaas executa o Split.
+   Físico exibe e assina → Digital valida e materializa a Evidence → Institucional ancora o hash → Settlement cria direito → Financial Platform governa carteira/saque → Asaas executa transferência instruída.
 
 2. **Interação física do público (NFC/QR)**
    Pessoa aproxima a tag ou lê o QR → a resolução vai ao **Quantum Registry**, nunca ao mini PC → a interação passa a compor o histórico público → o Digital lê esse histórico para atribuição.

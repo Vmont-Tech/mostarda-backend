@@ -22,6 +22,27 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `PlaybackRecovered` | Retomada após falha. |
 | `PlaybackFailed` | Falha definitiva; não gera Evidence válida. |
 | `PlaybackQueueExhausted` | Fila local sem Slots disponíveis. |
+| `FrameDropDetected` | Degradação de frames durante uma sessão de reprodução. |
+
+## TV Capability (produtor: Edge / Cloud)
+
+| Evento | Significado |
+| --- | --- |
+| `CapabilityDeclared` / `CapabilityActivated` | Capability instalada foi declarada ou ativada. |
+| `CapabilityDegraded` / `CapabilityRecovered` | Capability perdeu ou recuperou condição operacional. |
+| `FacetInstalled` / `FacetSwapped` | Facet instalada ou substituída sob contrato versionado. |
+| `CapabilityPolicyApplied` | Política da Capability aplicada. |
+
+## TV Network (produtor: TV Network)
+
+| Evento | Significado |
+| --- | --- |
+| `DeviceRegistered` / `DeviceBoundToTV` / `DeviceReplaced` | Registro, vínculo e substituição de equipamento. |
+| `InstallationVerified` / `InstallationAccepted` / `InstallationFailed` | Ciclo de instalação física. |
+| `HeartbeatReceived` / `HeartbeatMissed` | Liveness operacional e lacunas. |
+| `HealthObserved` / `HealthScoreChanged` / `DiagnosisCreated` | Histórico de saúde e diagnóstico. |
+| `UpdateWaveStarted` / `UpdateWavePaused` / `UpdateRolledBack` | Operação de rollout e rollback. |
+| `FleetCreated` / `FleetMembershipChanged` / `FleetHealthChanged` | Gestão de grupo operacional. |
 
 ## Campaign (produtor: Cloud / Campaign Management; alguns no Edge)
 
@@ -96,9 +117,8 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `SettlementAuthorized` | Evidences válidas e ancoradas liberam liquidação. |
 | `SettlementBlocked` | Bloqueada por falha de evidência ou ancoragem. |
 | `SplitCalculated` | Memória de cálculo do split gerada. |
-| `SettlementExecuted` | Split enviado ao Asaas. |
-| `PayoutConfirmed` | Repasse confirmado pelo Asaas. |
-| `PayoutFailed` | Falha de repasse. |
+| `SettlementExecuted` | Direitos financeiros do ciclo foram calculados e encaminhados ao Financial Platform. |
+| `PartnerCreditRequested` | Crédito de parceiro solicitado a partir de uma SplitShare. |
 | `InvoiceIssued` | Nota fiscal emitida. |
 | `ChargeRegistered` | Cobrança do Advertiser registrada. |
 | `ChargePaid` / `ChargeOverdue` | Estado da cobrança. |
@@ -173,6 +193,10 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `OverlayApplied` / `OverlayRemoved` / `OverlayRenderFailed` | Composição de camadas. |
 | `QrRendered` / `QrRenderFailed` | Renderização do QR. |
 | `ScheduleApplied` / `ScheduleConflictDetected` / `ScheduleDrifted` | Agenda de execução. |
+| `CompositionApplied` | Composição Canvas versionada aplicada. |
+| `LayerRenderFailed` / `SafeAreaViolationDetected` | Falha de layer ou violação visual detectada. |
+| `EmergencyLayerActivated` | Layer de emergência ganhou prioridade. |
+| `EmergencyBroadcastStarted` / `EmergencyBroadcastEnded` | Transmissão de emergência iniciou ou terminou. |
 
 ## AI Orchestration (produtor: Cloud / AI)
 
@@ -187,6 +211,7 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `AiCapabilityDegraded` | Agente degradado; fluxo humano segue com fallback. |
 | `EdgeModelPublished` / `EdgeModelRevoked` | Modelo local homologado/revogado. |
 | `EdgeInferenceCompleted` / `EdgeInferenceDegraded` | Inferência no Edge. |
+| `DesiredStatePublished` / `CurrentStateReported` / `ObservedStateDerived` / `StateReconciliationCompleted` | Convergência entre estado desejado, declarado e observado. |
 | `GraoPreferenceLearned` | Preferência aprendida pelo Grão. |
 
 ## Influencer Network
@@ -240,6 +265,19 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `InsuranceRepairAuthorized` / `InsuranceReplacementAuthorized` | Decisão operacional para reparar ou substituir. |
 | `InsuranceSettlementExecuted` | Saída do fundo reconciliada. |
 
+## Financial Platform
+
+| Evento | Significado |
+| --- | --- |
+| `PaymentReceived` / `PaymentCompensated` | Pagamento reconhecido ou confirmado para crédito de orçamento. |
+| `PaymentCancelled` / `PaymentDisputed` / `PaymentOverdue` | Pagamento sem disponibilidade financeira. |
+| `CampaignBudgetIncreased` / `CampaignBudgetConsumed` / `CampaignBudgetDepleted` | Alteração de orçamento disponível. |
+| `PartnerCreditRequested` / `PartnerCredited` | Direito do Settlement encaminhado e creditado no Ledger. |
+| `PartnerBalanceAvailable` / `PartnerBalanceBlocked` | Saldo de carteira derivado. |
+| `WithdrawalRequested` / `WithdrawalApproved` / `WithdrawalExecuted` / `WithdrawalFailed` | Ciclo de saque. |
+| `NegativeBalanceCreated` / `NegativeBalanceRecovered` | Débito compensatório e recuperação. |
+| `FinancialPolicyChanged` | Nova versão de política financeira. |
+
 ## Notifications
 
 | Evento | Significado |
@@ -265,7 +303,7 @@ PlaybackFinished → PlaybackEventSigned → PlaybackEventSubmitted
    → EvidenceGenerated → EvidenceValidated → EvidenceHashed
    → AnchoringRequested → AnchoringConfirmed → EvidenceRegistered
    → SettlementCycleClosed → SettlementAuthorized → SplitCalculated
-   → SettlementExecuted → PayoutConfirmed
+   → SettlementExecuted → PartnerCreditRequested → PartnerCredited
 ```
 
-Qualquer falha na cadeia produz `EvidenceRejected`, `EvidenceDisputed`, `AnchoringFailed` ou `SettlementBlocked` — e **nenhum** repasse ocorre.
+Qualquer falha na cadeia produz `EvidenceRejected`, `EvidenceDisputed`, `AnchoringFailed` ou `SettlementBlocked` — e nenhum direito financeiro é emitido. Saque é fluxo posterior, governado pelo Financial Platform.

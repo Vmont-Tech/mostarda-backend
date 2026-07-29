@@ -7,6 +7,9 @@ Vocabulário oficial da plataforma. **Um termo só existe se estiver aqui.** Qua
 ## TV
 Dispositivo físico ativo no ecossistema Mostarda. Composto por **mini PC (Edge)** + **tela** + acessórios. Possui identidade única (`TV ID`), pertence a um **Dono da TV** e está instalada em um **Venue**. Emite telemetria e executa **Playback Events**.
 
+## TV Network
+Bounded Context proprietário do ciclo de vida e da disponibilidade operacional da frota física: TVs, dispositivos, Edge, capabilities, health, heartbeat, atualização e Fleet. Não conhece Campaign, anúncios, preço, Financeiro, Evidence ou Settlement.
+
 ## Edge
 Camada de software que roda no mini PC acoplado à TV. Responsável por: reproduzir conteúdo (via Canvas), coletar telemetria, emitir heartbeat, operar offline por períodos limitados e assinar evidências localmente. **Não** contém regras complexas de negócio.
 
@@ -78,3 +81,42 @@ Identificador imutável da regra de distribuição aplicada a uma Evidence e a u
 
 ## Facet Asset
 Ativo interno de uma Facet: política, capacidade, perfil, pipeline, estado operacional ou trilha de auditoria. Não é um Creative Asset.
+
+## Canonical Evidence Package
+Representação canônica, independente de formato, de uma prova oficial preparada pelo Cloud. É a origem do hash ancorado pelo Quantum; PDF, JSON, CBOR ou Protobuf são somente transportes.
+
+## Desired State
+Estado versionado que Cloud declara para uma TV/Edge: configuração e versões que devem estar vigentes.
+
+## Current State
+Estado observado e reportado pelo Edge, incluindo configuração, versões, saúde e divergências em relação ao Desired State.
+
+## Observed State
+Leitura independente que Cloud deriva de heartbeat, telemetria, HDMI, execução e confirmações de comando. É comparada ao Current State pelo reconciliador.
+
+## Split Share Status
+Estado individual de uma parcela: `READY`, `BLOCKED`, `UNCLAIMED`, `PAID` ou `FAILED`.
+
+## Evidence Record
+Registro de prova append-only criado no Cloud após validação de um Playback Event. É a unidade que pode tornar-se `VALID` e habilitar Settlement.
+
+## Playback Collector
+Componente do Edge que coleta, assina, armazena offline e reporta fatos de playback. Não cria Evidence Record nem atribui status de prova.
+
+## TV Capability
+Aggregate que representa uma capacidade instalada em uma TV, com estado, versão, owner, health, Facets, Assets, Services, Policies e Events.
+
+## Financial Platform
+Bounded Context que governa entrada compensada, orçamento disponível, ledger, carteira de parceiros, saque e políticas financeiras; não calcula preço, prova ou split.
+
+## Campaign Available Budget
+Saldo compensado e disponível para reservar/consumir em Slots. É distinto de Contract Value e a única fonte de autorização financeira de Campaign.
+
+## Partner Ledger
+Livro append-only de créditos, débitos, taxas, chargebacks e recuperações de um parceiro.
+
+## Partner Wallet
+Projeção dos saldos Pending, Available, Blocked, Withdrawable e Negative derivados do Partner Ledger.
+
+## Withdrawal
+Solicitação e ciclo de retirada de saldo de parceiro, governados por Withdrawal Policy e executados pelo provider somente após aprovação/batch.

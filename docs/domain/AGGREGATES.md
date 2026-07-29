@@ -19,6 +19,14 @@ Cada Aggregate tem **uma raiz**, protege **invariantes** e é a única porta de 
 - **Invariantes:** toda TV pertence a **um** Dono da TV e está em **um** Venue; `TV ID` imutável e não reutilizável; só recebe Slots compatíveis com suas Capabilities declaradas; TV suspensa não recebe Slot.
 - **Eventos:** `TvRegistered`, `TvProvisioned`, `TvActivated`, `TvSuspended`, `TvReactivated`, `TvDecommissioned`, `TvAssignedToVenue`, `TvOwnershipTransferred`, `InsurancePolicyAttached`, `NfcTagLinked`.
 
+## TVCapability Aggregate — contexto Edge Runtime
+
+- **Root:** `TVCapability` (`CapabilityIdentifier`)
+- **Entidades internas:** `FacetInstallation`, `AssetBinding`, `ServiceContract`, `PolicyBinding`, `CapabilityHealth`.
+- **Value Objects:** `CapabilityVersion`, `CapabilityState`, `FacetId`, `Owner`, `DeviceHealth`.
+- **Invariantes:** pertence a exatamente uma TV e a um owner técnico; estado, versão, health e contratos são explícitos; Facets instaladas são compatíveis com a versão e não dependem diretamente entre si; alteração de Asset/Service/Policy é versionada e auditável; Capability degradada não anuncia suporte que não pode executar.
+- **Eventos:** `CapabilityDeclared`, `CapabilityActivated`, `CapabilityDegraded`, `CapabilityRecovered`, `FacetInstalled`, `FacetSwapped`, `CapabilityPolicyApplied`.
+
 ## Venue Aggregate — contexto TV Network
 
 - **Root:** `Venue`
@@ -32,7 +40,7 @@ Cada Aggregate tem **uma raiz**, protege **invariantes** e é a única porta de 
 - **Root:** `Campaign` (identidade `CampaignIdentifier`)
 - **Entidades internas:** CreativeAsset, TargetingRule, BudgetAllocation
 - **Value Objects:** `Money`, `TimeSlot`, `AssetReference`, `PlaybackWindow`
-- **Invariantes:** toda Campaign pertence a **um** Advertiser; só gera Slot com pelo menos um Creative Asset aprovado; não veicula fora da janela; orçamento consumido nunca excede o contratado; pausa impede nova alocação sem revogar Slots já executados.
+- **Invariantes:** toda Campaign pertence a **um** Advertiser; só gera Slot com pelo menos um Creative Asset aprovado; não veicula fora da janela; Contract Value registra o contrato, mas reserva/consumo financeiro nunca excedem o `AvailableBudget` do CampaignBudget; pausa impede nova alocação sem revogar Slots já executados.
 - **Eventos:** `CampaignCreated`, `CampaignScheduled`, `CampaignStarted`, `CampaignPaused`, `CampaignResumed`, `CampaignCompleted`, `CampaignExpired`, `CampaignBudgetExhausted`, `CreativeAssetUploaded`, `CreativeAssetApproved`, `CreativeAssetRejected`.
 
 ## Slot Aggregate — contexto Campaign Management
@@ -47,17 +55,23 @@ Cada Aggregate tem **uma raiz**, protege **invariantes** e é a única porta de 
 
 - **Root:** `Evidence`
 - **Entidades internas:** ValidationRecord, AnchoringRecord, DisputeRecord
-- **Value Objects:** `TVIdentifier`, `CampaignIdentifier`, `SlotIdentifier`, `EvidenceHash`, `DeviceSignature`, `Money` (calculado, final e efetivamente cobrado), `PlaybackDuration`, `AssetReference`, `AnchoringReceipt`, `PricingPolicyVersion`, `PricingAlgorithmVersion`, `SplitPolicyVersion`, `TaxBreakdown`, `SplitShare`.
-- **Invariantes:** representa exatamente **15s** de exibição; campos obrigatórios do ADR-003 sempre presentes; contém preço calculado, final e cobrado, preço dinâmico/fatores, impostos, split aplicado, percentuais, versões de política/algoritmo, timestamp, TV, Slot, Campaign, playback, telemetria, hash, documento associado e Quantum Anchor; assinatura válida é condição para `VALID`; unicidade por Slot executado; **append-only** — correção apenas por `EvidenceReversed`; sem status `VALID` + ancoragem confirmada não há liquidação.
+- **Value Objects:** `TVIdentifier`, `CampaignIdentifier`, `SlotIdentifier`, `EvidenceHash`, `DeviceSignature`, `Money` (calculado, final e efetivamente cobrado), `PlaybackDuration`, `AssetReference`, `AnchoringReceipt`, `EvidenceConfidence`, `PlaybackChecksum`, `CreativeChecksum`, `PlayerVersion`, `EdgeVersion`, `AIModelVersion`, `OSVersion`, `PricingPolicyVersion`, `PricingAlgorithmVersion`, `SettlementPolicyVersion`, `TaxPolicyVersion`, `InsurancePolicyVersion`, `SplitPolicyVersion`, `TaxBreakdown`, `SplitShare`.
+- **Invariantes:** representa exatamente **15s** de exibição; campos obrigatórios do ADR-003 sempre presentes; contém preço calculado, final e cobrado, preço dinâmico/fatores, impostos, split aplicado, percentuais, versões de política/algoritmo, timestamp, TV, Slot, Campaign, playback, telemetria, hash, documento associado e Quantum Anchor; registra `EvidenceConfidence`, checksums de playback e criativo e versões de Player, Edge, IA e sistema operacional; assinatura válida é condição para `VALID`; unicidade por Slot executado; **append-only** — correção apenas por `EvidenceReversed`; sem status `VALID` + ancoragem confirmada não há liquidação.
 - **Eventos:** `EvidenceGenerated`, `EvidenceValidated`, `EvidenceRejected`, `EvidenceDuplicateDetected`, `EvidenceHashed`, `EvidenceRegistered`, `EvidenceDisputed`, `EvidenceDisputeResolved`, `EvidenceReversed`, `LedgerSnapshotAnchored`.
 
 ## Settlement Aggregate — contexto Settlement
 
 - **Root:** `Settlement` (por `SettlementCycle` e participante pagador/recebedor)
-- **Entidades internas:** SplitLine, Payout, Invoice, Charge, SettlementDispute
-- **Value Objects:** `SettlementCycle`, `Money`, `SplitShare`, `SplitPolicyVersion`, `Retention`, `TaxBreakdown`, `AsaasFee`.
-- **Invariantes:** consome apenas Evidences `VALID` e ancoradas; após taxas, impostos e retenções explícitas, o valor líquido distribuível é dividido exatamente em **30% Mostarda, 20% Proprietário da TV, 20% Proprietário do Local, 20% Vendedor responsável e 10% Influenciador**; soma das cinco `SplitShare` = valor líquido distribuível; ausência de beneficiário elegível bloqueia a linha, nunca redistribui percentual; ciclo fechado é imutável; falha de ancoragem ou disputa aberta bloqueia execução; nenhuma trilha de valor em blockchain. Ver [`REVENUE_ARCHITECTURE.md`](./REVENUE_ARCHITECTURE.md).
-- **Eventos:** `SettlementCycleOpened`, `SettlementCycleClosed`, `SettlementAuthorized`, `SettlementBlocked`, `SplitCalculated`, `SettlementExecuted`, `PayoutConfirmed`, `PayoutFailed`, `InvoiceIssued`, `ChargeRegistered`, `ChargePaid`, `ChargeOverdue`, `InsuranceFundCredited`, `SettlementDisputeOpened`, `SettlementDisputeResolved`.
+- **Entidades internas:** SplitLine, FinancialRight, Invoice, Charge, SettlementDispute
+- **Value Objects:** `SettlementCycle`, `Money`, `SplitShare`, `SplitShareStatus`, `SplitPolicyVersion`, `SettlementPolicyVersion`, `TaxPolicyVersion`, `Retention`, `TaxBreakdown`, `AsaasFee`.
+- **Invariantes:** consome apenas Evidences `VALID` e ancoradas; após taxas, impostos e retenções explícitas, o valor líquido distribuível é dividido exatamente em **30% Mostarda, 20% Proprietário da TV, 20% Proprietário do Local, 20% Vendedor responsável e 10% Influenciador**; soma das cinco `SplitShare` = valor líquido distribuível; cada parcela possui status próprio `READY`/`BLOCKED`/`UNCLAIMED`/`CREDITED`; ausência de beneficiário não redistribui percentual nem bloqueia as demais parcelas; `CREDITED` cria direito para Financial Platform, não pagamento; ciclo fechado é imutável; falha de ancoragem ou disputa da Evidence bloqueia as parcelas afetadas; nenhuma trilha de valor em blockchain. Ver [`REVENUE_ARCHITECTURE.md`](./REVENUE_ARCHITECTURE.md).
+- **Eventos:** `SettlementCycleOpened`, `SettlementCycleClosed`, `SettlementAuthorized`, `SettlementBlocked`, `SplitCalculated`, `SettlementExecuted`, `PartnerCreditRequested`, `InvoiceIssued`, `ChargeRegistered`, `ChargePaid`, `ChargeOverdue`, `InsuranceFundCredited`, `SettlementDisputeOpened`, `SettlementDisputeResolved`.
+
+## Financial Platform Aggregates — contexto Financial Platform
+
+- **Roots:** `PartnerAccount`, `PartnerLedger`, `PartnerWallet`, `Withdrawal`, `WithdrawalBatch`, `CampaignBudget`, `PaymentLedger`, `FinancialPolicy`, `WithdrawalPolicy`.
+- **Invariantes:** PartnerLedger e PaymentLedger são append-only; Wallet é projeção do PartnerLedger; CampaignBudget só aumenta por pagamento compensado e só consome AvailableBudget; Withdrawal sempre aplica WithdrawalPolicy; chargebacks e recuperações são novos lançamentos; Settlement apenas origina direitos.
+- **Eventos:** catálogo em [`../financial/FINANCIAL_EVENTS.md`](../financial/FINANCIAL_EVENTS.md).
 
 ## Influencer Aggregate — contexto Influencer Network
 
