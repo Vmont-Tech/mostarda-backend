@@ -26,8 +26,15 @@ export interface ProjectionRebuild<TState> {
   readonly rebuildStatus: "COMPLETED_AWAITING_PROMOTION";
 }
 
+export interface ProjectionRebuildIdentity {
+  readonly projectionName: string;
+  readonly projectionVersion: number;
+  readonly rebuildId: string;
+}
+
 export interface AtomicProjectionStore<TState> {
   promote(rebuild: ProjectionRebuild<TState>): Promise<void>;
+  invalidate(expected: ProjectionRebuildIdentity): Promise<void>;
 }
 
 export async function promoteProjection<TState>(
@@ -35,6 +42,13 @@ export async function promoteProjection<TState>(
   rebuild: ProjectionRebuild<TState>,
 ): Promise<void> {
   await store.promote(structuredClone(rebuild));
+}
+
+export async function invalidateProjection<TState>(
+  store: AtomicProjectionStore<TState>,
+  expected: ProjectionRebuildIdentity,
+): Promise<void> {
+  await store.invalidate(structuredClone(expected));
 }
 
 export function rebuildProjection<TState, TEvent>({

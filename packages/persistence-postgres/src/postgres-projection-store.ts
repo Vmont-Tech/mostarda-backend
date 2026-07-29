@@ -2,12 +2,16 @@ import { isDeepStrictEqual } from "node:util";
 
 import type { Pool, PoolClient } from "pg";
 
-import type { ProjectionRebuild } from "../../kernel/src/projection.ts";
+import type {
+  ProjectionRebuild,
+  ProjectionRebuildIdentity,
+} from "../../kernel/src/projection.ts";
 import {
   ProjectionCandidateConflict,
   ProjectionCandidateNotFound,
   ProjectionCheckpointRegression,
   ProjectionIdentityMismatch,
+  ProjectionInvalidationConflict,
 } from "../../persistence/src/index.ts";
 import { canonicalizeProjectionCandidate } from "./projection-candidate-validation.ts";
 
@@ -20,6 +24,12 @@ interface ProjectionRow<TState> {
   as_of: Date | null;
   staleness: ProjectionRebuild<TState>["staleness"];
   rebuild_status: ProjectionRebuild<TState>["rebuildStatus"];
+}
+
+interface ProjectionInvalidationRow {
+  projection_name: string;
+  projection_version: number;
+  rebuild_id: string;
 }
 
 const projectionColumns = `
@@ -42,9 +52,9 @@ function toProjectionRebuild<TState>(
   };
 }
 
-function hasSameIdentity<TState>(
-  first: ProjectionRebuild<TState>,
-  second: ProjectionRebuild<TState>,
+function hasSameIdentity(
+  first: ProjectionRebuildIdentity,
+  second: ProjectionRebuildIdentity,
 ): boolean {
   return (
     first.projectionName === second.projectionName &&
@@ -152,6 +162,18 @@ export class PostgresProjectionStore<TState> {
       );
 
       const candidate = await this.#lockedCandidate(client, canonical);
+      if (
+        !isDeepStrictEqual(
+          canonicalizeProjectionCandidate(candidate),
+          canonical,
+        )
+      ) {
+        throw new ProjectionCandidateConflict(
+          canonical.projectionName,
+          canonical.projectionVersion,
+          canonical.rebuildId,
+        );
+      }
       const current = await this.#lockedCurrent(
         client,
         candidate.projectionName,
@@ -187,6 +209,77 @@ export class PostgresProjectionStore<TState> {
         ],
       );
       await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async invalidate(expected: ProjectionRebuildIdentity): Promise<void> {
+    const client = await this.#pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtextextended($1, 1))",
+        [expected.projectionName],
+      );
+
+      const current = await this.#lockedCurrent(
+        client,
+        expected.projectionName,
+      );
+      if (current !== null) {
+        if (!hasSameIdentity(current, expected)) {
+          throw new ProjectionInvalidationConflict(expected);
+        }
+
+        await client.query(
+          "DELETE FROM projection_heads WHERE projection_name = $1",
+          [expected.projectionName],
+        );
+        await client.query(
+          `INSERT INTO projection_invalidations (
+             projection_name, projection_version, rebuild_id
+           ) VALUES ($1, $2, $3)
+           ON CONFLICT (projection_name) DO UPDATE
+           SET projection_version = EXCLUDED.projection_version,
+               rebuild_id = EXCLUDED.rebuild_id,
+               invalidated_at = clock_timestamp()`,
+          [
+            expected.projectionName,
+            expected.projectionVersion,
+            expected.rebuildId,
+          ],
+        );
+        await client.query("COMMIT");
+        return;
+      }
+
+      const invalidated = await client.query<ProjectionInvalidationRow>(
+        `SELECT projection_name, projection_version, rebuild_id
+           FROM projection_invalidations
+          WHERE projection_name = $1
+          FOR UPDATE`,
+        [expected.projectionName],
+      );
+      const row = invalidated.rows[0];
+      if (
+        row !== undefined &&
+        hasSameIdentity(
+          {
+            projectionName: row.projection_name,
+            projectionVersion: row.projection_version,
+            rebuildId: row.rebuild_id,
+          },
+          expected,
+        )
+      ) {
+        await client.query("COMMIT");
+        return;
+      }
+      throw new ProjectionInvalidationConflict(expected);
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;

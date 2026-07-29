@@ -8,6 +8,10 @@ const projectionMigrationUrl = new URL(
   "../../migrations/004_projection_store.sql",
   import.meta.url,
 );
+const projectionInvalidationMigrationUrl = new URL(
+  "../../migrations/005_projection_invalidation.sql",
+  import.meta.url,
+);
 
 test("event store migration enforces append-only identity and revision constraints", async () => {
   const sql = await readFile(migrationUrl, "utf8");
@@ -117,4 +121,29 @@ test("projection promotion uses a transaction, row locks, and bigint conversion"
   assert.match(source, /client\.query\("ROLLBACK"\)/);
   assert.match(source, /BigInt\(row\.checkpoint\)/);
   assert.doesNotMatch(source, /Number\([^)]*checkpoint/i);
+});
+
+test("projection invalidation is an upgrade-safe tombstone linked to its candidate", async () => {
+  const sql = await readFile(projectionInvalidationMigrationUrl, "utf8");
+
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS projection_invalidations/);
+  assert.match(sql, /projection_name TEXT PRIMARY KEY/);
+  assert.match(
+    sql,
+    /FOREIGN KEY \(projection_name, projection_version, rebuild_id\)\s+REFERENCES projection_rebuilds \(projection_name, projection_version, rebuild_id\)/,
+  );
+});
+
+test("PostgreSQL invalidation is transactional and locked", async () => {
+  const source = await readFile(
+    new URL(
+      "../../packages/persistence-postgres/src/postgres-projection-store.ts",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  assert.match(source, /async invalidate\(/);
+  assert.match(source, /projection_invalidations/);
+  assert.match(source, /FOR UPDATE/);
 });

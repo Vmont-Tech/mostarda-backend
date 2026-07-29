@@ -7,6 +7,7 @@ import {
   ProjectionCandidateNotFound,
   ProjectionCheckpointRegression,
   ProjectionIdentityMismatch,
+  ProjectionInvalidationConflict,
 } from "../../packages/persistence/src/index.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -51,13 +52,22 @@ test(
     const pool = new Pool({ connectionString: databaseUrl });
 
     async function resetStore(): Promise<void> {
-      await pool.query("TRUNCATE projection_heads, projection_rebuilds");
+      await pool.query(
+        "TRUNCATE projection_heads, projection_invalidations, projection_rebuilds",
+      );
     }
 
     try {
       await applySqlMigration(
         pool,
         new URL("../../migrations/004_projection_store.sql", import.meta.url),
+      );
+      await applySqlMigration(
+        pool,
+        new URL(
+          "../../migrations/005_projection_invalidation.sql",
+          import.meta.url,
+        ),
       );
 
       await context.test(
@@ -166,6 +176,54 @@ test(
 
           assert.deepEqual(await store.current("fixture"), first);
           assert.deepEqual(await store.current("another-projection"), second);
+        },
+      );
+
+      await context.test(
+        "promotion rejects content divergent from the staged candidate",
+        async () => {
+          await resetStore();
+          const store = new PostgresProjectionStore<FixtureState>(pool);
+          const candidate = rebuild("fixture", "candidate-1", 3n);
+          await store.stage(candidate);
+
+          await assert.rejects(
+            store.promote({
+              ...candidate,
+              state: { nested: { value: "divergent" } },
+            }),
+            (error) => error instanceof ProjectionCandidateConflict,
+          );
+          assert.equal(await store.current("fixture"), null);
+        },
+      );
+
+      await context.test(
+        "invalidation preserves candidates, retries deterministically, and rejects stale identity",
+        async () => {
+          await resetStore();
+          const store = new PostgresProjectionStore<FixtureState>(pool);
+          const first = rebuild("fixture", "candidate-1", 3n);
+          const newer = rebuild("fixture", "candidate-2", 4n);
+          const firstIdentity = {
+            projectionName: first.projectionName,
+            projectionVersion: first.projectionVersion,
+            rebuildId: first.rebuildId,
+          };
+          await store.stage(first);
+          await store.promote(first);
+
+          await store.invalidate(firstIdentity);
+          await store.invalidate(firstIdentity);
+          assert.equal(await store.current("fixture"), null);
+
+          await store.stage(newer);
+          await store.promote(newer);
+          await assert.rejects(
+            store.invalidate(firstIdentity),
+            (error) => error instanceof ProjectionInvalidationConflict,
+          );
+          assert.deepEqual(await store.current("fixture"), newer);
         },
       );
     } finally {

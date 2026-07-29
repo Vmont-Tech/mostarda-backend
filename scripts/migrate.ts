@@ -24,7 +24,11 @@ try {
     pool,
     new URL("../migrations/004_projection_store.sql", import.meta.url),
   );
-  process.stdout.write("Applied migrations 001, 002, 003 and 004\n");
+  await applySqlMigration(
+    pool,
+    new URL("../migrations/005_projection_invalidation.sql", import.meta.url),
+  );
+  process.stdout.write("Applied migrations 001, 002, 003, 004 and 005\n");
 } finally {
   await pool.end();
 }

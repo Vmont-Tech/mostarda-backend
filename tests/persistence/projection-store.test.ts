@@ -11,6 +11,7 @@ import {
   ProjectionCandidateNotFound,
   ProjectionCheckpointRegression,
   ProjectionIdentityMismatch,
+  ProjectionInvalidationConflict,
 } from "../../packages/persistence/src/index.ts";
 
 interface FixtureState {
@@ -174,6 +175,113 @@ test("promotion rejects a staged rebuild with a mismatched projection identity",
   assert.equal(await store.current("fixture"), null);
 });
 
+test("promotion rejects supplied content that diverges from the staged candidate", async () => {
+  const store = new InMemoryProjectionStore<FixtureState>();
+  const candidate = rebuild("candidate-1", 3n);
+  await store.stage(candidate);
+
+  const divergences: ProjectionRebuild<FixtureState>[] = [
+    { ...candidate, checkpoint: 4n },
+    { ...candidate, state: { nested: { value: "divergent" } } },
+    {
+      ...candidate,
+      asOf: "2026-07-29T12:00:02.000Z",
+      staleness: {
+        ...candidate.staleness,
+        asOf: "2026-07-29T12:00:02.000Z",
+      },
+    },
+    {
+      ...candidate,
+      staleness: {
+        ...candidate.staleness,
+        lagMilliseconds: 2_000,
+      },
+    },
+    {
+      ...candidate,
+      rebuildStatus: "INVALID" as ProjectionRebuild<FixtureState>["rebuildStatus"],
+    },
+  ];
+
+  for (const divergent of divergences) {
+    await assert.rejects(
+      store.promote(divergent),
+      (error) => error instanceof ProjectionCandidateConflict,
+    );
+  }
+  assert.equal(await store.current("fixture"), null);
+});
+
+test("invalidation removes only the current head and preserves its staged candidate", async () => {
+  const store = new InMemoryProjectionStore<FixtureState>();
+  const candidate = rebuild("candidate-1", 3n);
+  await store.stage(candidate);
+  await store.promote(candidate);
+
+  await store.invalidate({
+    projectionName: candidate.projectionName,
+    projectionVersion: candidate.projectionVersion,
+    rebuildId: candidate.rebuildId,
+  });
+
+  assert.equal(await store.current("fixture"), null);
+  await store.promote(candidate);
+  assert.deepEqual(await store.current("fixture"), candidate);
+});
+
+test("repeated invalidation of the same current generation is idempotent", async () => {
+  const store = new InMemoryProjectionStore<FixtureState>();
+  const candidate = rebuild("candidate-1", 3n);
+  const identity = {
+    projectionName: candidate.projectionName,
+    projectionVersion: candidate.projectionVersion,
+    rebuildId: candidate.rebuildId,
+  };
+  await store.stage(candidate);
+  await store.promote(candidate);
+
+  await store.invalidate(identity);
+  await store.invalidate(identity);
+
+  assert.equal(await store.current("fixture"), null);
+});
+
+test("stale invalidation cannot remove a newer projection head", async () => {
+  const store = new InMemoryProjectionStore<FixtureState>();
+  const first = rebuild("candidate-1", 3n);
+  const newer = rebuild("candidate-2", 4n);
+  const firstIdentity = {
+    projectionName: first.projectionName,
+    projectionVersion: first.projectionVersion,
+    rebuildId: first.rebuildId,
+  };
+  await store.stage(first);
+  await store.promote(first);
+  await store.invalidate(firstIdentity);
+  await store.stage(newer);
+  await store.promote(newer);
+
+  await assert.rejects(
+    store.invalidate(firstIdentity),
+    (error) => error instanceof ProjectionInvalidationConflict,
+  );
+  assert.deepEqual(await store.current("fixture"), newer);
+});
+
+test("invalidation fails explicitly when no matching generation is current or tombstoned", async () => {
+  const store = new InMemoryProjectionStore<FixtureState>();
+
+  await assert.rejects(
+    store.invalidate({
+      projectionName: "fixture",
+      projectionVersion: 1,
+      rebuildId: "missing",
+    }),
+    (error) => error instanceof ProjectionInvalidationConflict,
+  );
+});
+
 test("checkpoint regression is rejected without changing the current projection", async () => {
   const store = new InMemoryProjectionStore<FixtureState>();
   const current = rebuild("candidate-current", 7n);
@@ -195,10 +303,15 @@ test("checkpoint regression is rejected without changing the current projection"
 test("stored candidates and reads are isolated structured clones", async () => {
   const store = new InMemoryProjectionStore<FixtureState>();
   const candidate = rebuild("candidate-1", 3n, "original");
+  const staged = structuredClone(candidate);
   await store.stage(candidate);
   candidate.state.nested.value = "caller-mutated";
 
-  await store.promote(candidate);
+  await assert.rejects(
+    store.promote(candidate),
+    (error) => error instanceof ProjectionCandidateConflict,
+  );
+  await store.promote(staged);
   const firstRead = await store.current("fixture");
   assert.ok(firstRead);
   assert.equal(firstRead.state.nested.value, "original");
@@ -215,4 +328,5 @@ test("the in-memory store implements the kernel atomic promotion contract", () =
     new InMemoryProjectionStore<FixtureState>();
 
   assert.equal(typeof contract.promote, "function");
+  assert.equal(typeof contract.invalidate, "function");
 });

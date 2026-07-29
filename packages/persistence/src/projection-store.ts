@@ -3,6 +3,7 @@ import { isDeepStrictEqual } from "node:util";
 import type {
   AtomicProjectionStore,
   ProjectionRebuild,
+  ProjectionRebuildIdentity,
 } from "../../kernel/src/projection.ts";
 
 export class ProjectionCandidateNotFound extends Error {
@@ -67,11 +68,29 @@ export class ProjectionCheckpointRegression extends Error {
   }
 }
 
+export class ProjectionInvalidationConflict extends Error {
+  readonly projectionName: string;
+  readonly projectionVersion: number;
+  readonly rebuildId: string;
+
+  constructor(expected: ProjectionRebuildIdentity) {
+    super(
+      `Projection ${expected.projectionName} current generation does not match ` +
+        `${expected.projectionVersion}/${expected.rebuildId} for invalidation.`,
+    );
+    this.name = "ProjectionInvalidationConflict";
+    this.projectionName = expected.projectionName;
+    this.projectionVersion = expected.projectionVersion;
+    this.rebuildId = expected.rebuildId;
+  }
+}
+
 export class InMemoryProjectionStore<TState>
   implements AtomicProjectionStore<TState>
 {
   readonly #candidates = new Map<string, ProjectionRebuild<TState>>();
   readonly #current = new Map<string, ProjectionRebuild<TState>>();
+  readonly #invalidated = new Map<string, ProjectionRebuildIdentity>();
 
   async stage(rebuild: ProjectionRebuild<TState>): Promise<void> {
     if (rebuild.rebuildStatus !== "COMPLETED_AWAITING_PROMOTION") {
@@ -115,6 +134,13 @@ export class InMemoryProjectionStore<TState>
       }
       throw new ProjectionCandidateNotFound(rebuild.rebuildId);
     }
+    if (!isDeepStrictEqual(candidate, rebuild)) {
+      throw new ProjectionCandidateConflict(
+        rebuild.projectionName,
+        rebuild.projectionVersion,
+        rebuild.rebuildId,
+      );
+    }
 
     const current = this.#current.get(candidate.projectionName);
     if (
@@ -137,13 +163,41 @@ export class InMemoryProjectionStore<TState>
     this.#current.set(candidate.projectionName, candidate);
   }
 
+  async invalidate(expected: ProjectionRebuildIdentity): Promise<void> {
+    const current = this.#current.get(expected.projectionName);
+    if (current !== undefined) {
+      if (!this.#hasIdentity(current, expected)) {
+        throw new ProjectionInvalidationConflict(expected);
+      }
+      this.#current.delete(expected.projectionName);
+      this.#invalidated.set(expected.projectionName, structuredClone(expected));
+      return;
+    }
+
+    const invalidated = this.#invalidated.get(expected.projectionName);
+    if (
+      invalidated !== undefined &&
+      this.#hasIdentity(invalidated, expected)
+    ) {
+      return;
+    }
+    throw new ProjectionInvalidationConflict(expected);
+  }
+
   #candidateKey(
-    rebuild: ProjectionRebuild<TState>,
+    rebuild: ProjectionRebuildIdentity,
   ): string {
     return JSON.stringify([
       rebuild.projectionName,
       rebuild.projectionVersion,
       rebuild.rebuildId,
     ]);
+  }
+
+  #hasIdentity(
+    first: ProjectionRebuildIdentity,
+    second: ProjectionRebuildIdentity,
+  ): boolean {
+    return this.#candidateKey(first) === this.#candidateKey(second);
   }
 }

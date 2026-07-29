@@ -197,11 +197,17 @@ function canonicalObject(
         `${path}.${key} is a property JSONB would drop or evaluate.`,
       );
     }
-    result[key] = canonicalJsonbValue(
+    const canonical = canonicalJsonbValue(
       descriptor.value,
       `${path}.${key}`,
       ancestors,
     );
+    Object.defineProperty(result, key, {
+      value: canonical,
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
   }
   return result;
 }

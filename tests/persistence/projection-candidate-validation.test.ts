@@ -208,6 +208,23 @@ test("canonicalization accepts matching null asOf values", () => {
   assert.equal(candidate.staleness.asOf, null);
 });
 
+test("canonicalization preserves __proto__ as an own data property", () => {
+  const state = JSON.parse(
+    '{"__proto__":{"polluted":true},"nested":{"__proto__":"value"}}',
+  ) as unknown;
+
+  const candidate = canonicalizeProjectionCandidate(rebuild(state));
+  const canonicalState = candidate.state as Record<string, unknown>;
+  const nested = canonicalState.nested as Record<string, unknown>;
+
+  assert.equal(Object.getPrototypeOf(canonicalState), Object.prototype);
+  assert.equal(Object.hasOwn(canonicalState, "__proto__"), true);
+  assert.deepEqual(canonicalState.__proto__, { polluted: true });
+  assert.equal(Object.hasOwn(nested, "__proto__"), true);
+  assert.equal(nested.__proto__, "value");
+  assert.equal(({} as { polluted?: boolean }).polluted, undefined);
+});
+
 test("the PostgreSQL adapter rejects an invalid stage before issuing SQL", async () => {
   const sqlCalls: string[] = [];
   const pool = {

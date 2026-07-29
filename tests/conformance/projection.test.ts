@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  invalidateProjection,
   promoteProjection,
   rebuildProjection,
   type ProjectionDefinition,
@@ -77,9 +78,39 @@ test("promotion delegates an isolated complete candidate to atomic storage", asy
     evaluatedAt: "2026-07-29T10:02:00.000Z",
   });
   let promoted: typeof candidate | null = null;
-  await promoteProjection({ promote: async (value) => { promoted = value; } }, candidate);
+  await promoteProjection(
+    {
+      promote: async (value) => {
+        promoted = value;
+      },
+      invalidate: async () => undefined,
+    },
+    candidate,
+  );
   assert.deepEqual(promoted, candidate);
   assert.notStrictEqual(promoted, candidate);
+});
+
+test("invalidation delegates an isolated expected generation to atomic storage", async () => {
+  const expected = {
+    projectionName: "total",
+    projectionVersion: 1,
+    rebuildId: "rebuild-promote",
+  };
+  let invalidated: typeof expected | null = null;
+
+  await invalidateProjection(
+    {
+      promote: async () => undefined,
+      invalidate: async (value) => {
+        invalidated = value;
+      },
+    },
+    expected,
+  );
+
+  assert.deepEqual(invalidated, expected);
+  assert.notStrictEqual(invalidated, expected);
 });
 
 test("projection rejects non-canonical or invalid staleness instants", () => {
