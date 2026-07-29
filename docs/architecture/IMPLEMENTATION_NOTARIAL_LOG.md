@@ -222,3 +222,80 @@ contexto de execução e o Engine não respondeu mesmo após solicitação de
 inicialização em segundo plano. Não existe instalação PostgreSQL nativa
 alternativa detectável. A prova real do adapter PostgreSQL continua pendente e
 não foi convertida artificialmente em sucesso.
+
+## 13. Revisão técnica independente e correções
+
+A fundação foi submetida a revisão técnica independente antes da integração.
+Os achados foram corrigidos sem ampliar o domínio:
+
+- consumo inbox e efeito persistente passaram a compartilhar a mesma transação;
+- falha do efeito não grava recibo e retry duplicado não reaplica o efeito;
+- outbox passou a possuir claim exclusivo, lease recuperável e confirmação
+  condicionada ao token da lease;
+- revisions do Event Store passaram a usar `bigint` ponta a ponta, sem coerção
+  destrutiva para `number`;
+- Events, payloads e estados retornados pelo Event Store são cópias isoladas;
+- replay descarta estado parcial, isola mutações do applier e converte falhas em
+  `ReplayAborted` normativo;
+- Projection declara staleness e só fica pronta para promoção após rebuild
+  integral;
+- readiness consulta uma dependência real com timeout e nunca declara produção
+  pronta por constante;
+- a State Machine autorizada mantém contexto suficiente para concluir
+  reavaliação;
+- o frontend valida o manifesto em runtime, possui timeout, não apresenta ações
+  fictícias e diferencia API conectada de indisponível.
+
+O requisito de produzir OpenAPI foi rejeitado nesta fase porque a autoridade
+superior (`ARCHITECTURE_LOCK_REVIEW_V1.md`) mantém contratos públicos em estado
+não autorizado. A omissão é deliberada e deny-by-default, não dívida acidental.
+
+## 14. Evidência final desta rodada
+
+Backend:
+
+- 57 testes executados;
+- 56 aprovados;
+- 1 teste de integração PostgreSQL explicitamente suspenso por ausência de
+  `DATABASE_URL`;
+- typecheck aprovado;
+- `git diff --check` aprovado.
+
+Frontend:
+
+- 7 testes comportamentais aprovados;
+- typecheck aprovado;
+- build de produção Next.js aprovado;
+- rota principal confirmada como dinâmica para consultar o runtime;
+- `git diff --check` aprovado.
+
+Prova ponta a ponta em processos locais novos:
+
+```json
+{
+  "FrontendStatus": 200,
+  "ApiStatus": "ok",
+  "FrontendConnected": true,
+  "RenderedCapability": "Base parcial"
+}
+```
+
+A consulta externa de advisories do npm não pôde ser repetida nesta rodada
+porque o registry estava indisponível no ambiente restrito. A última execução
+bem-sucedida registrou zero vulnerabilidades após os overrides documentados;
+isso não substitui uma nova auditoria antes de produção.
+
+## 15. Estado probatório consolidado
+
+O Event Store, outbox e inbox possuem implementação e testes de contrato em
+memória, adapter PostgreSQL e validação estática de schema. A afirmação anterior
+de que estavam “pendentes de implementação” fica superada por esta seção.
+
+Permanece pendente somente a prova viva contra PostgreSQL real. Essa pendência
+não é mascarada: o teste de integração é omitido com motivo explícito quando
+`DATABASE_URL` não existe, e `/ready` responde `503` enquanto a dependência não
+está operacional.
+
+O `GovernanceCase` Aggregate, seus Commands, Events, Sagas e contratos públicos
+continuam proibidos. Somente os Value Objects e a State Machine expressamente
+autorizados foram materializados.
