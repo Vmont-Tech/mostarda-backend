@@ -7,6 +7,7 @@ import {
   type OutboxRecord,
   type OutboxClaim,
   type StoredEvent,
+  validateOutboxClaim,
 } from "../../persistence/src/index.ts";
 
 interface PendingRow {
@@ -99,10 +100,17 @@ export class PostgresDeliveryLog {
   }
 
   async claimOutbox(claim: OutboxClaim): Promise<readonly OutboxRecord[]> {
-    if (!Number.isSafeInteger(claim.limit) || claim.limit <= 0) {
-      throw new TypeError("Outbox limit must be a positive safe integer.");
-    }
-    const result = await this.#pool.query<PendingRow>(
+    validateOutboxClaim(claim);
+    const client = await this.#pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(
+        `INSERT INTO event_store_outbox_claims
+           (lease_token, lease_owner, created_at)
+         VALUES ($1, $2, $3::timestamptz)`,
+        [claim.token, claim.owner, claim.now],
+      );
+      const result = await client.query<PendingRow>(
       `WITH candidates AS (
          SELECT outbox_id
            FROM event_store_outbox
@@ -134,7 +142,8 @@ export class PostgresDeliveryLog {
         ORDER BY c.created_at, c.outbox_id`,
       [claim.limit, claim.owner, claim.token, claim.now, claim.leaseUntil],
     );
-    return Object.freeze(
+      await client.query("COMMIT");
+      return Object.freeze(
       result.rows.map((row) =>
         Object.freeze({
           outboxId: row.outbox_id,
@@ -148,6 +157,12 @@ export class PostgresDeliveryLog {
         }),
       ),
     );
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async confirmPublished(
@@ -174,6 +189,10 @@ export class PostgresDeliveryLog {
     const client = await this.#pool.connect();
     try {
       await client.query("BEGIN");
+      await client.query(
+        "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
+        [`${identity.consumer}\u0000${identity.eventId}`],
+      );
       const existing = await client.query<InboxRow>(
         `SELECT payload_digest, effect_result, consumed_at
            FROM event_store_inbox

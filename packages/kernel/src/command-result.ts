@@ -51,11 +51,15 @@ export type CommandResult<T> =
 export function accepted<T>(
   result: Omit<AcceptedResult<T>, "status">,
 ): AcceptedResult<T> {
+  validateBase(result);
+  if (result.eventIds.length > 0 && result.newRevision === null) {
+    throw new TypeError("Accepted mutation requires newRevision.");
+  }
   return Object.freeze({
-    status: "Accepted",
     ...result,
     errors: Object.freeze([...result.errors]),
     eventIds: Object.freeze([...result.eventIds]),
+    status: "Accepted",
   });
 }
 
@@ -76,12 +80,24 @@ function failed(
   status: FailureStatus,
   result: Omit<FailedResult, "status">,
 ): FailedResult {
+  validateBase(result);
+  if (result.eventIds.length !== 0) {
+    throw new TypeError("Failed CommandResult cannot publish Events.");
+  }
   return Object.freeze({
-    status,
     ...result,
     errors: Object.freeze([...result.errors]),
     eventIds: Object.freeze([...result.eventIds]),
+    status,
   });
+}
+
+function validateBase(result: CommandResultBase): void {
+  for (const value of [result.commandId, result.correlationId]) {
+    if (value.trim() === "") {
+      throw new TypeError("CommandResult identity cannot be empty.");
+    }
+  }
 }
 
 export const rejected = (

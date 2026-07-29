@@ -37,12 +37,16 @@ export class IdempotencyPayloadConflict extends Error {
 
 export class InMemoryDeliveryLog {
   readonly #records = new Map<string, ConsumptionRecord<unknown>>();
+  readonly #pending = new Map<string, Promise<void>>();
 
   async consumeAtomically<T>(
     identity: ConsumptionIdentity,
     effect: () => Promise<T>,
   ): Promise<ConsumptionResult<T>> {
     const key = `${identity.consumer}\u0000${identity.eventId}`;
+    while (this.#pending.has(key)) {
+      await this.#pending.get(key);
+    }
     const previous = this.#records.get(key);
 
     if (previous !== undefined) {
@@ -60,7 +64,16 @@ export class InMemoryDeliveryLog {
       });
     }
 
-    const result = await effect();
+    let release!: () => void;
+    const pending = new Promise<void>((resolve) => { release = resolve; });
+    this.#pending.set(key, pending);
+    let result: T;
+    try {
+      result = await effect();
+    } finally {
+      this.#pending.delete(key);
+      release();
+    }
     const record: ConsumptionRecord<T> = { ...identity, result };
     this.#records.set(
       key,

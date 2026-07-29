@@ -174,3 +174,49 @@ test("failed consumer effect does not create an inbox receipt", async () => {
   );
   assert.equal(retry.status, "Applied");
 });
+
+test("concurrent first deliveries apply the effect exactly once", async () => {
+  const inbox = new InMemoryDeliveryLog();
+  let effects = 0;
+  const identity = {
+    consumer: "projection-a",
+    eventId: "event-concurrent",
+    payloadDigest: "sha256:concurrent",
+    consumedAt: "2026-07-29T12:01:00.000Z",
+  };
+  const effect = async () => {
+    effects += 1;
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    return { checkpoint: 12 };
+  };
+  const results = await Promise.all([
+    inbox.consumeAtomically(identity, effect),
+    inbox.consumeAtomically(identity, effect),
+  ]);
+  assert.equal(effects, 1);
+  assert.deepEqual(results.map((result) => result.status).sort(), ["Applied", "Duplicate"]);
+});
+
+test("outbox claims reject invalid identity, time and reused token", async () => {
+  const store = new InMemoryEventStore();
+  await store.append("stream-1", -1n, [event]);
+  const base = {
+    limit: 1,
+    owner: "publisher",
+    token: "lease-x",
+    now: "2026-07-29T12:00:00.000Z",
+    leaseUntil: "2026-07-29T12:01:00.000Z",
+  };
+  await assert.rejects(store.claimOutbox({ ...base, owner: "" }), /nonempty/);
+  await assert.rejects(store.claimOutbox({
+    ...base,
+    now: "2026-07-29T12:01:00.000Z",
+    leaseUntil: "2026-07-29T12:00:00.000Z",
+  }), /after now/);
+  await store.claimOutbox(base);
+  await assert.rejects(store.claimOutbox({
+    ...base,
+    now: "2026-07-29T12:02:00.000Z",
+    leaseUntil: "2026-07-29T12:03:00.000Z",
+  }), /unique/);
+});

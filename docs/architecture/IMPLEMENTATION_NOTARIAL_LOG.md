@@ -299,3 +299,28 @@ está operacional.
 O `GovernanceCase` Aggregate, seus Commands, Events, Sagas e contratos públicos
 continuam proibidos. Somente os Value Objects e a State Machine expressamente
 autorizados foram materializados.
+
+## 16. Retificação após teste adversarial concorrente
+
+Uma segunda revisão reproduziu uma corrida em entregas inbox simultâneas e uma
+mutação vazada durante rebuild de Projection. Portanto, as alegações da seção
+13 somente passam a valer com as correções e provas abaixo:
+
+- inbox em memória serializa a primeira entrega por `consumer + EventId`;
+- inbox PostgreSQL adquire advisory lock transacional pela mesma identidade
+  antes de executar o efeito;
+- teste concorrente comprova um único efeito e resultados
+  `Applied + Duplicate`;
+- rebuild clona estado e Event antes de cada aplicação e descarta mutações em
+  falha intermediária;
+- promoção exige um `AtomicProjectionStore`; a implementação concreta de
+  persistência ainda não é declarada concluída;
+- lease de outbox possui validação central, token de claim globalmente único e
+  migration incremental `003_outbox_leases.sql`;
+- factories de `CommandResult` controlam o discriminante em runtime e rejeitam
+  Events em falhas ou mutação aceita sem nova revision;
+- readiness coalesce probes concorrentes; PostgreSQL aplica
+  `statement_timeout` e `query_timeout`, além de listener de erro do pool.
+
+O número probatório desta rodada passa a ser 63 testes backend, sendo 62
+aprovados e 1 integração PostgreSQL suspensa por ausência de `DATABASE_URL`.

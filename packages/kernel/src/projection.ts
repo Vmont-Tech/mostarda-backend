@@ -26,6 +26,17 @@ export interface ProjectionRebuild<TState> {
   readonly rebuildStatus: "COMPLETED_AWAITING_PROMOTION";
 }
 
+export interface AtomicProjectionStore<TState> {
+  promote(rebuild: ProjectionRebuild<TState>): Promise<void>;
+}
+
+export async function promoteProjection<TState>(
+  store: AtomicProjectionStore<TState>,
+  rebuild: ProjectionRebuild<TState>,
+): Promise<void> {
+  await store.promote(structuredClone(rebuild));
+}
+
 export function rebuildProjection<TState, TEvent>({
   definition,
   events,
@@ -37,7 +48,7 @@ export function rebuildProjection<TState, TEvent>({
   readonly rebuildId: string;
   readonly evaluatedAt: string;
 }): ProjectionRebuild<TState> {
-  let state = definition.initialState;
+  let state = structuredClone(definition.initialState);
   let checkpoint = -1n;
   let asOf: string | null = null;
 
@@ -46,7 +57,7 @@ export function rebuildProjection<TState, TEvent>({
       throw new Error("Projection events must be strictly ordered.");
     }
 
-    state = definition.apply(state, event.value);
+    state = definition.apply(structuredClone(state), structuredClone(event.value));
     checkpoint = event.position;
     asOf = event.occurredAt;
   }
@@ -54,7 +65,7 @@ export function rebuildProjection<TState, TEvent>({
   return Object.freeze({
     projectionName: definition.name,
     projectionVersion: definition.version,
-    state,
+    state: structuredClone(state),
     checkpoint,
     asOf,
     staleness: Object.freeze({

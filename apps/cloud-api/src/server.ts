@@ -12,6 +12,7 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
   });
   const eventStoreProbe = options.eventStoreProbe ?? (async () => false);
   const readinessTimeoutMs = options.readinessTimeoutMs ?? 1000;
+  let activeProbe: Promise<boolean> | null = null;
 
   server.get(
     "/health",
@@ -64,10 +65,9 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
       },
     },
     async (_request, reply) => {
-      const eventStoreReady = await probeWithTimeout(
-        eventStoreProbe,
-        readinessTimeoutMs,
-      );
+      activeProbe ??= probeWithTimeout(eventStoreProbe, readinessTimeoutMs)
+        .finally(() => { activeProbe = null; });
+      const eventStoreReady = await activeProbe;
       const status = eventStoreReady ? "ready" : "not-ready";
 
       return reply.code(eventStoreReady ? 200 : 503).send({

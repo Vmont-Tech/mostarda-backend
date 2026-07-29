@@ -5,6 +5,7 @@ import {
   type EventToAppend,
   type OutboxRecord,
   type StoredEvent,
+  validateOutboxClaim,
 } from "./event-store.ts";
 
 export class InMemoryEventStore implements EventStore {
@@ -92,16 +93,19 @@ export class InMemoryEventStore implements EventStore {
   async claimOutbox(
     claim: import("./event-store.ts").OutboxClaim,
   ): Promise<readonly OutboxRecord[]> {
-    const available = this.#outbox
-      .filter(
-        (record) =>
-          record.publishedAt === null &&
-          (record.leaseExpiresAt === null ||
-            record.leaseExpiresAt <= claim.now),
-      )
-      .slice(0, claim.limit);
-    for (const availableRecord of available) {
-      const index = this.#outbox.indexOf(availableRecord);
+    validateOutboxClaim(claim);
+    if (this.#outbox.some((record) => record.leaseToken === claim.token)) {
+      throw new TypeError("Outbox claim token must be unique.");
+    }
+    const selectedIndices = this.#outbox
+      .map((record, index) => ({ record, index }))
+      .filter(({ record }) =>
+        record.publishedAt === null &&
+        (record.leaseExpiresAt === null || record.leaseExpiresAt <= claim.now))
+      .slice(0, claim.limit)
+      .map(({ index }) => index);
+    for (const index of selectedIndices) {
+      const availableRecord = this.#outbox[index]!;
       this.#outbox[index] = Object.freeze({
         ...availableRecord,
         publicationAttempts: availableRecord.publicationAttempts + 1,
@@ -110,11 +114,9 @@ export class InMemoryEventStore implements EventStore {
         leaseExpiresAt: claim.leaseUntil,
       });
     }
-    return Object.freeze(
-      structuredClone(
-        this.#outbox.filter((record) => record.leaseToken === claim.token),
-      ),
-    );
+    return Object.freeze(structuredClone(
+      selectedIndices.map((index) => this.#outbox[index]!),
+    ));
   }
 
   async confirmPublished(

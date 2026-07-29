@@ -16,7 +16,11 @@ try {
     pool,
     new URL("../migrations/002_inbox.sql", import.meta.url),
   );
-  process.stdout.write("Applied migrations 001_event_store.sql and 002_inbox.sql\n");
+  await applySqlMigration(
+    pool,
+    new URL("../migrations/003_outbox_leases.sql", import.meta.url),
+  );
+  process.stdout.write("Applied migrations 001, 002 and 003\n");
 } finally {
   await pool.end();
 }

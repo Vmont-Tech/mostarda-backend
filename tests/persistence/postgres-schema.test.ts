@@ -58,3 +58,14 @@ test("outbox references the authoritative Event and preserves pending delivery",
   assert.match(sql, /lease_token TEXT NULL/);
   assert.match(sql, /lease_expires_at TIMESTAMPTZ NULL/);
 });
+
+test("lease evolution is an ordered upgrade-safe migration", async () => {
+  const sql = await readFile(
+    new URL("../../migrations/003_outbox_leases.sql", import.meta.url),
+    "utf8",
+  );
+  assert.match(sql, /ALTER TABLE event_store_outbox/);
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS lease_token/);
+  assert.match(sql, /event_store_outbox_claims/);
+  assert.match(sql, /lease_token TEXT PRIMARY KEY/);
+});

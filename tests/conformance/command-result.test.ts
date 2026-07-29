@@ -96,3 +96,21 @@ test("same idempotency identity with divergent payload produces Conflict", () =>
   assert.equal(result.status, "Conflict");
   assert.equal(result.code, "TBS_IDEMPOTENCY_PAYLOAD_MISMATCH");
 });
+
+test("factories own their discriminant and enforce result invariants", () => {
+  const input = {
+    commandId: "cmd-runtime",
+    aggregateId: "aggregate-1",
+    observedRevision: 0n,
+    newRevision: 1n,
+    correlationId: "correlation-1",
+    causationId: null,
+    errors: [],
+    eventIds: ["event-1"],
+    value: null,
+    status: "Rejected",
+  } as any;
+  assert.equal(accepted(input).status, "Accepted");
+  assert.throws(() => accepted({ ...input, newRevision: null }), /newRevision/);
+  assert.throws(() => rejected({ ...input, code: "FAILED" }), /cannot publish Events/);
+});

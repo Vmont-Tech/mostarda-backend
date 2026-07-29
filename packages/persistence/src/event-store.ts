@@ -36,6 +36,20 @@ export interface OutboxClaim {
   readonly leaseUntil: string;
 }
 
+export function validateOutboxClaim(claim: OutboxClaim): void {
+  if (!Number.isSafeInteger(claim.limit) || claim.limit <= 0) {
+    throw new TypeError("Outbox limit must be a positive safe integer.");
+  }
+  if (claim.owner.trim() === "" || claim.token.trim() === "") {
+    throw new TypeError("Outbox owner and token must be nonempty.");
+  }
+  const now = Date.parse(claim.now);
+  const leaseUntil = Date.parse(claim.leaseUntil);
+  if (!Number.isFinite(now) || !Number.isFinite(leaseUntil) || leaseUntil <= now) {
+    throw new TypeError("Outbox leaseUntil must be a valid instant after now.");
+  }
+}
+
 export interface EventStore {
   read(streamId: string): Promise<readonly StoredEvent[]>;
   append(
