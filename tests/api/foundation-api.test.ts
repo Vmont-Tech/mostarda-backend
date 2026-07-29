@@ -40,5 +40,10 @@ test("capability manifest refuses blocked aggregate implementation", async () =>
   assert.equal(response.statusCode, 200);
   assert.equal(body.kernel, "IMPLEMENTATION_READY");
   assert.equal(body.governanceCaseAggregate, "IMPLEMENTATION_PARTIAL");
+  assert.equal(body.responsibilityValues, "IMPLEMENTATION_READY");
+  assert.equal(
+    body.responsibilityDecision,
+    "BLOCKED_BY_PARTIAL_DEPENDENCY",
+  );
   assert.equal(body.domainCommandsEnabled, false);
 });

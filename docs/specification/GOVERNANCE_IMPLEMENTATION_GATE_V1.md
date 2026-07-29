@@ -146,3 +146,28 @@ Enquanto este gate permanecer aberto, é permitido implementar somente:
 
 É proibido preencher as lacunas listadas neste documento por convenção de
 framework, preferência técnica ou inferência a partir dos exemplos.
+
+## 10. Dependência contraditória de ResponsibilityDecision
+
+O IRR V2 classifica `ResponsibilityDecision` como `IMPLEMENTATION_READY`, mas
+classifica simultaneamente como `IMPLEMENTATION_PARTIAL` três dependências
+obrigatórias da própria decisão:
+
+- `EvidenceReference`;
+- `GovernancePolicyVersion`;
+- `DecisionRevision`.
+
+Uma `ResponsibilityDecision` completa exige `evidenceReferences[]`, exatamente
+uma `policyVersion` e `revision`. Logo, a implementação concreta do objeto
+composto exigiria escolher contratos que o próprio IRR declara incompletos.
+
+Este gate não altera a classificação original nem cria uma regra. Aplica apenas
+o deny-by-default da CGS Parte A:
+
+- enums `ResponsibleParty`, `ResponsibilityCategory` e `Severity`: autorizados;
+- `Confidence`: autorizado;
+- `ResponsibilityDecision` concreta: `BLOCKED_BY_PARTIAL_DEPENDENCY`;
+- promoção do Aggregate por associação: proibida.
+
+O bloqueio poderá ser removido mecanicamente quando os três contratos
+dependentes forem certificados.

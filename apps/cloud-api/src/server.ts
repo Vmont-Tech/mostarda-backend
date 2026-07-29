@@ -29,6 +29,8 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
   server.get("/v1/implementation-capabilities", async () => ({
     kernel: "IMPLEMENTATION_READY",
     governanceCaseAggregate: "IMPLEMENTATION_PARTIAL",
+    responsibilityValues: "IMPLEMENTATION_READY",
+    responsibilityDecision: "BLOCKED_BY_PARTIAL_DEPENDENCY",
     domainCommandsEnabled: false,
     reason:
       "GovernanceCase awaits the five contracts listed in GOVERNANCE_IMPLEMENTATION_GATE_V1.",
