@@ -12,7 +12,11 @@ try {
     pool,
     new URL("../migrations/001_event_store.sql", import.meta.url),
   );
-  process.stdout.write("Applied migration 001_event_store.sql\n");
+  await applySqlMigration(
+    pool,
+    new URL("../migrations/002_inbox.sql", import.meta.url),
+  );
+  process.stdout.write("Applied migrations 001_event_store.sql and 002_inbox.sql\n");
 } finally {
   await pool.end();
 }

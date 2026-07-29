@@ -77,4 +77,19 @@ export class InMemoryEventStore implements EventStore {
       this.#outbox.filter((record) => record.publishedAt === null),
     );
   }
+
+  async confirmPublished(eventId: string, publishedAt: string): Promise<void> {
+    const index = this.#outbox.findIndex(
+      (record) => record.event.eventId === eventId,
+    );
+    const record = this.#outbox[index];
+    if (record === undefined) {
+      throw new Error(`No outbox record exists for EventId ${eventId}.`);
+    }
+
+    this.#outbox[index] = Object.freeze({
+      ...record,
+      publishedAt,
+    });
+  }
 }
