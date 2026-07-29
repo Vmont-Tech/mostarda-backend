@@ -27,7 +27,7 @@ function toStoredEvent(row: EventRow): StoredEvent {
   return Object.freeze({
     eventId: row.event_id,
     streamId: row.stream_id,
-    aggregateRevision: Number(row.aggregate_revision),
+    aggregateRevision: BigInt(row.aggregate_revision),
     eventType: row.event_type,
     schemaVersion: row.schema_version,
     occurredAt: row.occurred_at.toISOString(),
@@ -63,7 +63,7 @@ export class PostgresEventStore implements EventStore {
 
   async append(
     streamId: string,
-    expectedRevision: number,
+    expectedRevision: bigint,
     events: readonly EventToAppend[],
   ): Promise<readonly StoredEvent[]> {
     if (events.length === 0) {
@@ -86,7 +86,7 @@ export class PostgresEventStore implements EventStore {
 
       const appended: StoredEvent[] = [];
       for (const [index, event] of events.entries()) {
-        const revision = actualRevision + index + 1;
+        const revision = actualRevision + BigInt(index) + 1n;
         const result = await client.query<EventRow>(
           `INSERT INTO event_store_events (
              event_id, stream_id, aggregate_revision, event_type,
@@ -158,13 +158,13 @@ export class PostgresEventStore implements EventStore {
   private async currentRevision(
     client: PoolClient,
     streamId: string,
-  ): Promise<number> {
+  ): Promise<bigint> {
     const result = await client.query<{ revision: string }>(
       `SELECT COALESCE(MAX(aggregate_revision), -1)::bigint AS revision
          FROM event_store_events
         WHERE stream_id = $1`,
       [streamId],
     );
-    return Number(result.rows[0]?.revision ?? -1);
+    return BigInt(result.rows[0]?.revision ?? "-1");
   }
 }

@@ -1,9 +1,12 @@
-export interface ConsumptionRecord<T> {
+export interface ConsumptionIdentity {
   readonly consumer: string;
   readonly eventId: string;
   readonly payloadDigest: string;
-  readonly result: T;
   readonly consumedAt: string;
+}
+
+export interface ConsumptionRecord<T> extends ConsumptionIdentity {
+  readonly result: T;
 }
 
 export type ConsumptionResult<T> =
@@ -35,15 +38,19 @@ export class IdempotencyPayloadConflict extends Error {
 export class InMemoryDeliveryLog {
   readonly #records = new Map<string, ConsumptionRecord<unknown>>();
 
-  async recordConsumption<T>(
-    record: ConsumptionRecord<T>,
+  async consumeAtomically<T>(
+    identity: ConsumptionIdentity,
+    effect: () => Promise<T>,
   ): Promise<ConsumptionResult<T>> {
-    const identity = `${record.consumer}\u0000${record.eventId}`;
-    const previous = this.#records.get(identity);
+    const key = `${identity.consumer}\u0000${identity.eventId}`;
+    const previous = this.#records.get(key);
 
     if (previous !== undefined) {
-      if (previous.payloadDigest !== record.payloadDigest) {
-        throw new IdempotencyPayloadConflict(record.consumer, record.eventId);
+      if (previous.payloadDigest !== identity.payloadDigest) {
+        throw new IdempotencyPayloadConflict(
+          identity.consumer,
+          identity.eventId,
+        );
       }
 
       return Object.freeze({
@@ -53,8 +60,10 @@ export class InMemoryDeliveryLog {
       });
     }
 
+    const result = await effect();
+    const record: ConsumptionRecord<T> = { ...identity, result };
     this.#records.set(
-      identity,
+      key,
       Object.freeze({
         ...record,
         result: structuredClone(record.result),
@@ -63,8 +72,8 @@ export class InMemoryDeliveryLog {
 
     return Object.freeze({
       status: "Applied",
-      result: record.result,
-      consumedAt: record.consumedAt,
+      result,
+      consumedAt: identity.consumedAt,
     });
   }
 }

@@ -1,7 +1,8 @@
 import Fastify, { type FastifyInstance } from "fastify";
 
 export interface ServerOptions {
-  readonly eventStoreReady?: boolean;
+  readonly eventStoreProbe?: () => Promise<boolean>;
+  readonly readinessTimeoutMs?: number;
   readonly logger?: boolean;
 }
 
@@ -9,7 +10,8 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
   const server = Fastify({
     logger: options.logger ?? false,
   });
-  const eventStoreReady = options.eventStoreReady ?? false;
+  const eventStoreProbe = options.eventStoreProbe ?? (async () => false);
+  const readinessTimeoutMs = options.readinessTimeoutMs ?? 1000;
 
   server.get(
     "/health",
@@ -62,6 +64,10 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
       },
     },
     async (_request, reply) => {
+      const eventStoreReady = await probeWithTimeout(
+        eventStoreProbe,
+        readinessTimeoutMs,
+      );
       const status = eventStoreReady ? "ready" : "not-ready";
 
       return reply.code(eventStoreReady ? 200 : 503).send({
@@ -115,4 +121,21 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
   );
 
   return server;
+}
+
+async function probeWithTimeout(
+  probe: () => Promise<boolean>,
+  timeoutMs: number,
+): Promise<boolean> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      probe().catch(() => false),
+      new Promise<false>((resolve) => {
+        timer = setTimeout(() => resolve(false), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
 }

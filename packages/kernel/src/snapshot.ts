@@ -7,7 +7,7 @@ import {
 
 export interface AggregateSnapshot<TState> {
   readonly aggregateId: string;
-  readonly sourceRevision: number;
+  readonly sourceRevision: bigint;
   readonly schemaVersion: number;
   readonly integrity: string;
   readonly state: TState;
@@ -35,11 +35,11 @@ export function rehydrate<TState>({
   readonly supportedSnapshotSchemas: readonly number[];
   readonly verifyIntegrity: (snapshot: AggregateSnapshot<TState>) => boolean;
 }): RehydrationResult<TState> {
-  const lastRevision = events.at(-1)?.aggregateRevision ?? -1;
+  const lastRevision = events.at(-1)?.aggregateRevision ?? -1n;
   const snapshotIsUsable =
     snapshot !== null &&
     snapshot.aggregateId === aggregateId &&
-    snapshot.sourceRevision >= 0 &&
+    snapshot.sourceRevision >= 0n &&
     snapshot.sourceRevision <= lastRevision &&
     supportedSnapshotSchemas.includes(snapshot.schemaVersion) &&
     verifyIntegrity(snapshot);

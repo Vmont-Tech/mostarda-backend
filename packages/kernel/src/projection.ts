@@ -6,7 +6,7 @@ export interface ProjectionDefinition<TState, TEvent> {
 }
 
 export interface PositionedEvent<TEvent> {
-  readonly position: number;
+  readonly position: bigint;
   readonly occurredAt: string;
   readonly value: TEvent;
 }
@@ -15,23 +15,30 @@ export interface ProjectionRebuild<TState> {
   readonly projectionName: string;
   readonly projectionVersion: number;
   readonly state: TState;
-  readonly checkpoint: number;
+  readonly checkpoint: bigint;
   readonly asOf: string | null;
+  readonly staleness: {
+    readonly asOf: string | null;
+    readonly evaluatedAt: string;
+    readonly lagMilliseconds: number | null;
+  };
   readonly rebuildId: string;
-  readonly readyForAtomicPromotion: true;
+  readonly rebuildStatus: "COMPLETED_AWAITING_PROMOTION";
 }
 
 export function rebuildProjection<TState, TEvent>({
   definition,
   events,
   rebuildId,
+  evaluatedAt,
 }: {
   readonly definition: ProjectionDefinition<TState, TEvent>;
   readonly events: readonly PositionedEvent<TEvent>[];
   readonly rebuildId: string;
+  readonly evaluatedAt: string;
 }): ProjectionRebuild<TState> {
   let state = definition.initialState;
-  let checkpoint = -1;
+  let checkpoint = -1n;
   let asOf: string | null = null;
 
   for (const event of events) {
@@ -50,7 +57,15 @@ export function rebuildProjection<TState, TEvent>({
     state,
     checkpoint,
     asOf,
+    staleness: Object.freeze({
+      asOf,
+      evaluatedAt,
+      lagMilliseconds:
+        asOf === null
+          ? null
+          : Math.max(0, Date.parse(evaluatedAt) - Date.parse(asOf)),
+    }),
     rebuildId,
-    readyForAtomicPromotion: true,
+    rebuildStatus: "COMPLETED_AWAITING_PROMOTION",
   });
 }

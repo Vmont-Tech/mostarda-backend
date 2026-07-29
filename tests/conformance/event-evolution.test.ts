@@ -12,7 +12,7 @@ const original: EventEnvelope<unknown> = Object.freeze({
   eventType: "FixtureChanged",
   schemaVersion: 1,
   streamId: "fixture-1",
-  aggregateRevision: 0,
+  aggregateRevision: 0n,
   occurredAt: "2026-07-29T12:00:00.000Z",
   producer: "Fixture",
   correlationId: "correlation-1",

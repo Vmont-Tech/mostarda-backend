@@ -26,7 +26,7 @@ test(
       const store = new PostgresEventStore(pool);
       const appended = await store.append(
         "integration-stream",
-        -1,
+        -1n,
         [
           {
             eventId: "019b5a9f-8e5b-7000-8000-000000000001",
@@ -45,7 +45,7 @@ test(
         "SELECT event_id::text FROM event_store_outbox WHERE published_at IS NULL",
       );
 
-      assert.equal(appended[0]?.aggregateRevision, 0);
+      assert.equal(appended[0]?.aggregateRevision, 0n);
       assert.deepEqual(outbox.rows, [
         { event_id: "019b5a9f-8e5b-7000-8000-000000000001" },
       ]);

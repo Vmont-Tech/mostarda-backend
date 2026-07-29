@@ -3,7 +3,8 @@ import type { EventEnvelope } from "./envelopes.ts";
 export type ReplayErrorCode =
   | "DUPLICATE_EVENT"
   | "REVISION_GAP"
-  | "UNKNOWN_EVENT_SCHEMA";
+  | "UNKNOWN_EVENT_SCHEMA"
+  | "REPLAY_INVARIANT_VIOLATION";
 
 export class ReplayAborted extends Error {
   readonly partialStateDiscarded = true;
@@ -33,12 +34,12 @@ export interface ReplayInput<TState> {
   readonly events: readonly EventEnvelope<unknown>[];
   // Payload safety is established by the explicit eventType/schemaVersion registry.
   readonly appliers: readonly EventApplier<TState, any>[];
-  readonly sourceRevision?: number;
+  readonly sourceRevision?: bigint;
 }
 
 export interface ReplayResult<TState> {
   readonly state: TState;
-  readonly revision: number;
+  readonly revision: bigint;
   readonly appliedEventIds: readonly string[];
 }
 
@@ -46,10 +47,10 @@ export function replay<TState>({
   initialState,
   events,
   appliers,
-  sourceRevision = -1,
+  sourceRevision = -1n,
 }: ReplayInput<TState>): ReplayResult<TState> {
-  let state = initialState;
-  let expectedRevision = sourceRevision + 1;
+  let state = structuredClone(initialState);
+  let expectedRevision = sourceRevision + 1n;
   const seenEventIds = new Set<string>();
   const appliedEventIds: string[] = [];
 
@@ -84,15 +85,28 @@ export function replay<TState>({
       );
     }
 
-    state = applier.apply(state, event.payload as never);
+    try {
+      state = structuredClone(
+        applier.apply(
+          structuredClone(state),
+          structuredClone(event.payload) as never,
+        ),
+      );
+    } catch {
+      throw new ReplayAborted(
+        "REPLAY_INVARIANT_VIOLATION",
+        event.eventId,
+        `Applying ${event.eventType}@${event.schemaVersion} failed.`,
+      );
+    }
     seenEventIds.add(event.eventId);
     appliedEventIds.push(event.eventId);
-    expectedRevision += 1;
+    expectedRevision += 1n;
   }
 
   return Object.freeze({
     state,
-    revision: expectedRevision - 1,
+    revision: expectedRevision - 1n,
     appliedEventIds: Object.freeze(appliedEventIds),
   });
 }

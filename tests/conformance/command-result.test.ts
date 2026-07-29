@@ -5,6 +5,10 @@ import {
   accepted,
   conflict,
   duplicate,
+  expired,
+  invariantViolation,
+  rejected,
+  unauthorized,
   type CommandResult,
 } from "../../packages/kernel/src/command-result.ts";
 
@@ -12,8 +16,8 @@ test("Accepted records the observable command outcome", () => {
   const result = accepted({
     commandId: "cmd-1",
     aggregateId: "aggregate-1",
-    observedRevision: 2,
-    newRevision: 3,
+    observedRevision: 2n,
+    newRevision: 3n,
     correlationId: "correlation-1",
     causationId: "cause-1",
     errors: [],
@@ -25,8 +29,8 @@ test("Accepted records the observable command outcome", () => {
     status: "Accepted",
     commandId: "cmd-1",
     aggregateId: "aggregate-1",
-    observedRevision: 2,
-    newRevision: 3,
+    observedRevision: 2n,
+    newRevision: 3n,
     correlationId: "correlation-1",
     causationId: "cause-1",
     errors: [],
@@ -35,12 +39,30 @@ test("Accepted records the observable command outcome", () => {
   });
 });
 
+test("all normative non-success outcomes have deterministic factories", () => {
+  const base = {
+    commandId: "cmd-3",
+    aggregateId: "aggregate-1",
+    observedRevision: 2n,
+    correlationId: "correlation-1",
+    causationId: "cause-1",
+    errors: [],
+    eventIds: [],
+    code: "FIXTURE_ERROR",
+  };
+
+  assert.equal(rejected(base).status, "Rejected");
+  assert.equal(expired(base).status, "Expired");
+  assert.equal(unauthorized(base).status, "Unauthorized");
+  assert.equal(invariantViolation(base).status, "InvariantViolation");
+});
+
 test("Duplicate preserves the complete original result", () => {
   const original = accepted({
     commandId: "cmd-original",
     aggregateId: "aggregate-1",
-    observedRevision: 3,
-    newRevision: 4,
+    observedRevision: 3n,
+    newRevision: 4n,
     correlationId: "correlation-1",
     causationId: "cause-1",
     errors: [],
@@ -61,14 +83,14 @@ test("same idempotency identity with divergent payload produces Conflict", () =>
   const result: CommandResult<never> = conflict({
     commandId: "cmd-2",
     aggregateId: "aggregate-1",
-    observedRevision: 2,
+    observedRevision: 2n,
     correlationId: "correlation-1",
     causationId: "cause-1",
     errors: [],
     eventIds: [],
     code: "TBS_IDEMPOTENCY_PAYLOAD_MISMATCH",
-    expectedRevision: 2,
-    actualRevision: 2,
+    expectedRevision: 2n,
+    actualRevision: 2n,
   });
 
   assert.equal(result.status, "Conflict");

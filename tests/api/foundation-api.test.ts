@@ -16,7 +16,7 @@ test("health exposes a live foundation runtime", async () => {
 });
 
 test("readiness reports unavailable production dependencies honestly", async () => {
-  const server = buildServer({ eventStoreReady: false });
+  const server = buildServer({ eventStoreProbe: async () => false });
   const response = await server.inject({ method: "GET", url: "/ready" });
 
   assert.equal(response.statusCode, 503);
@@ -26,6 +26,32 @@ test("readiness reports unavailable production dependencies honestly", async () 
       eventStore: "unavailable",
     },
   });
+  await server.close();
+});
+
+test("readiness recovers when the Event Store probe succeeds", async () => {
+  let ready = false;
+  const server = buildServer({ eventStoreProbe: async () => ready });
+
+  const unavailable = await server.inject({ method: "GET", url: "/ready" });
+  ready = true;
+  const available = await server.inject({ method: "GET", url: "/ready" });
+
+  assert.equal(unavailable.statusCode, 503);
+  assert.equal(available.statusCode, 200);
+  assert.equal(available.json().dependencies.eventStore, "available");
+  await server.close();
+});
+
+test("readiness probe is timeout-bounded", async () => {
+  const server = buildServer({
+    eventStoreProbe: async () => new Promise(() => undefined),
+    readinessTimeoutMs: 5,
+  });
+
+  const response = await server.inject({ method: "GET", url: "/ready" });
+
+  assert.equal(response.statusCode, 503);
   await server.close();
 });
 

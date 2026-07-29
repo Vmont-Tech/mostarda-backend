@@ -25,10 +25,36 @@ test("inbox has one immutable logical receipt per consumer and EventId", async (
   assert.match(sql, /effect_result JSONB NOT NULL/);
 });
 
+test("PostgreSQL adapters preserve BIGINT revisions without Number coercion", async () => {
+  const sources = await Promise.all([
+    readFile(
+      new URL(
+        "../../packages/persistence-postgres/src/postgres-event-store.ts",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+    readFile(
+      new URL(
+        "../../packages/persistence-postgres/src/postgres-delivery-log.ts",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  ]);
+
+  for (const source of sources) {
+    assert.doesNotMatch(source, /Number\([^)]*(?:revision|aggregate_revision)/i);
+    assert.match(source, /BigInt\(row\.aggregate_revision\)/);
+  }
+});
+
 test("outbox references the authoritative Event and preserves pending delivery", async () => {
   const sql = await readFile(migrationUrl, "utf8");
 
   assert.match(sql, /event_id UUID NOT NULL REFERENCES event_store_events\(event_id\)/);
   assert.match(sql, /published_at TIMESTAMPTZ NULL/);
   assert.match(sql, /WHERE published_at IS NULL/);
+  assert.match(sql, /lease_token TEXT NULL/);
+  assert.match(sql, /lease_expires_at TIMESTAMPTZ NULL/);
 });

@@ -22,7 +22,7 @@ const event: EventToAppend = {
 
 test("unconfirmed publication remains pending with the original EventId", async () => {
   const store = new InMemoryEventStore();
-  await store.append("stream-1", -1, [event]);
+  await store.append("stream-1", -1n, [event]);
 
   const firstDelivery = await store.pendingOutbox();
   const redelivery = await store.pendingOutbox();
@@ -33,19 +33,37 @@ test("unconfirmed publication remains pending with the original EventId", async 
 
 test("broker confirmation removes only the confirmed Event from pending delivery", async () => {
   const store = new InMemoryEventStore();
-  await store.append("stream-1", -1, [event]);
+  await store.append("stream-1", -1n, [event]);
+  await store.claimOutbox({
+    limit: 1,
+    owner: "publisher-1",
+    token: "lease-1",
+    now: "2026-07-29T12:00:00.000Z",
+    leaseUntil: "2026-07-29T12:01:00.000Z",
+  });
 
-  await store.confirmPublished("event-1", "2026-07-29T12:01:00.000Z");
+  await store.confirmPublished(
+    "event-1",
+    "lease-1",
+    "2026-07-29T12:01:00.000Z",
+  );
 
   assert.deepEqual(await store.pendingOutbox(), []);
 });
 
 test("duplicate broker confirmation is idempotent and preserves first confirmation", async () => {
   const store = new InMemoryEventStore();
-  await store.append("stream-1", -1, [event]);
+  await store.append("stream-1", -1n, [event]);
+  await store.claimOutbox({
+    limit: 1,
+    owner: "publisher-1",
+    token: "lease-1",
+    now: "2026-07-29T12:00:00.000Z",
+    leaseUntil: "2026-07-29T12:01:00.000Z",
+  });
 
-  await store.confirmPublished("event-1", "2026-07-29T12:01:00.000Z");
-  await store.confirmPublished("event-1", "2026-07-29T12:09:00.000Z");
+  await store.confirmPublished("event-1", "lease-1", "2026-07-29T12:01:00.000Z");
+  await store.confirmPublished("event-1", "lease-1", "2026-07-29T12:09:00.000Z");
 
   assert.equal(
     (await store.allOutbox())[0]?.publishedAt,
@@ -53,21 +71,57 @@ test("duplicate broker confirmation is idempotent and preserves first confirmati
   );
 });
 
+test("expired outbox lease is recoverable by another publisher", async () => {
+  const store = new InMemoryEventStore();
+  await store.append("stream-1", -1n, [event]);
+  const first = await store.claimOutbox({
+    limit: 1,
+    owner: "publisher-1",
+    token: "lease-1",
+    now: "2026-07-29T12:00:00.000Z",
+    leaseUntil: "2026-07-29T12:01:00.000Z",
+  });
+  const concurrent = await store.claimOutbox({
+    limit: 1,
+    owner: "publisher-2",
+    token: "lease-2",
+    now: "2026-07-29T12:00:30.000Z",
+    leaseUntil: "2026-07-29T12:02:00.000Z",
+  });
+  const recovered = await store.claimOutbox({
+    limit: 1,
+    owner: "publisher-2",
+    token: "lease-2",
+    now: "2026-07-29T12:01:01.000Z",
+    leaseUntil: "2026-07-29T12:02:00.000Z",
+  });
+
+  assert.equal(first[0]?.event.eventId, "event-1");
+  assert.deepEqual(concurrent, []);
+  assert.equal(recovered[0]?.event.eventId, "event-1");
+  assert.equal(recovered[0]?.publicationAttempts, 2);
+});
+
 test("consumer duplicate returns its original effect result", async () => {
   const inbox = new InMemoryDeliveryLog();
-  const original = await inbox.recordConsumption({
+  let effects = 0;
+  const original = await inbox.consumeAtomically({
     consumer: "projection-a",
     eventId: "event-1",
     payloadDigest: "sha256:abc",
-    result: { checkpoint: 10 },
     consumedAt: "2026-07-29T12:01:00.000Z",
+  }, async () => {
+    effects += 1;
+    return { checkpoint: 10 };
   });
-  const duplicate = await inbox.recordConsumption({
+  const duplicate = await inbox.consumeAtomically({
     consumer: "projection-a",
     eventId: "event-1",
     payloadDigest: "sha256:abc",
-    result: { checkpoint: 999 },
     consumedAt: "2026-07-29T12:02:00.000Z",
+  }, async () => {
+    effects += 1;
+    return { checkpoint: 999 };
   });
 
   assert.equal(original.status, "Applied");
@@ -76,26 +130,47 @@ test("consumer duplicate returns its original effect result", async () => {
     originalResult: { checkpoint: 10 },
     originallyConsumedAt: "2026-07-29T12:01:00.000Z",
   });
+  assert.equal(effects, 1);
 });
 
 test("same consumer and EventId with divergent content is a conflict", async () => {
   const inbox = new InMemoryDeliveryLog();
-  await inbox.recordConsumption({
+  await inbox.consumeAtomically({
     consumer: "projection-a",
     eventId: "event-1",
     payloadDigest: "sha256:abc",
-    result: { checkpoint: 10 },
     consumedAt: "2026-07-29T12:01:00.000Z",
-  });
+  }, async () => ({ checkpoint: 10 }));
 
   await assert.rejects(
-    inbox.recordConsumption({
+    inbox.consumeAtomically({
       consumer: "projection-a",
       eventId: "event-1",
       payloadDigest: "sha256:different",
-      result: { checkpoint: 11 },
       consumedAt: "2026-07-29T12:02:00.000Z",
-    }),
+    }, async () => ({ checkpoint: 11 })),
     IdempotencyPayloadConflict,
   );
+});
+
+test("failed consumer effect does not create an inbox receipt", async () => {
+  const inbox = new InMemoryDeliveryLog();
+  const delivery = {
+    consumer: "projection-a",
+    eventId: "event-1",
+    payloadDigest: "sha256:abc",
+    consumedAt: "2026-07-29T12:01:00.000Z",
+  };
+
+  await assert.rejects(
+    inbox.consumeAtomically(delivery, async () => {
+      throw new Error("effect failed");
+    }),
+    /effect failed/,
+  );
+  const retry = await inbox.consumeAtomically(
+    delivery,
+    async () => ({ checkpoint: 10 }),
+  );
+  assert.equal(retry.status, "Applied");
 });

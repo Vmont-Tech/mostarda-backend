@@ -24,14 +24,22 @@ CREATE TABLE IF NOT EXISTS event_store_outbox (
     created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
     published_at TIMESTAMPTZ NULL,
     publication_attempts INTEGER NOT NULL DEFAULT 0 CHECK (publication_attempts >= 0),
-    last_error TEXT NULL
+    last_error TEXT NULL,
+    lease_token TEXT NULL,
+    lease_owner TEXT NULL,
+    lease_expires_at TIMESTAMPTZ NULL,
+    CONSTRAINT outbox_lease_complete CHECK (
+        (lease_token IS NULL AND lease_owner IS NULL AND lease_expires_at IS NULL)
+        OR
+        (lease_token IS NOT NULL AND lease_owner IS NOT NULL AND lease_expires_at IS NOT NULL)
+    )
 );
 
 CREATE INDEX IF NOT EXISTS event_store_events_stream_order
     ON event_store_events (stream_id, aggregate_revision);
 
 CREATE INDEX IF NOT EXISTS event_store_outbox_pending
-    ON event_store_outbox (created_at, outbox_id)
+    ON event_store_outbox (lease_expires_at, created_at, outbox_id)
     WHERE published_at IS NULL;
 
 CREATE OR REPLACE FUNCTION prevent_event_mutation()

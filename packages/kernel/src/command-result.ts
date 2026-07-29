@@ -12,7 +12,7 @@ export type CommandStatus =
 export interface CommandResultBase {
   readonly commandId: string;
   readonly aggregateId: string | null;
-  readonly observedRevision: number | null;
+  readonly observedRevision: bigint | null;
   readonly correlationId: string;
   readonly causationId: string | null;
   readonly errors: readonly ErrorDescriptor[];
@@ -21,7 +21,7 @@ export interface CommandResultBase {
 
 export interface AcceptedResult<T> extends CommandResultBase {
   readonly status: "Accepted";
-  readonly newRevision: number | null;
+  readonly newRevision: bigint | null;
   readonly value: T;
 }
 
@@ -33,8 +33,8 @@ export interface FailedResult extends CommandResultBase {
     | "Unauthorized"
     | "InvariantViolation";
   readonly code: string;
-  readonly expectedRevision?: number;
-  readonly actualRevision?: number;
+  readonly expectedRevision?: bigint;
+  readonly actualRevision?: bigint;
   readonly parameters?: Readonly<Record<string, unknown>>;
 }
 
@@ -69,6 +69,36 @@ export function conflict(
     eventIds: Object.freeze([...result.eventIds]),
   });
 }
+
+type FailureStatus = FailedResult["status"];
+
+function failed(
+  status: FailureStatus,
+  result: Omit<FailedResult, "status">,
+): FailedResult {
+  return Object.freeze({
+    status,
+    ...result,
+    errors: Object.freeze([...result.errors]),
+    eventIds: Object.freeze([...result.eventIds]),
+  });
+}
+
+export const rejected = (
+  result: Omit<FailedResult, "status">,
+): FailedResult => failed("Rejected", result);
+
+export const expired = (
+  result: Omit<FailedResult, "status">,
+): FailedResult => failed("Expired", result);
+
+export const unauthorized = (
+  result: Omit<FailedResult, "status">,
+): FailedResult => failed("Unauthorized", result);
+
+export const invariantViolation = (
+  result: Omit<FailedResult, "status">,
+): FailedResult => failed("InvariantViolation", result);
 
 export function duplicate<T>(
   originalResult: Exclude<CommandResult<T>, DuplicateResult<T>>,

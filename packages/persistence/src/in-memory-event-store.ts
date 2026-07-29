@@ -13,12 +13,14 @@ export class InMemoryEventStore implements EventStore {
   readonly #outbox: OutboxRecord[] = [];
 
   async read(streamId: string): Promise<readonly StoredEvent[]> {
-    return Object.freeze([...(this.#streams.get(streamId) ?? [])]);
+    return Object.freeze(
+      structuredClone(this.#streams.get(streamId) ?? []),
+    );
   }
 
   async append(
     streamId: string,
-    expectedRevision: number,
+    expectedRevision: bigint,
     events: readonly EventToAppend[],
   ): Promise<readonly StoredEvent[]> {
     if (events.length === 0) {
@@ -26,7 +28,7 @@ export class InMemoryEventStore implements EventStore {
     }
 
     const current = this.#streams.get(streamId) ?? [];
-    const actualRevision = current.length - 1;
+    const actualRevision = BigInt(current.length) - 1n;
 
     if (actualRevision !== expectedRevision) {
       throw new ConcurrencyConflict(
@@ -47,10 +49,9 @@ export class InMemoryEventStore implements EventStore {
     const storedAt = new Date().toISOString();
     const appended = events.map<StoredEvent>((event, index) =>
       Object.freeze({
-        ...event,
-        metadata: Object.freeze({ ...event.metadata }),
+        ...structuredClone(event),
         streamId,
-        aggregateRevision: actualRevision + index + 1,
+        aggregateRevision: actualRevision + BigInt(index) + 1n,
         storedAt,
       }),
     );
@@ -60,6 +61,10 @@ export class InMemoryEventStore implements EventStore {
         event,
         createdAt: storedAt,
         publishedAt: null,
+        publicationAttempts: 0,
+        leaseToken: null,
+        leaseOwner: null,
+        leaseExpiresAt: null,
       }),
     );
 
@@ -69,26 +74,63 @@ export class InMemoryEventStore implements EventStore {
     }
     this.#outbox.push(...outbox);
 
-    return Object.freeze(appended);
+    return Object.freeze(structuredClone(appended));
   }
 
   async pendingOutbox(): Promise<readonly OutboxRecord[]> {
     return Object.freeze(
-      this.#outbox.filter((record) => record.publishedAt === null),
+      structuredClone(
+        this.#outbox.filter((record) => record.publishedAt === null),
+      ),
     );
   }
 
   async allOutbox(): Promise<readonly OutboxRecord[]> {
-    return Object.freeze([...this.#outbox]);
+    return Object.freeze(structuredClone(this.#outbox));
   }
 
-  async confirmPublished(eventId: string, publishedAt: string): Promise<void> {
+  async claimOutbox(
+    claim: import("./event-store.ts").OutboxClaim,
+  ): Promise<readonly OutboxRecord[]> {
+    const available = this.#outbox
+      .filter(
+        (record) =>
+          record.publishedAt === null &&
+          (record.leaseExpiresAt === null ||
+            record.leaseExpiresAt <= claim.now),
+      )
+      .slice(0, claim.limit);
+    for (const availableRecord of available) {
+      const index = this.#outbox.indexOf(availableRecord);
+      this.#outbox[index] = Object.freeze({
+        ...availableRecord,
+        publicationAttempts: availableRecord.publicationAttempts + 1,
+        leaseToken: claim.token,
+        leaseOwner: claim.owner,
+        leaseExpiresAt: claim.leaseUntil,
+      });
+    }
+    return Object.freeze(
+      structuredClone(
+        this.#outbox.filter((record) => record.leaseToken === claim.token),
+      ),
+    );
+  }
+
+  async confirmPublished(
+    eventId: string,
+    leaseToken: string,
+    publishedAt: string,
+  ): Promise<void> {
     const index = this.#outbox.findIndex(
       (record) => record.event.eventId === eventId,
     );
     const record = this.#outbox[index];
     if (record === undefined) {
       throw new Error(`No outbox record exists for EventId ${eventId}.`);
+    }
+    if (record.leaseToken !== leaseToken) {
+      throw new Error(`Lease token does not own EventId ${eventId}.`);
     }
     if (record.publishedAt !== null) {
       return;

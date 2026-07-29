@@ -13,7 +13,7 @@ export interface EventToAppend<TPayload = unknown> {
 export interface StoredEvent<TPayload = unknown>
   extends EventToAppend<TPayload> {
   readonly streamId: string;
-  readonly aggregateRevision: number;
+  readonly aggregateRevision: bigint;
   readonly storedAt: string;
 }
 
@@ -22,26 +22,38 @@ export interface OutboxRecord {
   readonly event: StoredEvent;
   readonly createdAt: string;
   readonly publishedAt: string | null;
+  readonly publicationAttempts: number;
+  readonly leaseToken: string | null;
+  readonly leaseOwner: string | null;
+  readonly leaseExpiresAt: string | null;
+}
+
+export interface OutboxClaim {
+  readonly limit: number;
+  readonly owner: string;
+  readonly token: string;
+  readonly now: string;
+  readonly leaseUntil: string;
 }
 
 export interface EventStore {
   read(streamId: string): Promise<readonly StoredEvent[]>;
   append(
     streamId: string,
-    expectedRevision: number,
+    expectedRevision: bigint,
     events: readonly EventToAppend[],
   ): Promise<readonly StoredEvent[]>;
 }
 
 export class ConcurrencyConflict extends Error {
   readonly streamId: string;
-  readonly expectedRevision: number;
-  readonly actualRevision: number;
+  readonly expectedRevision: bigint;
+  readonly actualRevision: bigint;
 
   constructor(
     streamId: string,
-    expectedRevision: number,
-    actualRevision: number,
+    expectedRevision: bigint,
+    actualRevision: bigint,
   ) {
     super(
       `Wrong revision for ${streamId}: expected ${expectedRevision}, actual ${actualRevision}.`,

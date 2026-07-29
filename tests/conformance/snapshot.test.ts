@@ -14,7 +14,7 @@ const applier: EventApplier<Counter, Incremented> = {
   apply: (state, payload) => ({ value: state.value + payload.amount }),
 };
 
-const events: EventEnvelope<Incremented>[] = [0, 1, 2].map((revision) => ({
+const events: EventEnvelope<Incremented>[] = [0n, 1n, 2n].map((revision) => ({
   eventId: `event-${revision}`,
   eventType: "Incremented",
   schemaVersion: 1,
@@ -44,7 +44,7 @@ test("valid snapshot plus tail equals integral replay", () => {
     appliers: [applier],
     snapshot: {
       aggregateId: "counter-1",
-      sourceRevision: 1,
+      sourceRevision: 1n,
       schemaVersion: 1,
       integrity: "sha256:valid",
       state: { value: 2 },
@@ -67,7 +67,7 @@ test("corrupted or incompatible snapshot falls back to authoritative Events", ()
       appliers: [applier],
       snapshot: {
         aggregateId: "counter-1",
-        sourceRevision: 1,
+        sourceRevision: 1n,
         schemaVersion,
         integrity: "sha256:invalid",
         state: { value: 999 },

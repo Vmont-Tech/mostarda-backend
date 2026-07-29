@@ -5,30 +5,29 @@ import {
   evolveGovernanceMachine,
   InvalidGovernanceTransition,
   initialGovernanceMachine,
-  transitionGovernanceState,
 } from "../../packages/governance/src/index.ts";
 
 test("normal investigation lifecycle reaches the only terminal state", () => {
-  let state = transitionGovernanceState(null, "GovernanceCaseOpened");
-  state = transitionGovernanceState(state, "InvestigationStarted");
-  state = transitionGovernanceState(state, "ResponsibilityDecisionPublished");
-  state = transitionGovernanceState(state, "GovernanceCaseClosed");
+  let machine = evolveGovernanceMachine(initialGovernanceMachine(), "GovernanceCaseOpened");
+  machine = evolveGovernanceMachine(machine, "InvestigationStarted");
+  machine = evolveGovernanceMachine(machine, "ResponsibilityDecisionPublished");
+  machine = evolveGovernanceMachine(machine, "GovernanceCaseClosed");
 
-  assert.equal(state, "CLOSED");
+  assert.equal(machine.state, "CLOSED");
 });
 
 test("human review never auto-decides and publishes only through the decision fact", () => {
-  let state = transitionGovernanceState(null, "GovernanceCaseOpened");
-  state = transitionGovernanceState(state, "InvestigationStarted");
-  state = transitionGovernanceState(state, "HumanReviewRequested");
+  let machine = evolveGovernanceMachine(initialGovernanceMachine(), "GovernanceCaseOpened");
+  machine = evolveGovernanceMachine(machine, "InvestigationStarted");
+  machine = evolveGovernanceMachine(machine, "HumanReviewRequested");
 
-  assert.equal(state, "UNDER_REVIEW");
+  assert.equal(machine.state, "UNDER_REVIEW");
   assert.throws(
-    () => transitionGovernanceState(state, "GovernanceCaseClosed"),
+    () => evolveGovernanceMachine(machine, "GovernanceCaseClosed"),
     InvalidGovernanceTransition,
   );
   assert.equal(
-    transitionGovernanceState(state, "ResponsibilityDecisionPublished"),
+    evolveGovernanceMachine(machine, "ResponsibilityDecisionPublished").state,
     "DECIDED",
   );
 });
@@ -64,7 +63,11 @@ test("reevaluation preserves ordering: decision publication precedes conclusion"
 
 test("CLOSED rejects every later lifecycle transition", () => {
   assert.throws(
-    () => transitionGovernanceState("CLOSED", "InvestigationStarted"),
+    () =>
+      evolveGovernanceMachine(
+        { state: "CLOSED", reevaluationDecisionPublished: false },
+        "InvestigationStarted",
+      ),
     InvalidGovernanceTransition,
   );
 });

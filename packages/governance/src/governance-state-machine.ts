@@ -101,19 +101,6 @@ export function evolveGovernanceMachine(
   throw new InvalidGovernanceTransition(state, eventType);
 }
 
-export function transitionGovernanceState(
-  state: GovernanceState | null,
-  eventType: GovernanceLifecycleEvent,
-): GovernanceState {
-  return evolveGovernanceMachine(
-    Object.freeze({
-      state,
-      reevaluationDecisionPublished: false,
-    }),
-    eventType,
-  ).state as GovernanceState;
-}
-
 function machineAt(state: GovernanceState): GovernanceMachine {
   return Object.freeze({
     state,

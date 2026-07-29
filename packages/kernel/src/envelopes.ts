@@ -3,7 +3,7 @@ export interface CommandEnvelope<TPayload> {
   readonly commandType: string;
   readonly schemaVersion: number;
   readonly aggregateId?: string;
-  readonly expectedRevision: number;
+  readonly expectedRevision: bigint;
   readonly idempotencyKey: string;
   readonly correlationId: string;
   readonly causationId?: string;
@@ -16,7 +16,7 @@ export interface EventEnvelope<TPayload> {
   readonly eventType: string;
   readonly schemaVersion: number;
   readonly streamId: string;
-  readonly aggregateRevision: number;
+  readonly aggregateRevision: bigint;
   readonly occurredAt: string;
   readonly producer: string;
   readonly correlationId: string;
