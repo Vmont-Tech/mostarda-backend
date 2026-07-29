@@ -384,3 +384,64 @@ também foram executados nesta rodada.
 Este registro certifica somente a fundação técnica e suas provas locais. Ele não
 declara certificação de produção, não substitui execução contra PostgreSQL real
 e não autoriza nem afirma a existência de Projections de domínio.
+
+## 19. Auditoria operacional para PostgreSQL vivo
+
+Após a integração do Atomic Projection Store foram esgotadas as rotas locais
+seguras para executar os testes PostgreSQL suspensos:
+
+1. `com.docker.service` existe, mas permanece parado e não pode ser aberto pelo
+   contexto atual;
+2. Docker Desktop foi iniciado, porém o Engine não disponibilizou a named pipe;
+3. WSL está instalado, mas a enumeração retorna `E_ACCESSDENIED`;
+4. não existe serviço ou binário PostgreSQL detectável nos caminhos padrão;
+5. Chocolatey localizou `postgresql18 18.4.0`, mas não pode escrever em
+   `C:\ProgramData\chocolatey`;
+6. o instalador oficial EDB foi baixado para D e validado pelo SHA-256
+   `44B8187D2DB7E866495952D8260A1D7252CBB5125843142E1F0BF30115D23279`;
+7. a execução normal foi cancelada pelo gate UAC;
+8. a execução sem elevação via `RunAsInvoker` encerrou com código 1;
+9. nenhuma instalação, diretório de dados ou serviço parcial foi criado.
+
+Consequência: migrations e adapters possuem testes unitários, estáticos e
+contratos executáveis, mas a certificação contra servidor PostgreSQL real
+permanece bloqueada por disponibilidade administrativa externa.
+
+Para remover o bloqueio basta Docker Engine funcional ou PostgreSQL local com
+uma `DATABASE_URL` de desenvolvimento. Até lá, `/ready` responde `503`, e os
+dois testes PostgreSQL permanecem suspensos com motivo explícito.
+
+## 20. Limite atual de implementação de domínio
+
+O cruzamento Architecture Lock × IRR V2 confirmou que todos os artefatos
+`IMPLEMENTATION_READY` já foram materializados. Os Aggregates, Commands, Events,
+Sagas, Projections específicas e contratos públicos restantes continuam
+`IMPLEMENTATION_PARTIAL`, `IMPLEMENTATION_NOT_READY` ou bloqueados.
+
+Nenhum módulo adicional pode ser gerado deterministicamente até que uma fonte
+normativa promova seus artefatos ou forneça os contratos específicos ausentes.
+Esse limite não autoriza inferência de payloads, error codes, owners, schemas ou
+regras de negócio.
+
+## 21. Estado probatório consolidado após revisão final
+
+As revisões adversariais posteriores à seção 18 também fecharam:
+
+- invalidação técnica de view sem mutar candidato;
+- histórico de tombstones por identidade composta;
+- proibição permanente de ressuscitar geração invalidada;
+- recusa de conteúdo divergente durante promoção;
+- preservação segura de `__proto__` como propriedade JSON;
+- rejeição fail-fast de qualquer state não representável sem perda em JSONB.
+
+Na `main` integrada foram executados:
+
+- 118 testes TypeScript: 116 aprovados e 2 PostgreSQL suspensos;
+- 4 testes de fronteira arquitetural aprovados;
+- 6 testes documentais aprovados;
+- typecheck aprovado;
+- instalação limpa via `npm ci` aprovada;
+- revisão independente final aprovada sem bloqueadores.
+
+O backend local executa o commit `3833e32` em `127.0.0.1:3333`; o frontend em
+`127.0.0.1:3000` consome seu manifesto real de capacidades.
