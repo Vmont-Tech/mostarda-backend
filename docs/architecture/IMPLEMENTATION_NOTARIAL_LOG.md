@@ -161,3 +161,64 @@ Esta fase não está declarada integralmente concluída.
 
 Toda alegação futura de conclusão deverá incluir nova execução de testes,
 typecheck, auditoria de dependências e prova localhost.
+
+## 10. Continuação autônoma — persistência e certificação
+
+Após a abertura deste registro foram materializados:
+
+- contrato de Event Store;
+- implementação transacional em memória para conformidade;
+- migration PostgreSQL append-only;
+- adapter PostgreSQL com advisory lock por stream;
+- ExpectedRevision e append multi-Event atômico;
+- Event e outbox na mesma transação;
+- outbox com confirmação idempotente;
+- inbox por `consumer + EventId`;
+- conflito para mesmo EventId com digest divergente;
+- runner de migrations;
+- teste de integração PostgreSQL condicionado a `DATABASE_URL`;
+- reidratação por snapshot com fallback para replay integral;
+- cadeia explícita e contígua de upcast;
+- catálogo transversal completo de Error conforme TBS;
+- CommandResult completo conforme TBS;
+- gate executável de geração deny-by-default;
+- testes executáveis de fronteiras arquiteturais.
+
+## 11. Artefatos Governance efetivamente implementados
+
+O cruzamento Architecture Lock × IRR V2 autorizou deterministicamente:
+
+- `ResponsibleParty`;
+- `ResponsibilityCategory`;
+- `Severity`;
+- `Confidence`;
+- GovernanceCase State Machine.
+
+Esses artefatos foram implementados com testes. Nenhum Aggregate, Command,
+Event, Saga, Projection ou contrato público de Governance foi gerado.
+
+Foi identificada uma contradição objetiva: o IRR V2 marca
+`ResponsibilityDecision` como READY, mas marca três de suas dependências
+obrigatórias (`EvidenceReference`, `GovernancePolicyVersion` e
+`DecisionRevision`) como PARTIAL. O objeto concreto foi bloqueado por
+dependência; a ocorrência consta em `GOVERNANCE_IMPLEMENTATION_GATE_V1.md`.
+
+## 12. Estado probatório atualizado
+
+Na última execução anterior a este registro:
+
+- 47 testes backend aprovados;
+- 1 teste PostgreSQL suspenso por ausência de `DATABASE_URL`;
+- 3 testes de fronteira arquitetural aprovados;
+- 6 testes documentais aprovados;
+- typecheck backend aprovado;
+- auditoria de dependências backend sem vulnerabilidades conhecidas;
+- 2 testes frontend aprovados;
+- typecheck e build de produção frontend aprovados;
+- auditoria de dependências frontend sem vulnerabilidades conhecidas.
+
+O Docker Desktop foi localizado, mas seu serviço não pôde ser iniciado pelo
+contexto de execução e o Engine não respondeu mesmo após solicitação de
+inicialização em segundo plano. Não existe instalação PostgreSQL nativa
+alternativa detectável. A prova real do adapter PostgreSQL continua pendente e
+não foi convertida artificialmente em sucesso.
