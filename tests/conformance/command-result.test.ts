@@ -12,7 +12,11 @@ test("Accepted records the observable command outcome", () => {
   const result = accepted({
     commandId: "cmd-1",
     aggregateId: "aggregate-1",
-    aggregateRevision: 3,
+    observedRevision: 2,
+    newRevision: 3,
+    correlationId: "correlation-1",
+    causationId: "cause-1",
+    errors: [],
     eventIds: ["event-1"],
     value: { published: true },
   });
@@ -21,7 +25,11 @@ test("Accepted records the observable command outcome", () => {
     status: "Accepted",
     commandId: "cmd-1",
     aggregateId: "aggregate-1",
-    aggregateRevision: 3,
+    observedRevision: 2,
+    newRevision: 3,
+    correlationId: "correlation-1",
+    causationId: "cause-1",
+    errors: [],
     eventIds: ["event-1"],
     value: { published: true },
   });
@@ -31,15 +39,20 @@ test("Duplicate preserves the complete original result", () => {
   const original = accepted({
     commandId: "cmd-original",
     aggregateId: "aggregate-1",
-    aggregateRevision: 4,
+    observedRevision: 3,
+    newRevision: 4,
+    correlationId: "correlation-1",
+    causationId: "cause-1",
+    errors: [],
     eventIds: ["event-1", "event-2"],
     value: { published: true },
   });
 
-  const result = duplicate("cmd-retry", original);
+  const result = duplicate(original);
 
   assert.equal(result.status, "Duplicate");
-  assert.equal(result.commandId, "cmd-retry");
+  assert.equal(result.commandId, "cmd-original");
+  assert.deepEqual(result.eventIds, ["event-1", "event-2"]);
   assert.deepEqual(result.originalResult, original);
   assert.strictEqual(result.originalResult, original);
 });
@@ -47,6 +60,12 @@ test("Duplicate preserves the complete original result", () => {
 test("same idempotency identity with divergent payload produces Conflict", () => {
   const result: CommandResult<never> = conflict({
     commandId: "cmd-2",
+    aggregateId: "aggregate-1",
+    observedRevision: 2,
+    correlationId: "correlation-1",
+    causationId: "cause-1",
+    errors: [],
+    eventIds: [],
     code: "TBS_IDEMPOTENCY_PAYLOAD_MISMATCH",
     expectedRevision: 2,
     actualRevision: 2,
