@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from "node:util";
+
 import type {
   AtomicProjectionStore,
   ProjectionRebuild,
@@ -19,6 +21,27 @@ export class ProjectionIdentityMismatch extends Error {
   constructor(rebuildId: string) {
     super(`Staged Projection identity does not match rebuild ${rebuildId}.`);
     this.name = "ProjectionIdentityMismatch";
+    this.rebuildId = rebuildId;
+  }
+}
+
+export class ProjectionCandidateConflict extends Error {
+  readonly projectionName: string;
+  readonly projectionVersion: number;
+  readonly rebuildId: string;
+
+  constructor(
+    projectionName: string,
+    projectionVersion: number,
+    rebuildId: string,
+  ) {
+    super(
+      `Projection candidate ${projectionName}@${projectionVersion} ` +
+        `for rebuild ${rebuildId} conflicts with the staged candidate.`,
+    );
+    this.name = "ProjectionCandidateConflict";
+    this.projectionName = projectionName;
+    this.projectionVersion = projectionVersion;
     this.rebuildId = rebuildId;
   }
 }
@@ -55,13 +78,21 @@ export class InMemoryProjectionStore<TState>
       throw new TypeError("Only complete Projection rebuilds can be staged.");
     }
 
-    const existing = this.#candidates.get(rebuild.rebuildId);
+    const candidate = structuredClone(rebuild);
+    const key = this.#candidateKey(candidate);
+    const existing = this.#candidates.get(key);
     if (existing !== undefined) {
-      this.#assertIdentity(existing, rebuild);
-      return;
+      if (isDeepStrictEqual(existing, candidate)) {
+        return;
+      }
+      throw new ProjectionCandidateConflict(
+        candidate.projectionName,
+        candidate.projectionVersion,
+        candidate.rebuildId,
+      );
     }
 
-    this.#candidates.set(rebuild.rebuildId, structuredClone(rebuild));
+    this.#candidates.set(key, candidate);
   }
 
   async current(
@@ -72,14 +103,24 @@ export class InMemoryProjectionStore<TState>
   }
 
   async promote(rebuild: ProjectionRebuild<TState>): Promise<void> {
-    const candidate = this.#candidates.get(rebuild.rebuildId);
+    const key = this.#candidateKey(rebuild);
+    const candidate = this.#candidates.get(key);
     if (candidate === undefined) {
+      if (
+        [...this.#candidates.values()].some(
+          (staged) => staged.rebuildId === rebuild.rebuildId,
+        )
+      ) {
+        throw new ProjectionIdentityMismatch(rebuild.rebuildId);
+      }
       throw new ProjectionCandidateNotFound(rebuild.rebuildId);
     }
-    this.#assertIdentity(candidate, rebuild);
 
     const current = this.#current.get(candidate.projectionName);
-    if (current?.rebuildId === candidate.rebuildId) {
+    if (
+      current !== undefined &&
+      this.#candidateKey(current) === key
+    ) {
       return;
     }
     if (
@@ -96,15 +137,13 @@ export class InMemoryProjectionStore<TState>
     this.#current.set(candidate.projectionName, candidate);
   }
 
-  #assertIdentity(
-    candidate: ProjectionRebuild<TState>,
+  #candidateKey(
     rebuild: ProjectionRebuild<TState>,
-  ): void {
-    if (
-      candidate.projectionName !== rebuild.projectionName ||
-      candidate.projectionVersion !== rebuild.projectionVersion
-    ) {
-      throw new ProjectionIdentityMismatch(rebuild.rebuildId);
-    }
+  ): string {
+    return JSON.stringify([
+      rebuild.projectionName,
+      rebuild.projectionVersion,
+      rebuild.rebuildId,
+    ]);
   }
 }

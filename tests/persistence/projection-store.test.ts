@@ -7,6 +7,7 @@ import type {
 } from "../../packages/kernel/src/projection.ts";
 import {
   InMemoryProjectionStore,
+  ProjectionCandidateConflict,
   ProjectionCandidateNotFound,
   ProjectionCheckpointRegression,
   ProjectionIdentityMismatch,
@@ -72,6 +73,78 @@ test("repeated promotion of the same rebuild is idempotent", async () => {
 
   assert.deepEqual(await store.current("fixture"), candidate);
 });
+
+test("the same rebuild id can be staged for independent projections", async () => {
+  const store = new InMemoryProjectionStore<FixtureState>();
+  const first = rebuild("shared-rebuild", 3n);
+  const second: ProjectionRebuild<FixtureState> = {
+    ...rebuild("shared-rebuild", 5n),
+    projectionName: "another-projection",
+  };
+
+  await store.stage(first);
+  await store.stage(second);
+  await store.promote(first);
+  await store.promote(second);
+
+  assert.deepEqual(await store.current("fixture"), first);
+  assert.deepEqual(await store.current("another-projection"), second);
+});
+
+test("restaging a logically identical candidate is idempotent", async () => {
+  const store = new InMemoryProjectionStore<FixtureState>();
+  const candidate = rebuild("candidate-1", 3n);
+
+  await store.stage(candidate);
+  await store.stage(structuredClone(candidate));
+  await store.promote(candidate);
+
+  assert.deepEqual(await store.current("fixture"), candidate);
+});
+
+const divergentCandidates: ReadonlyArray<{
+  readonly description: string;
+  readonly change: (
+    candidate: ProjectionRebuild<FixtureState>,
+  ) => ProjectionRebuild<FixtureState>;
+}> = [
+  {
+    description: "checkpoint",
+    change: (candidate) => ({ ...candidate, checkpoint: 4n }),
+  },
+  {
+    description: "state",
+    change: (candidate) => ({
+      ...candidate,
+      state: { nested: { value: "divergent" } },
+    }),
+  },
+  {
+    description: "staleness metadata",
+    change: (candidate) => ({
+      ...candidate,
+      staleness: {
+        ...candidate.staleness,
+        lagMilliseconds: 2_000,
+      },
+    }),
+  },
+];
+
+for (const { description, change } of divergentCandidates) {
+  test(`restaging the same candidate identity with divergent ${description} is a conflict`, async () => {
+    const store = new InMemoryProjectionStore<FixtureState>();
+    const candidate = rebuild("candidate-1", 3n);
+    await store.stage(candidate);
+
+    await assert.rejects(
+      store.stage(change(candidate)),
+      (error) =>
+        error instanceof ProjectionCandidateConflict &&
+        error.rebuildId === "candidate-1",
+    );
+  });
+}
 
 test("promotion rejects a candidate that was not staged", async () => {
   const store = new InMemoryProjectionStore<FixtureState>();
