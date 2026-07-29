@@ -66,12 +66,7 @@ export function accepted<T>(
 export function conflict(
   result: Omit<FailedResult, "status">,
 ): FailedResult {
-  return Object.freeze({
-    status: "Conflict",
-    ...result,
-    errors: Object.freeze([...result.errors]),
-    eventIds: Object.freeze([...result.eventIds]),
-  });
+  return failed("Conflict", result);
 }
 
 type FailureStatus = FailedResult["status"];

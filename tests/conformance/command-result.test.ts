@@ -113,4 +113,5 @@ test("factories own their discriminant and enforce result invariants", () => {
   assert.equal(accepted(input).status, "Accepted");
   assert.throws(() => accepted({ ...input, newRevision: null }), /newRevision/);
   assert.throws(() => rejected({ ...input, code: "FAILED" }), /cannot publish Events/);
+  assert.throws(() => conflict({ ...input, code: "CONFLICT" }), /cannot publish Events/);
 });

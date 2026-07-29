@@ -82,6 +82,21 @@ test("promotion delegates an isolated complete candidate to atomic storage", asy
   assert.notStrictEqual(promoted, candidate);
 });
 
+test("projection rejects non-canonical or invalid staleness instants", () => {
+  assert.throws(() => rebuildProjection({
+    definition: projection,
+    events: [],
+    rebuildId: "invalid-time",
+    evaluatedAt: "not-a-time",
+  }), /canonical ISO-8601/);
+  assert.throws(() => rebuildProjection({
+    definition: projection,
+    events: [{ position: 1n, occurredAt: "2026-07-29 10:00:00Z", value: 1 }],
+    rebuildId: "non-canonical-time",
+    evaluatedAt: "2026-07-29T10:02:00.000Z",
+  }), /canonical ISO-8601/);
+});
+
 test("out-of-order projection input aborts rebuild", () => {
   assert.throws(
     () =>

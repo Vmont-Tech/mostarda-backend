@@ -45,7 +45,13 @@ export function validateOutboxClaim(claim: OutboxClaim): void {
   }
   const now = Date.parse(claim.now);
   const leaseUntil = Date.parse(claim.leaseUntil);
-  if (!Number.isFinite(now) || !Number.isFinite(leaseUntil) || leaseUntil <= now) {
+  if (
+    !Number.isFinite(now) ||
+    !Number.isFinite(leaseUntil) ||
+    new Date(now).toISOString() !== claim.now ||
+    new Date(leaseUntil).toISOString() !== claim.leaseUntil ||
+    leaseUntil <= now
+  ) {
     throw new TypeError("Outbox leaseUntil must be a valid instant after now.");
   }
 }

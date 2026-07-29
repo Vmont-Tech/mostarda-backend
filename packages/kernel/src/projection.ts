@@ -48,11 +48,13 @@ export function rebuildProjection<TState, TEvent>({
   readonly rebuildId: string;
   readonly evaluatedAt: string;
 }): ProjectionRebuild<TState> {
+  const evaluatedAtEpoch = parseCanonicalInstant(evaluatedAt, "evaluatedAt");
   let state = structuredClone(definition.initialState);
   let checkpoint = -1n;
   let asOf: string | null = null;
 
   for (const event of events) {
+    parseCanonicalInstant(event.occurredAt, "occurredAt");
     if (event.position <= checkpoint) {
       throw new Error("Projection events must be strictly ordered.");
     }
@@ -74,9 +76,17 @@ export function rebuildProjection<TState, TEvent>({
       lagMilliseconds:
         asOf === null
           ? null
-          : Math.max(0, Date.parse(evaluatedAt) - Date.parse(asOf)),
+          : Math.max(0, evaluatedAtEpoch - Date.parse(asOf)),
     }),
     rebuildId,
     rebuildStatus: "COMPLETED_AWAITING_PROMOTION",
   });
+}
+
+function parseCanonicalInstant(value: string, field: string): number {
+  const epoch = Date.parse(value);
+  if (!Number.isFinite(epoch) || new Date(epoch).toISOString() !== value) {
+    throw new TypeError(`${field} must be a canonical ISO-8601 instant.`);
+  }
+  return epoch;
 }

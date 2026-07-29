@@ -11,6 +11,7 @@ const pool = databaseUrl === undefined
       connectionString: databaseUrl,
       statement_timeout: readinessTimeoutMs,
       query_timeout: readinessTimeoutMs,
+      connectionTimeoutMillis: readinessTimeoutMs,
     });
 pool?.on("error", (error) => {
   server.log.error(error, "Unexpected PostgreSQL pool error");

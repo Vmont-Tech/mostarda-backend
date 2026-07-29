@@ -213,6 +213,10 @@ test("outbox claims reject invalid identity, time and reused token", async () =>
     now: "2026-07-29T12:01:00.000Z",
     leaseUntil: "2026-07-29T12:00:00.000Z",
   }), /after now/);
+  await assert.rejects(store.claimOutbox({
+    ...base,
+    now: "2026-07-29 12:00:00Z",
+  }), /valid instant/);
   await store.claimOutbox(base);
   await assert.rejects(store.claimOutbox({
     ...base,

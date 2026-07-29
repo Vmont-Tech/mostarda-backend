@@ -324,3 +324,18 @@ mutação vazada durante rebuild de Projection. Portanto, as alegações da seç
 
 O número probatório desta rodada passa a ser 63 testes backend, sendo 62
 aprovados e 1 integração PostgreSQL suspensa por ausência de `DATABASE_URL`.
+
+## 17. Fechamento dos testes adversariais finais
+
+Uma terceira passagem encerrou quatro bypasses residuais:
+
+- `Conflict` usa a mesma factory validada dos demais resultados de falha;
+- probes de readiness expirados permanecem coalescidos enquanto a operação
+  subjacente não termina, e o pool limita aquisição de conexão;
+- instantes de lease exigem representação ISO-8601 canônica, garantindo a mesma
+  ordenação em memória e PostgreSQL;
+- timestamps de staleness inválidos abortam o rebuild em vez de produzir
+  `NaN`.
+
+O número probatório final desta passagem é 65 testes backend: 64 aprovados e 1
+integração PostgreSQL suspensa por ausência de `DATABASE_URL`.

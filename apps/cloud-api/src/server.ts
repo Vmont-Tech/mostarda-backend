@@ -1,7 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 
 export interface ServerOptions {
-  readonly eventStoreProbe?: () => Promise<boolean>;
+  readonly eventStoreProbe?: (signal: AbortSignal) => Promise<boolean>;
   readonly readinessTimeoutMs?: number;
   readonly logger?: boolean;
 }
@@ -65,9 +65,15 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
       },
     },
     async (_request, reply) => {
-      activeProbe ??= probeWithTimeout(eventStoreProbe, readinessTimeoutMs)
-        .finally(() => { activeProbe = null; });
-      const eventStoreReady = await activeProbe;
+      if (activeProbe === null) {
+        const controller = new AbortController();
+        const operation = eventStoreProbe(controller.signal).catch(() => false);
+        activeProbe = operation.finally(() => {
+          if (activeProbe === operation || activeProbe !== null) activeProbe = null;
+        });
+        setTimeout(() => controller.abort(), readinessTimeoutMs).unref();
+      }
+      const eventStoreReady = await waitWithTimeout(activeProbe, readinessTimeoutMs);
       const status = eventStoreReady ? "ready" : "not-ready";
 
       return reply.code(eventStoreReady ? 200 : 503).send({
@@ -123,14 +129,14 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
   return server;
 }
 
-async function probeWithTimeout(
-  probe: () => Promise<boolean>,
+async function waitWithTimeout(
+  operation: Promise<boolean>,
   timeoutMs: number,
 ): Promise<boolean> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
-      probe().catch(() => false),
+      operation,
       new Promise<false>((resolve) => {
         timer = setTimeout(() => resolve(false), timeoutMs);
       }),

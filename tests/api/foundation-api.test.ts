@@ -55,6 +55,26 @@ test("readiness probe is timeout-bounded", async () => {
   await server.close();
 });
 
+test("timed-out readiness requests coalesce the same unfinished probe", async () => {
+  let probes = 0;
+  const server = buildServer({
+    readinessTimeoutMs: 10,
+    eventStoreProbe: async () => {
+      probes += 1;
+      return new Promise<boolean>(() => undefined);
+    },
+  });
+  try {
+    const first = await server.inject({ method: "GET", url: "/ready" });
+    const second = await server.inject({ method: "GET", url: "/ready" });
+    assert.equal(first.statusCode, 503);
+    assert.equal(second.statusCode, 503);
+    assert.equal(probes, 1);
+  } finally {
+    await server.close();
+  }
+});
+
 test("capability manifest refuses blocked aggregate implementation", async () => {
   const server = buildServer();
   const response = await server.inject({
