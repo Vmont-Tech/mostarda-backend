@@ -33,6 +33,7 @@ export interface ReplayInput<TState> {
   readonly events: readonly EventEnvelope<unknown>[];
   // Payload safety is established by the explicit eventType/schemaVersion registry.
   readonly appliers: readonly EventApplier<TState, any>[];
+  readonly sourceRevision?: number;
 }
 
 export interface ReplayResult<TState> {
@@ -45,9 +46,10 @@ export function replay<TState>({
   initialState,
   events,
   appliers,
+  sourceRevision = -1,
 }: ReplayInput<TState>): ReplayResult<TState> {
   let state = initialState;
-  let expectedRevision = 0;
+  let expectedRevision = sourceRevision + 1;
   const seenEventIds = new Set<string>();
   const appliedEventIds: string[] = [];
 
