@@ -40,6 +40,19 @@ test("broker confirmation removes only the confirmed Event from pending delivery
   assert.deepEqual(await store.pendingOutbox(), []);
 });
 
+test("duplicate broker confirmation is idempotent and preserves first confirmation", async () => {
+  const store = new InMemoryEventStore();
+  await store.append("stream-1", -1, [event]);
+
+  await store.confirmPublished("event-1", "2026-07-29T12:01:00.000Z");
+  await store.confirmPublished("event-1", "2026-07-29T12:09:00.000Z");
+
+  assert.equal(
+    (await store.allOutbox())[0]?.publishedAt,
+    "2026-07-29T12:01:00.000Z",
+  );
+});
+
 test("consumer duplicate returns its original effect result", async () => {
   const inbox = new InMemoryDeliveryLog();
   const original = await inbox.recordConsumption({

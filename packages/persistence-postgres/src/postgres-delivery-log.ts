@@ -90,9 +90,8 @@ export class PostgresDeliveryLog {
   async confirmPublished(eventId: string, publishedAt: string): Promise<void> {
     const result = await this.#pool.query(
       `UPDATE event_store_outbox
-          SET published_at = $2::timestamptz
-        WHERE event_id = $1::uuid
-          AND published_at IS NULL`,
+          SET published_at = COALESCE(published_at, $2::timestamptz)
+        WHERE event_id = $1::uuid`,
       [eventId, publishedAt],
     );
     if (result.rowCount === 0) {

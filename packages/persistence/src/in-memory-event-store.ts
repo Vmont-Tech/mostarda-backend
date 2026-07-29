@@ -78,6 +78,10 @@ export class InMemoryEventStore implements EventStore {
     );
   }
 
+  async allOutbox(): Promise<readonly OutboxRecord[]> {
+    return Object.freeze([...this.#outbox]);
+  }
+
   async confirmPublished(eventId: string, publishedAt: string): Promise<void> {
     const index = this.#outbox.findIndex(
       (record) => record.event.eventId === eventId,
@@ -85,6 +89,9 @@ export class InMemoryEventStore implements EventStore {
     const record = this.#outbox[index];
     if (record === undefined) {
       throw new Error(`No outbox record exists for EventId ${eventId}.`);
+    }
+    if (record.publishedAt !== null) {
+      return;
     }
 
     this.#outbox[index] = Object.freeze({
