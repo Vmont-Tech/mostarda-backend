@@ -4,6 +4,10 @@ import test from "node:test";
 
 const migrationUrl = new URL("../../migrations/001_event_store.sql", import.meta.url);
 const inboxMigrationUrl = new URL("../../migrations/002_inbox.sql", import.meta.url);
+const projectionMigrationUrl = new URL(
+  "../../migrations/004_projection_store.sql",
+  import.meta.url,
+);
 
 test("event store migration enforces append-only identity and revision constraints", async () => {
   const sql = await readFile(migrationUrl, "utf8");
@@ -68,4 +72,49 @@ test("lease evolution is an ordered upgrade-safe migration", async () => {
   assert.match(sql, /ADD COLUMN IF NOT EXISTS lease_token/);
   assert.match(sql, /event_store_outbox_claims/);
   assert.match(sql, /lease_token TEXT PRIMARY KEY/);
+});
+
+test("projection candidates are complete immutable records with a composite identity", async () => {
+  const sql = await readFile(projectionMigrationUrl, "utf8");
+
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS projection_rebuilds/);
+  assert.match(
+    sql,
+    /PRIMARY KEY \(projection_name, projection_version, rebuild_id\)/,
+  );
+  assert.match(sql, /state JSONB NOT NULL/);
+  assert.match(sql, /checkpoint BIGINT NOT NULL/);
+  assert.match(sql, /as_of TIMESTAMPTZ NULL/);
+  assert.match(sql, /staleness JSONB NOT NULL/);
+  assert.match(sql, /rebuild_status TEXT NOT NULL/);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION prevent_projection_rebuild_mutation/);
+  assert.match(sql, /BEFORE UPDATE OR DELETE ON projection_rebuilds/);
+});
+
+test("projection heads have one current candidate per projection", async () => {
+  const sql = await readFile(projectionMigrationUrl, "utf8");
+
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS projection_heads/);
+  assert.match(sql, /projection_name TEXT PRIMARY KEY/);
+  assert.match(
+    sql,
+    /FOREIGN KEY \(projection_name, projection_version, rebuild_id\)\s+REFERENCES projection_rebuilds \(projection_name, projection_version, rebuild_id\)/,
+  );
+});
+
+test("projection promotion uses a transaction, row locks, and bigint conversion", async () => {
+  const source = await readFile(
+    new URL(
+      "../../packages/persistence-postgres/src/postgres-projection-store.ts",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  assert.match(source, /client\.query\("BEGIN"\)/);
+  assert.match(source, /FOR UPDATE/);
+  assert.match(source, /client\.query\("COMMIT"\)/);
+  assert.match(source, /client\.query\("ROLLBACK"\)/);
+  assert.match(source, /BigInt\(row\.checkpoint\)/);
+  assert.doesNotMatch(source, /Number\([^)]*checkpoint/i);
 });
