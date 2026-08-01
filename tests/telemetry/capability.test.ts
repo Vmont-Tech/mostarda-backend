@@ -4,20 +4,42 @@ import test from "node:test";
 import {
   TELEMETRY_CAPABILITY_STATUSES,
   createAudienceProjectionId,
-  createAudienceProjectionPolicyVersion,
-  createAudienceProjectionVersion,
-  createCapabilityVersion,
-  createCollectionPolicyVersion,
-  createCollectorVersion,
   createTelemetryBucketId,
   createTelemetryEventId,
-  createTelemetrySchemaVersion,
   isTelemetryCapabilityStatus,
   type AudienceProjectionId,
-  type CapabilityVersion,
-  type CollectorVersion,
   type TelemetryBucketId,
+  type TelemetryEventId,
 } from "../../packages/telemetry/src/index.ts";
+import * as telemetry from "../../packages/telemetry/src/index.ts";
+import { telemetryAuthorizedArtifacts } from "../../packages/generation/src/index.ts";
+
+// @ts-expect-error PARTIAL version types must not be public telemetry contracts.
+type ForbiddenTelemetrySchemaVersion = import("../../packages/telemetry/src/index.ts").TelemetrySchemaVersion;
+// @ts-expect-error PARTIAL version types must not be public telemetry contracts.
+type ForbiddenCollectorVersion = import("../../packages/telemetry/src/index.ts").CollectorVersion;
+// @ts-expect-error PARTIAL version types must not be public telemetry contracts.
+type ForbiddenCapabilityVersion = import("../../packages/telemetry/src/index.ts").CapabilityVersion;
+// @ts-expect-error PARTIAL version types must not be public telemetry contracts.
+type ForbiddenCollectionPolicyVersion = import("../../packages/telemetry/src/index.ts").CollectionPolicyVersion;
+// @ts-expect-error PARTIAL version types must not be public telemetry contracts.
+type ForbiddenAudienceProjectionVersion = import("../../packages/telemetry/src/index.ts").AudienceProjectionVersion;
+// @ts-expect-error PARTIAL version types must not be public telemetry contracts.
+type ForbiddenAudienceProjectionPolicyVersion = import("../../packages/telemetry/src/index.ts").AudienceProjectionPolicyVersion;
+// @ts-expect-error Source-context-owned identities must not be telemetry exports.
+type ForbiddenTVId = import("../../packages/telemetry/src/index.ts").TVId;
+// @ts-expect-error Source-context-owned identities must not be telemetry exports.
+type ForbiddenVenueId = import("../../packages/telemetry/src/index.ts").VenueId;
+// @ts-expect-error Source-context-owned identities must not be telemetry exports.
+type ForbiddenDeviceId = import("../../packages/telemetry/src/index.ts").DeviceId;
+// @ts-expect-error Source-context-owned identities must not be telemetry exports.
+type ForbiddenEdgeInstallationId = import("../../packages/telemetry/src/index.ts").EdgeInstallationId;
+// @ts-expect-error Source-context-owned identities must not be telemetry exports.
+type ForbiddenPlayerInstallationId = import("../../packages/telemetry/src/index.ts").PlayerInstallationId;
+// @ts-expect-error CapabilityObservation is not a certified READY artifact.
+type ForbiddenCapabilityObservation = import("../../packages/telemetry/src/index.ts").CapabilityObservation;
+// @ts-expect-error Measurement contracts are not certified independently of TelemetryBucket.
+type ForbiddenTelemetryMeasurement = import("../../packages/telemetry/src/index.ts").TelemetryMeasurement;
 
 test("telemetry opaque identities preserve their exact logical values", () => {
   assert.equal(createTelemetryBucketId("bucket:\u00e7:\u0000"), "bucket:\u00e7:\u0000");
@@ -31,9 +53,9 @@ test("telemetry opaque identities reject empty and padded values", () => {
     createAudienceProjectionId,
     createTelemetryEventId,
   ]) {
-    assert.throws(() => create(""), { code: "EMPTY_OPAQUE_VALUE" });
-    assert.throws(() => create(" padded"), { code: "EMPTY_OPAQUE_VALUE" });
-    assert.throws(() => create("padded "), { code: "EMPTY_OPAQUE_VALUE" });
+    assert.throws(() => create(""), /non-empty/);
+    assert.throws(() => create(" padded"), /canonical/);
+    assert.throws(() => create("padded "), /canonical/);
   }
 });
 
@@ -41,14 +63,22 @@ test("telemetry identity brands are distinct at compile time", () => {
   const bucketId: TelemetryBucketId = createTelemetryBucketId("same-value");
   const projectionId: AudienceProjectionId =
     createAudienceProjectionId("same-value");
+  const eventId: TelemetryEventId = createTelemetryEventId("same-value");
 
   // @ts-expect-error Projection identities cannot substitute for bucket identities.
   const wrongBucketId: TelemetryBucketId = projectionId;
+  // @ts-expect-error Event identities cannot substitute for projection identities.
+  const wrongProjectionId: AudienceProjectionId = eventId;
+  // @ts-expect-error Bucket identities cannot substitute for event identities.
+  const wrongEventId: TelemetryEventId = bucketId;
 
   assert.equal(bucketId, wrongBucketId);
+  assert.equal(projectionId, wrongProjectionId);
+  assert.equal(eventId, wrongEventId);
 });
 
 test("telemetry capability status exposes exactly the five certified values", () => {
+  assert.equal(Object.isFrozen(TELEMETRY_CAPABILITY_STATUSES), true);
   assert.deepEqual(TELEMETRY_CAPABILITY_STATUSES, [
     "AVAILABLE",
     "UNAVAILABLE",
@@ -64,29 +94,19 @@ test("telemetry capability status exposes exactly the five certified values", ()
   assert.equal(isTelemetryCapabilityStatus("available"), false);
 });
 
-test("version identities require canonical non-empty strings and preserve exact values", () => {
-  const versions = [
-    [createTelemetrySchemaVersion, "schema-v1"],
-    [createCollectorVersion, "collector/2026.08"],
-    [createCapabilityVersion, "capability:\u03b2"],
-    [createCollectionPolicyVersion, "collection-policy-1"],
-    [createAudienceProjectionVersion, "projection-v1"],
-    [createAudienceProjectionPolicyVersion, "projection-policy-v1"],
-  ] as const;
+test("telemetry exposes only the four generation-authorized contracts", () => {
+  assert.deepEqual(telemetryAuthorizedArtifacts, [
+    "TelemetryBucketId",
+    "AudienceProjectionId",
+    "TelemetryEventId",
+    "TelemetryCapabilityStatus",
+  ]);
 
-  for (const [create, value] of versions) {
-    assert.equal(create(value), value);
-    assert.throws(() => create(""), { code: "EMPTY_OPAQUE_VALUE" });
-    assert.throws(() => create(` ${value}`), { code: "EMPTY_OPAQUE_VALUE" });
-    assert.throws(() => create(`${value} `), { code: "EMPTY_OPAQUE_VALUE" });
-  }
-});
-
-test("version brands cannot substitute for one another", () => {
-  const collectorVersion: CollectorVersion = createCollectorVersion("1");
-
-  // @ts-expect-error CollectorVersion is not a CapabilityVersion.
-  const capabilityVersion: CapabilityVersion = collectorVersion;
-
-  assert.equal(capabilityVersion, "1");
+  assert.deepEqual(Object.keys(telemetry).sort(), [
+    "TELEMETRY_CAPABILITY_STATUSES",
+    "createAudienceProjectionId",
+    "createTelemetryBucketId",
+    "createTelemetryEventId",
+    "isTelemetryCapabilityStatus",
+  ]);
 });
