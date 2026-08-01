@@ -1,23 +1,22 @@
 # Telemetry Architecture Review Gate V1
 
-This record captures the completed manual Architecture Review Gate. The verdict is based on direct inspection of the reviewed range; automated tests are supporting evidence only.
+This record preserves a previously completed manual Architecture Review Gate and records its subsequent invalidation. It is not a current approval. Automated tests are supporting evidence only and cannot restore approval.
 
 ## Verdict
 
-Status: APPROVED
-NO_NEW_BOUNDED_CONTEXT: PASS
-AUDIENCE_PROJECTION_OWNED_BY_TELEMETRY: PASS
-EVIDENCE_LEDGER_ONLY_MATERIALIZER: PASS
-PRICING_READ_ONLY_CONSUMER: PASS
-AUTHORIZED_ARTIFACTS_MATCH_GATE: PASS
-NO_BYPASS: PASS
+Status: INVALIDATED_BY_AUTHORIZATION_CHANGE
+PRIOR_APPROVAL: INVALIDATED
+TASK_3_AND_LATER: BLOCKED_PENDING_NEW_MANUAL_REVIEW
+
+Commit `801514f` demoted six underspecified version contracts and four transitive composite dependents. Because the reviewed authorization set changed after the immutable reviewed range, the former approval cannot authorize Task 3 or any later implementation work. A new manual Architecture Review Gate is required.
 
 ## Reviewed scope
 
 Reviewed head: `757d9b0`
 Reviewed range: `7029c40..757d9b0`
+Invalidating authorization commit: `801514f`
 
-The review assessed the architecture and authorization changes in that immutable range. It does not authorize later implementation tasks or change any domain decision.
+The prior review assessed only that immutable range. Its evidence remains historical, but its verdict is invalidated and does not authorize later implementation tasks or change any domain decision.
 
 ## Reviewer evidence
 
@@ -53,13 +52,15 @@ The review assessed the architecture and authorization changes in that immutable
 
 ## Authorization audit
 
-READY count: 14
-PARTIAL count: 19
+READY count: 4
+PARTIAL count: 29
 Unknown artifacts: denied
 Infrastructure authorization: none
 Architecture bypass: none
 
-The registry and implementation gate contain the same READY and PARTIAL names. The sets are disjoint. No services, APIs, repositories, topics, or brokers are authorized. Adapters, ingestion services, persistence mappings, transport envelopes, and deployment resources also remain outside authorization.
+The current registry and implementation gate contain the same READY and PARTIAL names. The sets are disjoint. The six version artifacts were demoted because the supported version set/compatibility lookup absent defect prevents their unsupported-version behavior from being implemented. `TelemetryBucket`, both bucket decision events, and `AudienceProjection` were demoted transitively. A new manual Architecture Review Gate is required before Task 3 or later work may proceed.
+
+No services, APIs, repositories, topics, or brokers are authorized. Adapters, ingestion services, persistence mappings, transport envelopes, and deployment resources also remain outside authorization.
 
 ## Reviewed files
 
@@ -98,8 +99,8 @@ Claim boundary: `recorded result; not cryptographic proof of historical output`
 - `npm run test:architecture` — PASS.
 - `git diff --check` — PASS.
 
-Test results are supporting evidence, not a substitute for direct inspection and the manual reviewer verdict.
+These command records describe the prior immutable review and are not evidence of current approval. Test results are supporting evidence, not a substitute for direct inspection in a new manual review and its reviewer verdict.
 
 ## Audit note
 
-The audit mentioned markdown trailing whitespace outside the architecture verdict. It did not affect approval, and the current branch passes `git diff --check`.
+The historical audit mentioned markdown trailing whitespace outside the architecture verdict. The authorization change, not whitespace, invalidated approval. The current branch passes `git diff --check`.

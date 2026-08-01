@@ -38,18 +38,14 @@ const lineContaining = (document, needle) => {
   return line;
 };
 
-test("records the approved Telemetry architecture review verdict and immutable scope", async () => {
+test("invalidates the prior approval and blocks later tasks pending a new manual review", async () => {
   const review = await readFile(reviewPath, "utf8");
   const verdict = boundedSection(review, "Verdict");
 
   for (const required of [
-    "Status: APPROVED",
-    "NO_NEW_BOUNDED_CONTEXT: PASS",
-    "AUDIENCE_PROJECTION_OWNED_BY_TELEMETRY: PASS",
-    "EVIDENCE_LEDGER_ONLY_MATERIALIZER: PASS",
-    "PRICING_READ_ONLY_CONSUMER: PASS",
-    "AUTHORIZED_ARTIFACTS_MATCH_GATE: PASS",
-    "NO_BYPASS: PASS",
+    "Status: INVALIDATED_BY_AUTHORIZATION_CHANGE",
+    "PRIOR_APPROVAL: INVALIDATED",
+    "TASK_3_AND_LATER: BLOCKED_PENDING_NEW_MANUAL_REVIEW",
   ]) {
     assert.ok(verdict.split(/\r?\n/).includes(required), `missing verdict: ${required}`);
   }
@@ -57,6 +53,7 @@ test("records the approved Telemetry architecture review verdict and immutable s
   const scope = boundedSection(review, "Reviewed scope");
   assert.match(scope, /^Reviewed head: `757d9b0`$/m);
   assert.match(scope, /^Reviewed range: `7029c40\.\.757d9b0`$/m);
+  assert.match(scope, /^Invalidating authorization commit: `801514f`$/m);
 
   execFileSync("git", ["cat-file", "-e", "757d9b0^{commit}"], { cwd: repositoryRoot });
   execFileSync("git", ["cat-file", "-e", "7029c40^{commit}"], { cwd: repositoryRoot });
@@ -153,8 +150,8 @@ test("records exact manifests and denies infrastructure authorization", async ()
   const ready = JSON.parse(gate.match(/^READY_MANIFEST: (\[[^\n]+\])$/m)?.[1] ?? "null");
   const partial = JSON.parse(gate.match(/^PARTIAL_MANIFEST: (\[[^\n]+\])$/m)?.[1] ?? "null");
 
-  assert.equal(ready.length, 14);
-  assert.equal(partial.length, 19);
+  assert.equal(ready.length, 4);
+  assert.equal(partial.length, 29);
   assert.equal(new Set([...ready, ...partial]).size, 33);
 
   const denied = [
@@ -230,8 +227,10 @@ test("records exact manifests and denies infrastructure authorization", async ()
       thrownStatus: "IMPLEMENTATION_BLOCKED_ARCHITECTURE",
     })),
   );
-  assert.match(authorization, /^READY count: 14$/m);
-  assert.match(authorization, /^PARTIAL count: 19$/m);
+  assert.match(authorization, /^READY count: 4$/m);
+  assert.match(authorization, /^PARTIAL count: 29$/m);
+  assert.match(authorization, /supported version set\/compatibility lookup absent/);
+  assert.match(authorization, /new manual Architecture Review Gate is required/i);
   assert.match(authorization, /^Unknown artifacts: denied$/m);
   assert.match(authorization, /^Infrastructure authorization: none$/m);
   assert.match(authorization, /^Architecture bypass: none$/m);
