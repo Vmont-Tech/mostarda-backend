@@ -5,6 +5,7 @@ import {
   ArtifactGenerationBlocked,
   assertGenerationAuthorized,
   authorizationFor,
+  telemetryAuthorizedArtifacts,
 } from "../../packages/generation/src/index.ts";
 
 test("only explicitly READY artifacts pass the generation gate", () => {
@@ -53,11 +54,9 @@ test("only the exact mechanically certified telemetry artifacts are authorized",
     "TelemetryBucketAccepted",
     "TelemetryBucketRejected",
     "AudienceProjection",
-    "AudienceProjectionApplier",
-    "AudienceProjectionProduced",
-    "AudienceProjectionExpired",
-    "AudienceProjectionInvalidated",
   ];
+
+  assert.deepEqual(telemetryAuthorizedArtifacts, artifacts);
 
   for (const artifact of artifacts) {
     assert.deepEqual(authorizationFor(artifact), {
@@ -69,7 +68,7 @@ test("only the exact mechanically certified telemetry artifacts are authorized",
   }
 });
 
-test("telemetry infrastructure and uncertified events remain denied", () => {
+test("every named PARTIAL telemetry artifact and infrastructure artifact remains denied", () => {
   for (const artifact of [
     "TelemetryAdapter",
     "TelemetryIngestionService",
@@ -77,6 +76,25 @@ test("telemetry infrastructure and uncertified events remain denied", () => {
     "TelemetryTopic",
     "TelemetryBroker",
     "TelemetryCaptured",
+    "TelemetryBucketClosed",
+    "EdgeTelemetryCapabilityChanged",
+    "EdgeTelemetryIncidentReported",
+    "TelemetryValidationIncidentReported",
+    "TelemetryCapabilityChanged",
+    "TelemetryIncidentReported",
+    "CapabilityDeclared",
+    "CapabilityValidated",
+    "CapabilityRejected",
+    "CapabilityActivated",
+    "CapabilityDegraded",
+    "CapabilitySuspended",
+    "CapabilityRecovered",
+    "CapabilityRetired",
+    "AudienceProjectionApplier",
+    "AudienceProjectionProduced",
+    "AudienceProjectionExpired",
+    "AudienceProjectionInvalidated",
+    "TelemetryApi",
   ]) {
     assert.equal(
       authorizationFor(artifact).status,
@@ -85,14 +103,19 @@ test("telemetry infrastructure and uncertified events remain denied", () => {
   }
 });
 
-test("a READY telemetry artifact cannot authorize an absent dependency by association", () => {
-  assert.doesNotThrow(() => assertGenerationAuthorized("TelemetryBucket"));
-  assert.throws(
-    () => assertGenerationAuthorized("TelemetryRepository"),
-    (error) =>
-      error instanceof ArtifactGenerationBlocked &&
-      error.status === "IMPLEMENTATION_BLOCKED_ARCHITECTURE",
-  );
+test("READY telemetry composites do not authorize their excluded mechanisms", () => {
+  const dependencies = new Map([
+    ["TelemetryBucket", ["TelemetryAdapter", "TelemetryIngestionService"]],
+    ["TelemetryBucketAccepted", ["TelemetryRepository", "TelemetryTopic"]],
+    ["TelemetryBucketRejected", ["TelemetryBroker", "TelemetryApi"]],
+    ["AudienceProjection", ["AudienceProjectionApplier", "AudienceProjectionProduced"]],
+  ]);
+  for (const [artifact, excluded] of dependencies) {
+    assert.doesNotThrow(() => assertGenerationAuthorized(artifact));
+    for (const dependency of excluded) {
+      assert.throws(() => assertGenerationAuthorized(dependency), ArtifactGenerationBlocked);
+    }
+  }
 });
 
 test("READY label cannot bypass a blocked mandatory dependency", () => {

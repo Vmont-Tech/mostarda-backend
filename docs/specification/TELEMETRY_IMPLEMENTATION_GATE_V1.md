@@ -4,21 +4,29 @@
 **Normative domain source:** `docs/domain/TELEMETRY.md` (`DEC-063`)  
 **Scope:** value contracts, the immutable minute bucket, acceptance/rejection events, the audience projection state, and its pure applier
 
+READY_MANIFEST: ["TelemetryBucketId","AudienceProjectionId","TelemetryEventId","TelemetryCapabilityStatus","TelemetrySchemaVersion","CollectorVersion","CapabilityVersion","CollectionPolicyVersion","AudienceProjectionVersion","AudienceProjectionPolicyVersion","TelemetryBucket","TelemetryBucketAccepted","TelemetryBucketRejected","AudienceProjection"]
+
 This gate certifies only the names marked `IMPLEMENTATION_READY` below. The following are not authorized: adapters; not authorized: ingestion services; not authorized: API; not authorized: repositories; not authorized: topics; not authorized: brokers. Persistence mappings, transport envelopes, and deployment resources are likewise excluded. An artifact absent from the READY list remains denied by CGS-A-1. Public event families not concretized here remain non-READY.
 
 ## 1. Mechanical certification matrix
 
 | Artifact | Status | Unique owner | Producer where applicable | Dependencies |
 | --- | --- | --- | --- | --- |
-| `TelemetryBucketId`, `AudienceProjectionId`, `TelemetryEventId` | `IMPLEMENTATION_READY` | Telemetry Context | none; value types | UTF-8 string validation |
+| `TelemetryBucketId` | `IMPLEMENTATION_READY` | Telemetry Context | none; value type | UTF-8 string validation |
+| `AudienceProjectionId` | `IMPLEMENTATION_READY` | Telemetry Context | none; value type | UTF-8 string validation |
+| `TelemetryEventId` | `IMPLEMENTATION_READY` | Telemetry Context | none; value type | UTF-8 string validation |
 | `TelemetryCapabilityStatus` | `IMPLEMENTATION_READY` | Telemetry Context contract; Edge observes the value | Edge Runtime collector | none |
-| `TelemetrySchemaVersion`, `CollectorVersion`, `CapabilityVersion`, `CollectionPolicyVersion`, `AudienceProjectionVersion`, `AudienceProjectionPolicyVersion` | `IMPLEMENTATION_READY` | owner of the named contract; Telemetry preserves every value | none; value types | UTF-8 string validation |
+| `TelemetrySchemaVersion` | `IMPLEMENTATION_READY` | Telemetry Context | none; value type | UTF-8 string validation |
+| `CollectorVersion` | `IMPLEMENTATION_READY` | Edge Runtime | Edge Runtime collector | UTF-8 string validation |
+| `CapabilityVersion` | `IMPLEMENTATION_READY` | TV Network capability owner | TV Network capability owner | UTF-8 string validation |
+| `CollectionPolicyVersion` | `IMPLEMENTATION_READY` | Telemetry Context | none; value type | UTF-8 string validation |
+| `AudienceProjectionVersion` | `IMPLEMENTATION_READY` | Telemetry Context | none; value type | UTF-8 string validation |
+| `AudienceProjectionPolicyVersion` | `IMPLEMENTATION_READY` | Telemetry Context | none; value type | UTF-8 string validation |
 | `TelemetryBucket` | `IMPLEMENTATION_READY` | Telemetry Context owns the acquisition contract; Edge Runtime produces instances | Edge Runtime | READY value contracts above; opaque external references |
 | `TelemetryBucketAccepted` | `IMPLEMENTATION_READY` | Telemetry Context | Telemetry Context validator, after ledger append | `TelemetryBucket`, `TelemetryEventId` |
 | `TelemetryBucketRejected` | `IMPLEMENTATION_READY` | Telemetry Context | Telemetry Context validator, without accepted-observation append | `TelemetryBucketId`, `TelemetryEventId` |
 | `AudienceProjection` | `IMPLEMENTATION_READY` | Telemetry Context | projection builder is outside this gate | accepted bucket identities and READY versions |
-| `AudienceProjectionApplier` | `IMPLEMENTATION_READY` | Telemetry Context | pure function, no event producer | `AudienceProjection` and the three concrete projection lifecycle events below |
-| `AudienceProjectionProduced`, `AudienceProjectionExpired`, `AudienceProjectionInvalidated` | `IMPLEMENTATION_READY` | Telemetry Context | Telemetry Context | `AudienceProjection`, `TelemetryEventId` |
+| `AudienceProjectionApplier`, `AudienceProjectionProduced`, `AudienceProjectionExpired`, `AudienceProjectionInvalidated` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | Telemetry Context | replay metadata and complete transition behavior are absent from the normative design |
 | `TelemetryCaptured`, `TelemetryBucketClosed`, `EdgeTelemetryCapabilityChanged`, capability-owner transition events, `EdgeTelemetryIncidentReported`, `TelemetryValidationIncidentReported` | `IMPLEMENTATION_PARTIAL` | owners are stated by `TELEMETRY.md` | stated there | complete v1 payload/error schemas are absent |
 
 The conceptual families `TelemetryCapabilityChanged` and `TelemetryIncidentReported` are not concrete artifacts and are not authorized. No READY artifact authorizes a dependency by association.
@@ -161,23 +169,17 @@ Test each rejection reason; accepted-after-append ordering; rejected-without-app
 - `calculatedAt: Instant`, `validFrom: Instant`, `validUntil: Instant`, where `validFrom <= calculatedAt < validUntil`
 - `state`, exactly `CURRENT | EXPIRED | INVALIDATED`; `invalidationReason?: SOURCE_OBSERVATION_INVALIDATED | POLICY_INVALIDATED`, required only for `INVALIDATED`
 
-Lifecycle event envelopes use the shared event envelope with producer `TelemetryContext`, ordering key `projectionId`, and `eventSchemaVersion: "1"`:
-
-- `AudienceProjectionProduced`: `{ event envelope; projection: AudienceProjection }`, where the projection state is `CURRENT`.
-- `AudienceProjectionExpired`: `{ event envelope; projectionId; expiredAt: Instant }`.
-- `AudienceProjectionInvalidated`: `{ event envelope; projectionId; invalidatedAt: Instant; reasonCode: SOURCE_OBSERVATION_INVALIDATED | POLICY_INVALIDATED }`.
-
 ### Error codes
 
-Validation returns exactly `INVALID_PROJECTION_WINDOW`, `EMPTY_COVERED_BUCKETS`, `DUPLICATE_COVERED_BUCKET`, `INTERVAL_OUTSIDE_WINDOW`, `OVERLAPPING_EXCEPTION_INTERVAL`, `EMPTY_CONTRIBUTING_CAPABILITIES`, `DUPLICATE_CONTRIBUTING_CAPABILITY`, `EMPTY_VERSION_PROVENANCE`, `INVALID_PROJECTION_COVERAGE`, `INVALID_VALIDITY_INTERVAL`, `INVALID_PROJECTION_STATE`, `MISSING_INVALIDATION_REASON`, `UNEXPECTED_INVALIDATION_REASON`, `PROJECTION_NOT_FOUND`, `PROJECTION_ALREADY_TERMINAL`, `PROJECTION_EVENT_ID_CONFLICT`, plus shared errors.
+Validation returns exactly `INVALID_PROJECTION_WINDOW`, `EMPTY_COVERED_BUCKETS`, `DUPLICATE_COVERED_BUCKET`, `INTERVAL_OUTSIDE_WINDOW`, `OVERLAPPING_EXCEPTION_INTERVAL`, `EMPTY_CONTRIBUTING_CAPABILITIES`, `DUPLICATE_CONTRIBUTING_CAPABILITY`, `EMPTY_VERSION_PROVENANCE`, `INVALID_PROJECTION_COVERAGE`, `INVALID_VALIDITY_INTERVAL`, `INVALID_PROJECTION_STATE`, `MISSING_INVALIDATION_REASON`, `UNEXPECTED_INVALIDATION_REASON`, plus shared errors.
 
 ### Lifecycle and terminality
 
-`Produced` creates `CURRENT`. `Expired` changes `CURRENT` to terminal `EXPIRED`; `Invalidated` changes `CURRENT` to terminal `INVALIDATED`. Terminal states cannot transition. Lifecycle events never modify covered buckets or other projection fields. A later calculation has a new `projectionId`.
+The immutable record declares whether it is current, expired, or invalidated. Expired and invalidated records remain historical, and a later calculation has a new `projectionId`. This gate does not define event-driven state transitions.
 
 ### Replay and rebuild
 
-`AudienceProjectionApplier(state: AudienceProjection | null, event)` is pure and deterministic: Produced applies only to null, while Expired/Invalidated apply only to the matching CURRENT projection. Reapplying an event with the same event identity and canonical content is a no-op; same identity/different content fails. Rebuild folds ordered events, performs no I/O, emits no events, and never appends, edits, or deletes a telemetry bucket.
+The normative design establishes that rebuilding a projection never mutates the Telemetry Ledger, but does not define replay metadata or the complete transition behavior for an applier. Consequently `AudienceProjectionApplier` and its three lifecycle event artifacts are `IMPLEMENTATION_PARTIAL` and denied.
 
 ### Producer
 
@@ -194,6 +196,304 @@ Only READY values, accepted bucket identities, rejection reason codes, and lifec
 ### Required tests
 
 Validate all required fields, interval bounds, uniqueness, provenance, confidence/coverage, validity, and state/reason combinations; test the full transition table and every error code; prove event replay idempotency and conflict detection; fold a stream twice with identical output; prove rebuild performs no I/O and leaves input buckets byte-equivalent.
+
+## Artifact: TelemetryBucketId
+Status: `IMPLEMENTATION_READY`
+### Unique owner
+Telemetry Context.
+### Conceptual schema v1
+Required non-empty opaque UTF-8 string, compared byte-for-byte; no parseable components.
+### Error codes
+`EMPTY_OPAQUE_VALUE`.
+### Lifecycle and terminality
+Immutable; never reused for different canonical bucket content.
+### Replay and rebuild
+Same identity and content is idempotent; divergent content is `BUCKET_ID_CONTENT_CONFLICT`.
+### Producer
+Edge Runtime allocates it under the Telemetry acquisition contract.
+### Compatibility and version evolution
+Shape changes require a successor contract; v1 readers do not parse it.
+### Dependencies
+UTF-8 validation only.
+### Required tests
+Empty rejection, byte equality, round-trip, idempotency, and content conflict.
+
+## Artifact: AudienceProjectionId
+Status: `IMPLEMENTATION_READY`
+### Unique owner
+Telemetry Context.
+### Conceptual schema v1
+Required non-empty opaque UTF-8 string, compared byte-for-byte; no parseable components.
+### Error codes
+`EMPTY_OPAQUE_VALUE`.
+### Lifecycle and terminality
+Immutable and identifies one projection record only.
+### Replay and rebuild
+Rebuild preserves the identifier of the rebuilt historical record; a later calculation uses a new identifier.
+### Producer
+Telemetry Context projection builder allocates it; that builder is not authorized here.
+### Compatibility and version evolution
+Shape changes require a successor contract; v1 readers do not parse it.
+### Dependencies
+UTF-8 validation only.
+### Required tests
+Empty rejection, byte equality, round-trip, and non-reuse across calculations.
+
+## Artifact: TelemetryEventId
+Status: `IMPLEMENTATION_READY`
+### Unique owner
+Telemetry Context.
+### Conceptual schema v1
+Required non-empty opaque UTF-8 string, compared byte-for-byte; no parseable components.
+### Error codes
+`EMPTY_OPAQUE_VALUE`, `EVENT_ID_CONTENT_CONFLICT`.
+### Lifecycle and terminality
+Immutable and identifies one concrete event envelope.
+### Replay and rebuild
+Same identity and canonical envelope is idempotent; divergent content conflicts.
+### Producer
+The authoritative concrete event producer allocates it; READY events here are produced by Telemetry Context.
+### Compatibility and version evolution
+Shape changes require a successor contract; v1 readers do not parse it.
+### Dependencies
+UTF-8 validation and canonical event content.
+### Required tests
+Empty rejection, round-trip, duplicate idempotency, and divergent-content conflict.
+
+## Artifact: TelemetryCapabilityStatus
+Status: `IMPLEMENTATION_READY`
+### Unique owner
+Telemetry Context owns the acquisition status contract; Edge Runtime reports observations.
+### Conceptual schema v1
+Exactly `AVAILABLE | UNAVAILABLE | DISABLED | DEGRADED | FAILED`.
+### Error codes
+`UNSUPPORTED_CAPABILITY_STATUS`.
+### Lifecycle and terminality
+It is an immutable observation value, not a state machine or lifecycle authority.
+### Replay and rebuild
+Replay preserves the exact value and never substitutes missing information or zero.
+### Producer
+Edge Runtime collector reports the observed value.
+### Compatibility and version evolution
+Adding a member is breaking for exhaustive v1 readers.
+### Dependencies
+None.
+### Required tests
+Exhaust all five values, reject all others, and preserve missing-versus-zero semantics.
+
+## Artifact: TelemetrySchemaVersion
+Status: `IMPLEMENTATION_READY`
+### Unique owner
+Telemetry Context, as exclusive owner of telemetry acquisition contracts and schemas.
+### Conceptual schema v1
+Required non-empty opaque UTF-8 string branded `TelemetrySchemaVersion`.
+### Error codes
+`EMPTY_OPAQUE_VALUE`, `UNSUPPORTED_TELEMETRY_SCHEMA_VERSION`.
+### Lifecycle and terminality
+Immutable; a meaning or shape change publishes a successor.
+### Replay and rebuild
+Historical buckets retain the original value and are never reinterpreted.
+### Producer
+Telemetry Context publishes supported values; Edge Runtime records the selected value.
+### Compatibility and version evolution
+Only declared compatible values are accepted; upcast preserves the original envelope.
+### Dependencies
+UTF-8 validation only.
+### Required tests
+Brand separation, empty and unsupported rejection, round-trip, and historical preservation.
+
+## Artifact: CollectorVersion
+Status: `IMPLEMENTATION_READY`
+### Unique owner
+Edge Runtime, owner of the collector implementation and algorithm that produced a measurement.
+### Conceptual schema v1
+Required non-empty opaque UTF-8 string branded `CollectorVersion`.
+### Error codes
+`EMPTY_OPAQUE_VALUE`, `UNSUPPORTED_COLLECTOR_VERSION`.
+### Lifecycle and terminality
+Immutable; algorithm or normalization changes publish a successor.
+### Replay and rebuild
+Historical observations retain the original value.
+### Producer
+Edge Runtime collector reports its own value.
+### Compatibility and version evolution
+Telemetry accepts only declared compatible values and never silently reinterprets them.
+### Dependencies
+UTF-8 validation only.
+### Required tests
+Brand separation, empty and unsupported rejection, round-trip, and historical preservation.
+
+## Artifact: CapabilityVersion
+Status: `IMPLEMENTATION_READY`
+### Unique owner
+TV Network capability owner, whose authoritative capability transitions are listed by `TELEMETRY.md`.
+### Conceptual schema v1
+Required non-empty opaque UTF-8 string branded `CapabilityVersion`.
+### Error codes
+`EMPTY_OPAQUE_VALUE`, `UNSUPPORTED_CAPABILITY_VERSION`.
+### Lifecycle and terminality
+Immutable; behavior or support changes publish a successor.
+### Replay and rebuild
+Historical observations retain the declared source value.
+### Producer
+TV Network capability owner declares it; Edge Runtime reports the active declared value.
+### Compatibility and version evolution
+Telemetry accepts only declared compatible values and never substitutes a collector version.
+### Dependencies
+UTF-8 validation only; capability transition events remain denied.
+### Required tests
+Brand separation, empty and unsupported rejection, round-trip, and source-value preservation.
+
+## Artifact: CollectionPolicyVersion
+Status: `IMPLEMENTATION_READY`
+### Unique owner
+Telemetry Context, owner of collection authorization, minimization, and validation rules.
+### Conceptual schema v1
+Required non-empty opaque UTF-8 string branded `CollectionPolicyVersion`.
+### Error codes
+`EMPTY_OPAQUE_VALUE`, `UNSUPPORTED_POLICY_VERSION`.
+### Lifecycle and terminality
+Immutable; policy changes publish a successor.
+### Replay and rebuild
+Historical observations retain the active value and are not reinterpreted.
+### Producer
+Telemetry Context publishes it; Edge Runtime records the selected policy.
+### Compatibility and version evolution
+Only declared compatible values are accepted.
+### Dependencies
+UTF-8 validation only.
+### Required tests
+Brand separation, empty and unsupported rejection, round-trip, and historical preservation.
+
+## Artifact: AudienceProjectionVersion
+Status: `IMPLEMENTATION_READY`
+### Unique owner
+Telemetry Context, exclusive owner of `AudienceProjection`.
+### Conceptual schema v1
+Required non-empty opaque UTF-8 string branded `AudienceProjectionVersion`.
+### Error codes
+`EMPTY_OPAQUE_VALUE`, `UNSUPPORTED_AUDIENCE_PROJECTION_VERSION`.
+### Lifecycle and terminality
+Immutable; projection shape or derivation-contract changes publish a successor.
+### Replay and rebuild
+Rebuilt records identify the version used and never reinterpret predecessors.
+### Producer
+Telemetry Context projection builder records it; the builder remains outside authorization.
+### Compatibility and version evolution
+Only declared compatible values are read; it cannot substitute for policy version.
+### Dependencies
+UTF-8 validation only.
+### Required tests
+Brand separation, empty and unsupported rejection, round-trip, and rebuild preservation.
+
+## Artifact: AudienceProjectionPolicyVersion
+Status: `IMPLEMENTATION_READY`
+### Unique owner
+Telemetry Context, owner of projection confidence, coverage, validity, and derivation semantics.
+### Conceptual schema v1
+Required non-empty opaque UTF-8 string branded `AudienceProjectionPolicyVersion`.
+### Error codes
+`EMPTY_OPAQUE_VALUE`, `UNSUPPORTED_POLICY_VERSION`.
+### Lifecycle and terminality
+Immutable; semantic changes publish a successor.
+### Replay and rebuild
+Rebuild records the selected policy and never reinterprets historical confidence.
+### Producer
+Telemetry Context publishes it and its projection builder records it.
+### Compatibility and version evolution
+Only declared compatible values are read; it remains distinct from projection schema version.
+### Dependencies
+UTF-8 validation only.
+### Required tests
+Brand separation, empty and unsupported rejection, round-trip, and confidence preservation.
+
+## Artifact: TelemetryBucket
+Status: `IMPLEMENTATION_READY`
+### Unique owner
+Telemetry Context owns the acquisition contract and validation boundary.
+### Conceptual schema v1
+The complete required/optional field schema and invariants are in section 3: identities, exact civil-minute interval, ordering sequence, capability observations, aggregate measurements, six independent versions/policies where applicable, three purpose-specific hashes, authenticity proof, and observed time.
+### Error codes
+Exactly the construction, scalar, version, retry, and conflict codes catalogued in section 3.
+### Lifecycle and terminality
+Edge construction closes it; closed is immutable and terminal.
+### Replay and rebuild
+Identical retry is idempotent; same identity with different canonical content conflicts; rebuild never mutates it.
+### Producer
+Edge Runtime is sole producer; Telemetry Context validates it.
+### Compatibility and version evolution
+Schema selection uses only `TelemetrySchemaVersion`; unsupported versions are rejected without partial interpretation.
+### Dependencies
+The ten READY scalar/status contracts and opaque external references; no infrastructure artifact.
+### Required tests
+Every field invariant/error, closure, hash-purpose separation, retry idempotency/conflict, version retention, and missing-versus-zero.
+
+## Artifact: TelemetryBucketAccepted
+Status: `IMPLEMENTATION_READY`
+### Unique owner
+Telemetry Context.
+### Conceptual schema v1
+The complete section 4 envelope plus required `bucket`, `ledgerPosition`, and `acceptedAt`; producer literal is `TelemetryContext`.
+### Error codes
+Exactly `INVALID_EVENT_ENVELOPE`, `INVALID_EVENT_TIME_ORDER`, `INVALID_LEDGER_POSITION`, `EVENT_ID_CONTENT_CONFLICT`, and shared errors.
+### Lifecycle and terminality
+Immutable terminal decision for the submitted identity/content pair, emitted only after ledger append succeeds.
+### Replay and rebuild
+Byte-equivalent duplicate has no duplicate effect; conflict fails; replay restores the same ledger position and observation.
+### Producer
+Telemetry Context validator, after successful append.
+### Compatibility and version evolution
+`eventSchemaVersion` selects shape; unknown versions fail and original envelopes are preserved.
+### Dependencies
+READY `TelemetryBucket` and `TelemetryEventId`; repository/topic mechanisms remain denied.
+### Required tests
+Envelope fields, producer, time order, append-before-event, duplicate/conflict, unsupported version, and provenance retention.
+
+## Artifact: TelemetryBucketRejected
+Status: `IMPLEMENTATION_READY`
+### Unique owner
+Telemetry Context.
+### Conceptual schema v1
+The complete section 4 envelope plus bucket/install/sequence/schema references, rejection time, and exactly one catalogued rejection reason; it contains no accepted bucket.
+### Error codes
+The ten rejection reasons plus `INVALID_EVENT_ENVELOPE`, `INVALID_EVENT_TIME_ORDER`, `INVALID_REJECTION_REASON`, `EVENT_ID_CONTENT_CONFLICT`, and shared errors.
+### Lifecycle and terminality
+Immutable terminal decision for the submitted identity/content pair; no accepted-observation append occurs.
+### Replay and rebuild
+Byte-equivalent duplicate has no duplicate effect; conflict fails; replay restores rejection history only.
+### Producer
+Telemetry Context validator.
+### Compatibility and version evolution
+Unknown event versions or reason codes fail rather than map to a generic reason.
+### Dependencies
+READY identity/version contracts; API/broker mechanisms remain denied.
+### Required tests
+Every reason, envelope fields, producer, absence of append, duplicate/conflict, and unsupported version/reason.
+
+## Artifact: AudienceProjection
+Status: `IMPLEMENTATION_READY`
+### Unique owner
+Telemetry Context.
+### Conceptual schema v1
+The complete section 5 immutable record: projection/TV/Venue identities, exact rolling fifteen-minute window, covered buckets, missing/rejected intervals, contributing capabilities, all provenance versions, confidence, coverage, calculation/validity times, and current/expired/invalidated state qualification.
+### Error codes
+Exactly the validation codes in section 5 through `UNEXPECTED_INVALIDATION_REASON`, plus shared scalar/version errors; applier-only errors are not part of this READY artifact.
+### Lifecycle and terminality
+The record represents one immutable snapshot. Any later improvement is a new projection; expired or invalidated records remain historical.
+### Replay and rebuild
+Rebuild deterministically recreates record content from accepted observations under recorded versions and never mutates the Telemetry Ledger; event-fold behavior is not certified.
+### Producer
+Telemetry Context; the projection builder algorithm/scheduling remains outside authorization.
+### Compatibility and version evolution
+Projection schema and policy versions remain independent; unsupported versions fail and historical provenance is retained.
+### Dependencies
+READY identities/status/versions and accepted bucket identities; applier, lifecycle events, storage, and consumers remain denied.
+### Required tests
+All fields, interval/uniqueness/provenance rules, confidence/coverage/validity/state qualification, deterministic reconstruction, and ledger non-mutation.
+
+## Non-READY artifacts
+
+`AudienceProjectionApplier`, `AudienceProjectionProduced`, `AudienceProjectionExpired`, and `AudienceProjectionInvalidated` are `IMPLEMENTATION_PARTIAL`: the normative design lacks replay metadata and complete transition/error behavior. `TelemetryCaptured`, `TelemetryBucketClosed`, `EdgeTelemetryCapabilityChanged`, `EdgeTelemetryIncidentReported`, `TelemetryValidationIncidentReported`, `TelemetryCapabilityChanged`, `TelemetryIncidentReported`, `CapabilityDeclared`, `CapabilityValidated`, `CapabilityRejected`, `CapabilityActivated`, `CapabilityDegraded`, `CapabilitySuspended`, `CapabilityRecovered`, and `CapabilityRetired` are `IMPLEMENTATION_PARTIAL`: their complete v1 payload/error schemas are absent. All remain denied.
 
 ## 6. Gate conclusion
 

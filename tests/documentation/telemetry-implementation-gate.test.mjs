@@ -39,15 +39,25 @@ test("Telemetry implementation gate mechanically closes every READY artifact", a
     "Dependencies",
     "Required tests",
   ];
-  for (const heading of requiredHeadings) {
-    assert.match(gate, new RegExp(heading, "i"));
+  const ready = JSON.parse(gate.match(/^READY_MANIFEST: (\[[^\n]+\])$/m)?.[1] ?? "null");
+  assert.ok(Array.isArray(ready));
+  for (const artifact of ready) {
+    const escaped = artifact.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const section = gate.match(
+      new RegExp(`^## Artifact: ${escaped}\\n([\\s\\S]*?)(?=^## Artifact: |^## Non-READY|\\Z)`, "m"),
+    )?.[1];
+    assert.ok(section, `missing bounded certification section for ${artifact}`);
+    assert.match(section, /Status: `IMPLEMENTATION_READY`/);
+    for (const heading of requiredHeadings) {
+      assert.match(section, new RegExp(`^### ${heading}$`, "im"), `${artifact}: ${heading}`);
+    }
   }
   assert.doesNotMatch(gate, /\b(?:TBD|TODO|placeholder)\b/i);
   assert.match(gate, /TelemetryBucket[\s\S]*IMPLEMENTATION_READY/);
   assert.match(gate, /AudienceProjection[\s\S]*IMPLEMENTATION_READY/);
   assert.match(gate, /TelemetryBucketAccepted[\s\S]*IMPLEMENTATION_READY/);
   assert.match(gate, /TelemetryBucketRejected[\s\S]*IMPLEMENTATION_READY/);
-  assert.match(gate, /AudienceProjectionApplier[\s\S]*IMPLEMENTATION_READY/);
+  assert.doesNotMatch(gate, /AudienceProjectionApplier[^\n]*IMPLEMENTATION_READY/);
 });
 
 test("Telemetry gate explicitly excludes infrastructure and uncertified contracts", async () => {

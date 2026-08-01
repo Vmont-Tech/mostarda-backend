@@ -31,7 +31,7 @@ const registry = new Map<string, ArtifactAuthorization>(
   ]),
 );
 
-for (const artifact of [
+export const telemetryAuthorizedArtifacts = Object.freeze([
   "TelemetryBucketId",
   "AudienceProjectionId",
   "TelemetryEventId",
@@ -46,11 +46,9 @@ for (const artifact of [
   "TelemetryBucketAccepted",
   "TelemetryBucketRejected",
   "AudienceProjection",
-  "AudienceProjectionApplier",
-  "AudienceProjectionProduced",
-  "AudienceProjectionExpired",
-  "AudienceProjectionInvalidated",
-]) {
+] as const);
+
+for (const artifact of telemetryAuthorizedArtifacts) {
   registry.set(
     artifact,
     Object.freeze({
