@@ -26,10 +26,10 @@ Contrato de veiculação criado por um **Advertiser**. Define objetivo, criativo
 Unidade de intenção de exibição — reserva de um espaço/instante para uma **Campaign** em uma **TV**. Cada Slot, ao ser executado, gera um **Playback Event** que produz uma **Evidence**.
 
 ## Asset
-Arquivo de mídia (vídeo de 15s, imagem, composição) associado a uma **Campaign**. Passa por validação de IA (formato, duração, conformidade) antes de tornar-se elegível para exibição.
+Arquivo de mídia (vídeo de até 15s por Slot, imagem ou composição) associado a uma **Campaign**. Passa por validação de IA (formato, duração, conformidade) antes de tornar-se elegível para exibição. Quando menor que o Slot, seu último frame permanece visível até o fim da janela.
 
 ## Evidence
-Registro atômico e íntegro de que **um Asset foi exibido em uma TV em um dado instante**, correspondendo a um evento atômico de **15 segundos**. Contém, no mínimo: `TV ID`, `Campaign ID`, `Slot ID`, `timestamp`, `hash`, `conteúdo exibido`, `valor cobrado`, `status`. Ver [ADR-003](../adr/ADR-003-Evidence-Ledger.md).
+Registro atômico e íntegro de que **um Asset foi exibido em uma TV dentro de um Slot fixo de 15 segundos**, preservando a duração real do Creative e o período do último frame congelado. Contém, no mínimo: `TV ID`, `Campaign ID`, `Slot ID`, `timestamp`, `hash`, `conteúdo exibido`, `valor cobrado`, `status`. Ver [ADR-003](../adr/ADR-003-Evidence-Ledger.md).
 
 ## Evidence Ledger
 Livro-razão append-only de todas as **Evidences** produzidas pela plataforma. Fonte da verdade para liquidação financeira. Uma evidência inválida ou ausente **bloqueia** qualquer pagamento associado. Pode ter hash ancorado em **blockchain institucional** para prova pública.

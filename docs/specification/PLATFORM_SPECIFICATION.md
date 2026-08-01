@@ -139,7 +139,7 @@ Slot referencia exatamente uma Campaign, uma TV, um Creative Asset, uma janela d
 
 ### SPEC-MEDIA-003 — Unidade atômica
 
-A unidade atômica vigente é uma exibição de 15 segundos. Formatos maiores DEVEM ser compostos por unidades/Slots compatíveis, preservando prova e preço por unidade. A tolerância técnica exata permanece `OPEN-004`.
+A unidade comercial atômica é uma janela exclusiva e fixa de 15 segundos. O Creative pode usar duração inferior por escolha do Advertiser, sem desconto, crédito ou fracionamento do Slot. Quando o Creative termina, seu último frame permanece congelado e visível, sem prolongar o áudio, até o limite temporal contratado. O tempo restante continua pertencendo exclusivamente ao mesmo Advertiser; nenhum conteúdo de outro titular pode começar antes desse limite. Formatos superiores a 15 segundos DEVEM ser compostos por Slots consecutivos, preservando prova e preço por unidade. Cobrança exige que o Player confirme o final natural do Creative; interrupção anterior invalida a tentativa, mesmo quando falta uma fração mínima do arquivo. Falha posterior ao final natural, limitada ao período do frame congelado, é incidente auditável separado e não invalida a execução já concluída.
 
 ### SPEC-MEDIA-004 — Player e Canvas
 
@@ -219,7 +219,7 @@ Slot confirmado NUNCA é deslocado por Campaign posterior. Scheduling reorganiza
 
 ### SPEC-PARTNER-003 — Quota local e fallback
 
-Parceiro escolhe reter ou liberar capacidade ainda livre de seus 40%. Capacidade liberada e confirmada pela Mostarda não pode ser retomada. Capacidade retida sem Creative executa fallback institucional não monetizado. Enquanto hardware funcional permitir renderização, tela preta por falta de conteúdo é proibida.
+Parceiro escolhe reter ou liberar capacidade ainda livre de seus 40%. Capacidade liberada e confirmada pela Mostarda não pode ser retomada. Capacidade retida sem Creative executa fallback institucional não monetizado. Enquanto hardware funcional permitir renderização, tela preta por falta de conteúdo é proibida. Creative menor que o Slot mantém seu último frame visível até o fim da janela; esse intervalo pertence ao titular do Slot e não recebe conteúdo de terceiro.
 
 ## 7. Pricing
 
@@ -349,6 +349,16 @@ Protocolo normativo:
 
 `BudgetReservationAuthorized` perdido no transporte não autoriza a Saga a criar uma segunda reserva. Ela repete o mesmo Command/idempotency key ou consulta o resultado correlacionado. Se a reserva foi autorizada e `AllocateSlot` falha, a Saga emite `ReleaseBudgetReservation`; não altera buckets diretamente. Se a liberação falha por indisponibilidade, a reserva permanece ativa e não volta a Available até confirmação ou expiração válida.
 
+Interrupção antes do final natural do Creative publica o fato da falha e nunca consome a reserva. A rejeição definitiva da Evidence causa `ReleaseBudgetReservation`; o valor retorna a `AvailableBudget` por fato explícito e permanece rastreável. Isso não apaga a tentativa, não fabrica Evidence válida e não representa refund bancário automático.
+
+Após a liberação, Campaign Management procura automaticamente nova oportunidade sem sair das escolhas originais da Campaign. A ordem é: outro horário compatível na mesma TV; depois outra TV já escolhida; por fim outra TV equivalente que satisfaça integralmente localização, público, capacidades, faixa temporal, preço autorizado e demais restrições vigentes. Nenhum critério pode ser ampliado silenciosamente. Cada realocação cria Slot, quote, reserva e tentativa próprios, correlacionados à obrigação original.
+
+O Player nunca retoma nem reinicia o Creative pago dentro do mesmo Slot após falha anterior ao final natural. A tentativa é encerrada, o restante da janela exibe fallback institucional local não monetizado e o próximo Slot preserva seu horário original. `PlaybackFailed` registra causa, estágio, duração observada, diagnóstico e versões; o Edge envia o fato ao Cloud ou o conserva na fila offline. A falha alimenta diagnóstico operacional sem permitir que TV Network decida cobrança ou realocação.
+
+A contenção depende da causa técnica comprovada, sem atribuir responsabilidade contratual. Falha determinística e isolada no Creative torna somente aquele conteúdo inelegível e permite que a TV continue com outros conteúdos validados. Falha no equipamento, Edge, Player, saída de vídeo ou causa ainda desconhecida retira imediatamente a disponibilidade da TV para novas entregas pagas. Enquanto suspensa, ela executa apenas conteúdo institucional seguro e diagnóstico permitido. Ausência de causa comprovada nunca é tratada como falha exclusiva do Creative.
+
+Recuperação comercial exige cumulativamente verificação automática aprovada e reprodução integral de um conteúdo institucional de teste, com identidade, duração, checksums, versões, health e demais fatos disponíveis produzidos pelo dispositivo. Declaração humana isolada nunca restabelece disponibilidade. Sinal ausente, conflitante ou tecnicamente impossível de comprovar mantém o resultado inconclusivo e encaminha atendimento; não existe liberação por timeout ou presunção de saúde.
+
 Exemplo válido: um Slot de R$3,27 recebe quote congelado, reserva integral de R$3,27 e somente depois é alocado. A Evidence válida e ancorada converte exatamente R$3,27 em consumo.
 
 Contraexemplo proibido: dois allocators leem R$5,00 disponíveis, criam Slots de R$4,00 e “acertam o saldo depois”. O CampaignBudget deve serializar as decisões; apenas uma reserva pode ser aceita.
@@ -426,6 +436,16 @@ TVCapability é declarativa, versionada, com identidade, owner, health e manifes
 Health observations são append-only; HealthScore é derivado e explicável. Ausência de heartbeat gera `UNKNOWN`/gap, não estado saudável. Atualização exige assinatura, compatibilidade, política, MaintenanceWindow, rollout em ondas e health gate. Rollback é nova transição e NUNCA apaga histórico.
 
 Versões de Edge, Player, Canvas, Capability Manifest, OS e Firmware acompanham Current/Observed State e updates.
+
+### SPEC-TV-006 — Expediente e turnos de apuração
+
+O período de funcionamento corresponde ao expediente declarado e vigente do Venue; ele não é sinônimo de sessão do processo Player nem de turno de apuração. A Mostarda mantém faixas civis diárias fixas de seis horas, delimitadas por `00h`, `06h`, `12h`, `18h` e `24h` no horário aplicável ao Venue. O expediente recorta essas faixas e produz somente períodos efetivos de disponibilidade. Exemplo: Venue aberto de `08h` a `22h` produz `08h–12h`, `12h–18h` e `18h–22h`. Horários de pico e características do local alimentam preço e planejamento, mas não movem os marcos de apuração.
+
+Edge confirma ao Cloud o início do expediente, cada marco de troca aplicável e o encerramento, sempre preservando instante local, instante de recebimento, identidade, sequência e cobertura do período. Ao final de cada período efetivo, envia o consolidado de execuções, falhas, fallback, health, telemetria disponível e posições de sincronização para o fechamento operacional daquela TV. Esse “fechamento de caixa” é apuração operacional: não calcula dinheiro, não cria Settlement e não reescreve fatos individuais.
+
+Dados declarados no onboarding sustentam abertura, intervalos, encerramento e disponibilidade inicial e permanecem identificados como declarados. TV Network valida a programação e Configuration Service distribui a versão ao EdgeInstallation vinculado à TV correta. Evidências observadas podem produzir nova configuração prospectiva, mas nunca redividem períodos já iniciados ou encerrados, nem reescrevem a origem das informações iniciais.
+
+Falha técnica é reportada imediatamente e não aguarda o fechamento do período. Entre os marcos, mensagens curtas de continuidade confirmam que Edge e execução permanecem operacionais; ausência ou problema gera diagnóstico sem esperar até seis horas. Cloud tenta sincronização ou correção remota autorizada. Se não obtiver recuperação comprovada, Notifications informa o dono da TV, o responsável pelo local e a equipe Mostarda, preservando entrega, falha e confirmação. A intervenção humana auxilia o reparo, mas a retomada paga continua sujeita a `DEC-059`.
 
 ## 14. AI e Grão
 
@@ -614,7 +634,6 @@ Os parâmetros quantitativos permanecem em policies versionadas. Validação fis
 | `OPEN-001` | Retenção e descarte por classe de dado/documento | Legal, storage, auditoria | Preservar fatos auditáveis; não definir prazo por suposição |
 | `OPEN-002` | Matriz completa de autorização por papel/command | Segurança e produto | Somente owner e ator explicitamente autorizado |
 | `OPEN-003` | Controles formais LGPD, segurança e incidentes | Compliance | Minimização, consentimento e auditoria já obrigatórios |
-| `OPEN-004` | Tolerância técnica exata dos 15 segundos | Evidence e Player | Unidade de 15s obrigatória; tolerância não inventada |
 | `OPEN-005` | SLO/SLA numéricos de Edge, Evidence, Anchor e financeiro | Operação e seguro | Health/lacunas explícitos; sem número presumido |
 | `OPEN-007` | Critérios quantitativos de HealthScore e rollout | TV Network | Política versionada e explicável, sem limiar inventado |
 | `OPEN-008` | Mínimo/máximo de Withdrawal | Financial Platform | Apenas frequência de 30 dias e taxa R$2 estão aprovadas |

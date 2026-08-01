@@ -166,7 +166,7 @@ Security
 ### Playback
 | Facet | Responsabilidade |
 | --- | --- |
-| Player | Executar o item corrente pelo tempo atômico de 15s. |
+| Player | Executar o Creative integralmente dentro do Slot fixo de 15s e manter seu último frame até o fim da janela quando necessário. |
 | Playlist | Manter ordem e consumo da fila local de Slots. |
 | Overlay | Delegar composição de camadas à Capability Overlay. |
 | Live | Alternar entre conteúdo gravado e fluxo ao vivo. |

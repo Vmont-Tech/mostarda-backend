@@ -35,6 +35,8 @@ Mudança de modo produz nova vigência. Nunca reclassifica Slots, Evidence Recor
 
 No onboarding, o responsável informa horário de funcionamento, segmento, tipo e capacidade do local, fluxo estimado, picos, sazonalidade e demais características exigidas pela política.
 
+O horário de funcionamento define o expediente operacional do Venue. A Mostarda usa faixas civis fixas `00h–06h`, `06h–12h`, `12h–18h` e `18h–24h`; abertura, intervalos e fechamento informados pelo parceiro recortam somente a parte em que a TV está disponível. Assim, um local aberto de `08h` a `22h` opera `08h–12h`, `12h–18h` e `18h–22h`. Picos e características obrigatórias alimentam Pricing e planejamento, não os limites dos períodos. A configuração validada é vinculada à TV e ao Mini PC corretos.
+
 Esses dados:
 
 - são declarações de bootstrap;
@@ -50,7 +52,7 @@ Pricing classifica faixas nobres e de baixo fluxo. A quota 40/60 é garantida se
 
 ### GRID-INV-001 — Unidade
 
-Um Slot possui 15 segundos. Conteúdo local pode ocupar um ou dois Slots consecutivos, nunca mais de 30 segundos por bloco.
+Um Slot é uma janela fixa e exclusiva de 15 segundos. Creative menor pode terminar antes, mas seu último frame permanece congelado e visível até o fim do Slot, sem prolongar o áudio. A janela não é reduzida e o conteúdo seguinte nunca é antecipado. Conteúdo local pode ocupar um ou dois Slots consecutivos, nunca mais de 30 segundos por bloco.
 
 ### GRID-INV-002 — Composição Mostarda
 
@@ -190,7 +192,7 @@ Edge:
 - retém fatos até confirmação durável;
 - retoma sync do último ponto confirmado.
 
-Quando o cache autorizado se esgota, executa conteúdo institucional. Enquanto display, energia e hardware permitirem renderização, tela preta por falta de conteúdo é proibida.
+Quando o cache autorizado se esgota ou um Creative falha antes do final natural, executa conteúdo institucional pelo período restante aplicável. A falha não permite repetir o anúncio no mesmo Slot e deve ser reportada para diagnóstico e realocação. Enquanto display, energia e hardware permitirem renderização, tela preta por falta de conteúdo é proibida.
 
 O último recurso é um asset seguro local. Fallback não cobra, não consome budget e não gera Settlement.
 

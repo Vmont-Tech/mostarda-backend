@@ -99,7 +99,11 @@ O evento não contém Evidence status, valor de split calculado pelo Edge nem de
 
 Cada tentativa possui identidade própria. Reiniciar Player, recuperar uma sessão ou repetir parte do conteúdo não reutiliza o mesmo `playbackAttemptId`.
 
-Dois trechos interrompidos não podem ser concatenados silenciosamente para fabricar uma unidade válida de 15 segundos. Uma política futura pode reconhecer composição de trechos somente se aprovada, versionada e verificável; até lá, cada tentativa é validada isoladamente.
+Dois trechos interrompidos não podem ser concatenados para fabricar uma execução válida. Cada tentativa é validada isoladamente. Somente a confirmação do final natural do Creative satisfaz sua completude; interrupção anterior é inválida, independentemente da fração restante. Depois dessa confirmação, falha durante a permanência do último frame não reverte a completude e é preservada como incidente posterior correlacionado.
+
+Falha anterior ao final não admite continuação ou reinício dentro do mesmo Slot. O PlaybackEvent falho e a execução institucional posterior permanecem fatos distintos, com `EvidencePurpose` distintos. O fallback nunca torna válida a tentativa monetizada nem completa sua duração.
+
+O Evidence Ledger preserva a classificação técnica recebida e os sinais verificáveis, mas não diagnostica equipamento nem atribui responsabilidade. Conflito ou insuficiência mantém a causa desconhecida, o que não autoriza a TV a continuar entregas pagas. Falha de checksum/decodificação só é considerada exclusiva do Creative quando essa conclusão for determinística e correlacionada à versão exata do arquivo.
 
 ### 5.3 Fila offline
 
@@ -232,7 +236,8 @@ Evidence Validator emite `ValidateEvidence`; o EvidenceRecord decide a transiç�
 | Assinatura e chave vigente no instante | `INVALID` | `DISPUTED`/aguarda reconciliação de identidade |
 | TV/Device/Slot correlation | `INVALID` | `DISPUTED` |
 | Janela temporal | `INVALID` | `DISPUTED` por clock drift não resolvido |
-| Duração/unidade atômica | `INVALID` | `DISPUTED` se tolerância aplicável estiver indefinida |
+| Creative chegou ao final natural, duração observada e limites do Slot | `INVALID` se houve interrupção anterior | `DISPUTED` somente quando os fatos de conclusão forem conflitantes |
+| Falha após o final natural, durante o frame congelado | preserva o resultado da execução | incidente posterior correlacionado; não desfaz cobrança ou repasse |
 | Creative checksum | `INVALID` | `DISPUTED` |
 | Playback checksum/integridade | `INVALID` | `DISPUTED` |
 | Unicidade | duplicata sem novo efeito | `DISPUTED` quando há duas origens concorrentes |
@@ -368,7 +373,7 @@ Evidence e Settlement possuem owners distintos. Se Settlement ainda não fechou,
 | Reversão tardia | REVERSED | não reabre histórico | compensações downstream |
 | Projection de eligibility atrasada | stale explícito | replay/rebuild | Settlement não usa revisão desconhecida |
 
-Retries quantitativos, tolerância temporal dos 15 segundos e retenção local permanecem políticas versionadas ainda abertas. A ausência desses números não permite retry infinito, descarte silencioso ou validade presumida.
+Retries quantitativos e retenção local permanecem políticas versionadas ainda abertas. Não existe tolerância para omitir o final do Creative: a conclusão natural é obrigatória. A ausência dos demais números não permite retry infinito, descarte silencioso ou validade presumida.
 
 ## 14. Replay, reprocessamento e rebuild
 
@@ -449,7 +454,7 @@ Os papéis exatos e a retenção são decisões abertas da matriz global; owner 
 
 ### Exemplo válido — reprodução online
 
-Um Slot de 15 segundos possui quote final de R$3,27 e reserva correspondente. Player finaliza a tentativa, o Edge assina e submete o PlaybackEvent. Builder correlaciona o quote, a reserva, as políticas e cria Evidence pendente. Validator confirma identidade, janela, duração e checksums. O pacote é congelado, o hash é ancorado e a eligibility projection passa a verdadeira. Só então a Saga solicita consumo da reserva e Settlement pode considerar a Evidence.
+Um Slot fixo de 15 segundos possui quote final de R$3,27 e reserva correspondente. O Advertiser forneceu Creative de 13 segundos. Player conclui o Creative, encerra o áudio e mantém o último frame visível pelos 2 segundos restantes, sem antecipar o conteúdo seguinte. Edge assina e submete o PlaybackEvent preservando duração do Creative, período do frame congelado e limites da janela. Builder correlaciona quote, reserva, políticas e cria Evidence pendente. Validator confirma identidade, janela, conclusão do Creative e checksums. O pacote é congelado, o hash é ancorado e a eligibility projection passa a verdadeira. Só então a Saga solicita consumo da reserva e Settlement pode considerar a Evidence.
 
 ### Exemplo válido — anchor atrasado
 
@@ -490,7 +495,7 @@ São sempre inválidos:
 O Evidence Pipeline está implementável somente quando:
 
 - owners e contratos acima estão preservados;
-- tolerância quantitativa da unidade de 15 segundos foi aprovada;
+- conclusão natural do Creative e preservação da janela fixa são comprováveis;
 - policy versions históricas são recuperáveis;
 - todos os Commands e Events estão no catálogo;
 - a máquina de validade não se mistura à máquina de anchor;

@@ -17,7 +17,7 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | Evento | Significado |
 | --- | --- |
 | `PlaybackStarted` | Início da exibição de um Creative Asset em um Slot. |
-| `PlaybackFinished` | Conclusão íntegra dos 15s — gatilho da Evidence. |
+| `PlaybackFinished` | Conclusão íntegra do Creative e preservação de sua janela fixa — gatilho da Evidence. |
 | `PlaybackInterrupted` | Interrupção antes da conclusão. |
 | `PlaybackRecovered` | Retomada após falha. |
 | `PlaybackFailed` | Falha definitiva; não gera Evidence válida. |

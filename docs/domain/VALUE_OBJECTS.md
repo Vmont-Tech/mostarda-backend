@@ -72,9 +72,9 @@ Value Objects (VO) descrevem **características**, não identidades com ciclo de
 
 ## PlaybackDuration
 
-- **Descrição:** duração atômica da exibição.
-- **Regras:** unidade oficial de **15 segundos**; tolerância técnica definida e explícita; fora da tolerância a Evidence não é `VALID`.
-- **Validação:** dentro da tolerância homologada.
+- **Descrição:** duração efetivamente reproduzida do Creative dentro da janela contratada.
+- **Regras:** o Slot possui **15 segundos fixos**; o Creative pode durar menos por escolha do Advertiser; a duração real é preservada; o próximo Slot não começa antecipadamente; tolerância técnica deve ser definida e explícita.
+- **Validação:** Creative concluído conforme sua própria duração e dentro dos limites do Slot, respeitada a tolerância homologada.
 
 ## OccupancyLevel
 

@@ -83,6 +83,8 @@ O Reconciler:
 6. aguarda Events e novas observações;
 7. conclui como `CONVERGED`, `DIVERGED`, `BLOCKED`, `TIMED_OUT` ou `UNKNOWN`.
 
+Falha técnica de playback inicia tentativa remota autorizada sem aguardar o fechamento do turno. Se a operação não comprovar recuperação, o fluxo solicita notificações separadas ao dono da TV, responsável pelo Venue e equipe Mostarda. Timeout não é sucesso nem recuperação; mantém indisponibilidade e exige acompanhamento humano.
+
 Ele nunca:
 
 - altera Desired, Current ou Aggregate diretamente;

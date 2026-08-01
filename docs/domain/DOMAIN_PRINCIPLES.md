@@ -4,7 +4,7 @@ Princípios obrigatórios. **Nada pode ser implementado contrariando esta lista.
 
 ## Prova e liquidação
 
-1. **Toda exibição gera evidência.** Uma exibição concluída de 15s sempre produz um **Playback Event** assinado.
+1. **Toda exibição gera evidência.** A reprodução concluída do Creative dentro de seu Slot sempre produz um **Playback Event** assinado, preservando a duração real e a janela exclusiva contratada.
 2. **Sem evidência não existe liquidação.** Nenhum valor é cobrado ou repassado sem **Evidence** `VALID`.
 3. **Toda evidência nasce no Edge.** O Cloud valida e materializa, mas não inventa evidência.
 4. **Toda liquidação depende da evidência** e da confirmação de ancoragem.
@@ -54,4 +54,4 @@ Princípios obrigatórios. **Nada pode ser implementado contrariando esta lista.
 33. **Um termo só existe se estiver no [`DOMAIN_DICTIONARY.md`](./DOMAIN_DICTIONARY.md).**
 34. **Nenhuma nova terminologia sem necessidade**; sinônimos são proibidos.
 35. **Mudança arquitetural relevante gera novo ADR**; ADR aceito não é editado, é superseded.
-36. **Unidade atômica da plataforma é 15 segundos** de exibição — nenhuma regra pode fracioná-la.
+36. **Unidade comercial atômica da plataforma é uma janela exclusiva de 15 segundos** — o Creative pode ser menor, mas preço, titularidade e início do próximo Slot nunca são fracionados ou antecipados.

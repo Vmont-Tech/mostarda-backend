@@ -89,7 +89,17 @@ Divergência não é corrigida por mutação direta. O Reconciler emite Command 
 
 ## Conectividade e sincronização
 
-Perda do Cloud não interrompe programação assinada e válida em cache. PlaybackEvents e Telemetry são enfileirados separadamente e sincronizados após reconexão. Edge nunca repete conteúdo além dos Slots autorizados. Esgotada a programação, Player usa fallback institucional local; tela preta por ausência de conteúdo é proibida enquanto o hardware puder renderizar.
+Perda do Cloud não interrompe programação assinada e válida em cache. PlaybackEvents e Telemetry são enfileirados separadamente e sincronizados após reconexão. Edge nunca repete conteúdo além dos Slots autorizados. Esgotada a programação ou interrompido um Creative antes de seu final natural, Player usa fallback institucional local pelo período aplicável; tela preta por ausência de conteúdo é proibida enquanto o hardware puder renderizar. A falha preserva causa, estágio, duração, diagnóstico e versões e é enviada ao Cloud imediatamente ou após reconexão.
+
+Falha comprovadamente isolada no Creative bloqueia somente seu checksum/versão e permite a execução dos demais conteúdos previamente validados. Falha do equipamento, Edge, Player, saída ou causa desconhecida suspende imediatamente a execução paga local, mesmo antes da confirmação do Cloud. Nessa condição o Edge mantém fallback institucional e diagnóstico seguro. O Cloud recebe os fatos e TV Network atualiza a disponibilidade operacional sem conhecer Campaign, preço ou cobrança.
+
+Para solicitar recuperação, Edge executa verificação automática das capacidades observáveis, incluindo processos, versões, integridade, armazenamento, decodificação, renderização e saídas que o hardware consiga medir. Em seguida reproduz integralmente um asset institucional de teste e preserva os fatos assinados. A ausência de sensor ou capacidade não é convertida em sucesso: o campo fica não comprovado e a recuperação segue para atendimento. O Edge não se autodeclara disponível; TV Network avalia as provas recebidas.
+
+## Expediente e turnos de apuração
+
+Edge recebe o expediente vigente do Venue recortado pelas faixas civis fixas `00/06/12/18/24`, conforme horário aplicável ao Venue. Ele não calcula períodos nem horários por conta própria e rejeita configuração destinada a outra TV/EdgeInstallation. Confirma início do expediente, cada marco aplicável e encerramento, incluindo identidade, sequência, clock local, revisão da programação, cobertura, posições das filas, reproduções, falhas, fallback, health e telemetria disponível. O marco não reinicia o Player, não encerra filas e não altera Slots; apenas fecha e envia o consolidado operacional do período anterior.
+
+Falha técnica é emitida imediatamente e nunca espera a troca ou o fechamento do período. Entre marcos, confirmações curtas de continuidade permitem detectar indisponibilidade sem acumular horas de execução incerta. Se o Cloud estiver indisponível, o Edge preserva o fato original e o envia após reconexão, sem trocar timestamp ou identidade. O período pode ser fechado com lacuna explícita, mas não como íntegro por presunção.
 
 Conectividade possui estados conceituais `UNKNOWN`, `ONLINE`, `INTERMITTENT`, `OFFLINE` e `RECOVERING`, derivados por política.
 

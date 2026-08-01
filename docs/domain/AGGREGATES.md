@@ -33,7 +33,8 @@ Cada Aggregate tem **uma raiz**, protege **invariantes** e é a única porta de 
 - **Entidades internas:** OperatingSchedule, ContextProfile (categoria, tráfego)
 - **Value Objects:** `GeoLocation`, `TimeSlot`
 - **Invariantes:** pertence a **um** Dono do espaço; horário de operação obrigatório; alteração de contexto é versionada (afeta pricing histórico).
-- **Eventos:** `VenueRegistered`, `VenueOperatingHoursUpdated`.
+- **Eventos:** `VenueRegistered`, `VenueOperatingHoursUpdated`; os contratos de confirmação de expediente e turnos serão consolidados no catálogo de execução.
+- **Invariantes operacionais:** horário de funcionamento vigente define o expediente; faixas civis fixas `00/06/12/18/24` são recortadas por abertura, intervalos e fechamento sem alterar Slots; picos não movem esses marcos; mudança futura não reclassifica apurações históricas.
 
 ## Campaign Aggregate — contexto Campaign Management
 
@@ -58,7 +59,7 @@ Especificação integral: [`CAMPAIGN_MANAGEMENT.md`](./CAMPAIGN_MANAGEMENT.md).
 - **Root:** `Evidence`
 - **Entidades internas:** ValidationRecord, AnchoringRecord, DisputeRecord
 - **Value Objects:** `TVIdentifier`, `CampaignIdentifier`, `SlotIdentifier`, `EvidenceHash`, `DeviceSignature`, `Money` (calculado, final e efetivamente cobrado), `PlaybackDuration`, `AssetReference`, `AnchoringReceipt`, `EvidenceConfidence`, `PlaybackChecksum`, `CreativeChecksum`, `PlayerVersion`, `EdgeVersion`, `AIModelVersion`, `OSVersion`, `PricingPolicyVersion`, `PricingAlgorithmVersion`, `SettlementPolicyVersion`, `TaxPolicyVersion`, `SplitPolicyVersion`, `TaxBreakdown`, `SplitShare`.
-- **Invariantes:** representa exatamente **15s** de exibição; campos obrigatórios do ADR-003 sempre presentes; contém preço calculado, final e cobrado, preço dinâmico/fatores, impostos, split aplicado, percentuais, versões de política/algoritmo, timestamp, TV, Slot, Campaign, playback, telemetria, hash, documento associado e Quantum Anchor; registra `EvidenceConfidence`, checksums de playback e criativo e versões de Player, Edge, IA e sistema operacional; assinatura válida é condição para `VALID`; unicidade por Slot executado; **append-only** — correção apenas por `EvidenceReversed`; sem status `VALID` + ancoragem confirmada não há liquidação.
+- **Invariantes:** representa uma execução dentro de Slot fixo de **15s**, preservando separadamente duração real do Creative e permanência do último frame; campos obrigatórios do ADR-003 sempre presentes; contém preço calculado, final e cobrado, preço dinâmico/fatores, impostos, split aplicado, percentuais, versões de política/algoritmo, timestamp, TV, Slot, Campaign, playback, telemetria, hash, documento associado e Quantum Anchor; registra `EvidenceConfidence`, checksums de playback e criativo e versões de Player, Edge, IA e sistema operacional; assinatura válida é condição para `VALID`; unicidade por Slot executado; **append-only** — correção apenas por `EvidenceReversed`; sem status `VALID` + ancoragem confirmada não há liquidação.
 - **Eventos:** `EvidenceGenerated`, `EvidenceValidated`, `EvidenceRejected`, `EvidenceDuplicateDetected`, `EvidenceHashed`, `EvidenceRegistered`, `EvidenceDisputed`, `EvidenceDisputeResolved`, `EvidenceReversed`, `LedgerSnapshotAnchored`.
 
 ## Settlement Aggregate — contexto Settlement

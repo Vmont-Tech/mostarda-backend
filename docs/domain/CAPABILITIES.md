@@ -14,7 +14,7 @@ Toda **TV** é tratada como um **Container de Capabilities**. Uma Capability é 
 ## Playback
 
 - **Objetivo:** reproduzir o conteúdo alocado à TV.
-- **Responsabilidades:** consumir a fila local de Slots, decodificar e exibir o Asset, aplicar overlays, garantir a duração atômica de 15s, recuperar-se de falhas.
+- **Responsabilidades:** consumir a fila local de Slots, decodificar e exibir o Asset, aplicar overlays, preservar a janela fixa de 15s e o último frame de Creative menor, recuperar-se de falhas.
 - **Dependências:** Campaign (fila), Canvas, Scheduling, Security (verificação de integridade do Asset).
 - **Gera:** `PlaybackStarted`, `PlaybackFinished`, `PlaybackInterrupted`, `PlaybackRecovered`, `PlaybackFailed`, `PlaybackQueueExhausted`.
 - **Consome:** `SlotAllocated`, `PlaybackQueueUpdated`, `AssetCached`, `MaintenanceWindowOpened`.
@@ -38,7 +38,7 @@ Toda **TV** é tratada como um **Container de Capabilities**. Uma Capability é 
 ## Playback Reporting
 
 - **Objetivo:** produzir fatos locais de execução; Evidence é exclusivamente do Cloud.
-- **Responsabilidades:** ao concluir 15s de exibição, montar `PlaybackEvent`, checksums e métricas, assinar com a chave local, enfileirar offline e ressincronizar.
+- **Responsabilidades:** ao concluir o Creative e preservar sua janela de 15s, montar `PlaybackEvent` com duração real, período do frame final, checksums e métricas, assinar com a chave local, enfileirar offline e ressincronizar.
 - **Dependências:** Playback, Security (chave), Pricing (quote congelado recebido do Backend).
 - **Gera:** `PlaybackEventSigned`, `PlaybackEventQueued`, `PlaybackEventSubmitted`.
 - **Consome:** `PlaybackFinished`.

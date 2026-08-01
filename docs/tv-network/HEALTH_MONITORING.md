@@ -50,6 +50,10 @@ Escala, pesos, limiares, janelas, cobertura mínima e fórmula do HealthScore s�
 - `DEGRADED`: operação possível, porém com condição relevante fora do ideal.
 - `CRITICAL`: risco operacional ou de segurança que exige bloqueio, quarentena, rollback ou intervenção conforme política.
 
+Falha de playback comprovadamente causada pelo equipamento, Edge, Player ou saída, assim como causa ainda desconhecida, é dimensão bloqueante para disponibilidade paga e não pode ser compensada por média saudável. Falha determinística restrita a um Creative bloqueia somente esse conteúdo e permanece observação relevante, sem degradar automaticamente toda a TV.
+
+Recuperação após bloqueio de playback requer nova avaliação apoiada em dois conjuntos de fatos: verificação automática aprovada e execução integral de asset institucional de teste. Ambos preservam Device/Edge identity, versões, tempos, checksums, cobertura e origem dos sinais. Confirmação humana pode auxiliar diagnóstico, mas nunca substitui esses fatos. Cobertura insuficiente resulta em `UNKNOWN`/`INSUFFICIENT_DATA` e mantém indisponibilidade paga.
+
 Uma dimensão crítica não pode ser escondida por média favorável. A política deve declarar dimensões bloqueantes e preservar a razão da classificação.
 
 ## Ordering, duplicidade e replay

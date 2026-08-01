@@ -80,6 +80,8 @@ Ordering é monotônico por `edgeInstallationId + bootSessionId`. Recebimento gl
 
 Cada avaliação de clock preserva desvio estimado, confiança, origem e política usada. Desvio além da tolerância gera `EdgeClockDriftDetected` e pode degradar Health, solicitar sincronização ou levar à quarentena quando houver risco de identidade/replay.
 
+Heartbeat não substitui as confirmações de expediente e período. Essas confirmações referenciam a posição da sequência e a cobertura acumulada entre os marcos civis aplicáveis; Heartbeats intermediários demonstram continuidade e reduzem o intervalo de detecção. Ausência de confirmação no marco esperado cria lacuna explícita e diagnóstico, nunca fechamento presumido.
+
 Tolerância, método de estimação e janela de estabilização são `OPEN`. Até serem aprovados, clock local não pode ser usado sozinho para declarar disponibilidade.
 
 ## Liveness e ausência

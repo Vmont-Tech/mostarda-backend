@@ -82,12 +82,12 @@ Estados: `QUEUED`, `PREPARING`, `PLAYING`, `FINISHED`, `INTERRUPTED`, `FAILED`, 
 | inexistente → `QUEUED` | Scheduler local ao aceitar Slot | fato local de fila | Slot/revisão válidos | Fila offline preserva ordem conhecida | Revogação/expiração explícita |
 | `QUEUED` → `PREPARING` | Player, `PreparePlayback` | `PlaybackPrepared` | Asset/composição/capability íntegros | Falha pode ir a FAILED | Nova tentativa identificada se permitido |
 | `PREPARING` → `PLAYING` | Player, `StartPlayback` | `PlaybackStarted` | Saída pronta e janela válida | Resultado desconhecido consultado localmente | Falha/interrupção explícita |
-| `PLAYING` → `FINISHED` | Player, `FinishPlayback` | `PlaybackFinished` | Fim observado; duração/checksums/versions capturados | Tolerância de 15s é `OPEN-004`; owner registra valor observado | Collector assina fato; Validator decide validade |
-| `PREPARING/PLAYING` → `INTERRUPTED` | Supervisor/emergência, `InterruptPlayback` | `PlaybackInterrupted` | Causa conhecida; dados parciais preservados | Não completar por timeout | Retomada/nova tentativa conforme `OPEN-034` |
+| `PLAYING` → `FINISHED` | Player, `FinishPlayback` | `PlaybackFinished` | Final natural do Creative confirmado; duração/checksums/versions capturados | Interrupção anterior nunca conclui a tentativa; owner registra valor observado | Collector assina fato; Validator decide validade |
+| `PREPARING/PLAYING` → `INTERRUPTED` | Supervisor/emergência, `InterruptPlayback` | `PlaybackInterrupted` | Causa conhecida; dados parciais preservados | Não completar por timeout | Conteúdo pago não retoma no mesmo Slot; fallback institucional ocupa o restante |
 | `QUEUED/PREPARING/PLAYING/INTERRUPTED` → `FAILED` | Player Supervisor | `PlaybackFailed` | Falha classificada definitiva para tentativa | Retry não reutiliza tentativa como sucesso | Nova tentativa com causalidade |
 | `QUEUED` → `EXPIRED` | Scheduler local | `SlotExpiredLocally` | Window terminou | Cloud valida ao receber | Nenhuma Evidence válida |
 
-Finais da tentativa: `FINISHED`, `FAILED`, `EXPIRED`; `INTERRUPTED` só é recuperável conforme política. Proibido somar trechos de tentativas distintas para fabricar 15 segundos.
+Finais da tentativa: `FINISHED`, `FAILED`, `EXPIRED`; para conteúdo pago, `INTERRUPTED` converge a falha daquela entrega e nunca retoma no mesmo Slot. Proibido somar trechos de tentativas distintas para fabricar conclusão.
 
 ## PlayerSession
 
@@ -101,7 +101,7 @@ Estados: `IDLE`, `PREPARING`, `PLAYING`, `DEGRADED`, `PREEMPTED`, `COMPLETED`, `
 | `DEGRADED` → `PLAYING` | Supervisor | `PlaybackRecovered` | Health observado | Sem loop infinito | Preserva janela degradada |
 | `PLAYING/PREPARING` → `PREEMPTED` | Saga de emergência, `PreemptPlayerSession` | `EmergencyBroadcastStarted`, `PlaybackInterrupted` | Emergência ativa/prioritária | Confirmação por TV; ausência = UNKNOWN | `RestorePlayerSession` |
 | `PREEMPTED` → `PLAYING/COMPLETED/FAILED` | Saga, `RestorePlayerSession` | `EmergencyBroadcastEnded` e resultado | Clear confirmado; composição compatível | Retomada/tentativa exata `OPEN-034` | Nunca oculta interrupção |
-| `PLAYING` → `COMPLETED` | Player, `FinishPlayback` | `PlaybackFinished` | Tentativa concluída | Duração real registrada | — |
+| `PLAYING` → `COMPLETED` | Player, `FinishPlayback` | `PlaybackFinished` | Final natural do Creative confirmado | Duração real e permanência do frame final registradas | — |
 | qualquer não final → `FAILED` | Supervisor | `PlaybackFailed` | Falha definitiva | Nova sessão/tentativa, não reabertura | Diagnóstico append-only |
 
 Finais: `COMPLETED`, `FAILED`. Proibido aplicar composição de emergência sem prioridade/autorização ou declarar sucesso apenas porque o processo está vivo.

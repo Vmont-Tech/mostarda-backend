@@ -78,7 +78,7 @@ Depois da execução, a plataforma registra onde, quando e por quanto tempo exib
 
 O Advertiser pode adquirir um único Slot ou milhões. Não existe quantidade mínima de Slots por princípio de domínio; eventual limite técnico ou comercial deve ser política explícita.
 
-Formatos com duração superior à unidade atômica são compostos por Slots consecutivos. Eles não criam uma unidade financeira opaca: cada unidade conserva identidade, preço, reserva, execução e prova.
+Creative de até 15 segundos ocupa integralmente um Slot fixo, mesmo quando sua duração é menor. O último frame permanece congelado, sem prolongar o áudio, até o fim da janela. O intervalo remanescente continua reservado ao mesmo Advertiser e nunca antecipa o próximo conteúdo. Formatos superiores à unidade atômica são compostos por Slots consecutivos. Eles não criam uma unidade financeira opaca: cada unidade conserva identidade, preço, reserva, execução e prova.
 
 ## 6. Campaign Aggregate
 
@@ -311,15 +311,18 @@ As tolerâncias quantitativas pertencem à `SlotEquivalencePolicy` versionada e 
 
 ## 13. Falha de exibição e realocação
 
-Falha operacional não consome definitivamente o orçamento da obrigação não executada. A reserva é liberada por fato explícito e o valor volta a ser elegível.
+Falha operacional não consome definitivamente o orçamento da obrigação não executada. O Creative precisa alcançar seu final natural; interrupção anterior invalida a tentativa, mesmo quando próxima do fim. A reserva é liberada por fato explícito e o valor volta a `AvailableBudget`, com causa e correlação preservadas para explicar ao Advertiser por que não houve cobrança. Se o Creative já alcançou o final natural, falha posterior durante o frame congelado não libera a reserva nem desfaz cobrança ou repasse; o incidente continua registrado separadamente.
 
 A ordem obrigatória é:
 
 1. confirmar que não houve execução válida;
 2. liberar a obrigação financeira pelo owner;
-3. procurar outro Slot compatível;
-4. realocar automaticamente quando houver candidato;
-5. manter AvailableBudget quando não houver candidato.
+3. procurar outro horário compatível na mesma TV;
+4. se indisponível, procurar outra TV já escolhida pela Campaign;
+5. se ainda indisponível, procurar TV equivalente que satisfaça integralmente as escolhas originais;
+6. reaplicar localização, público, capacidades, faixa temporal, preço autorizado e demais restrições;
+7. criar novo Quote, Slot, reserva e tentativa correlacionados;
+8. manter `AvailableBudget` quando não houver candidato.
 
 Compatibilidade deve considerar:
 
@@ -338,7 +341,13 @@ Underdelivery não gera refund automático. Primeiro ocorre realocação e reapr
 
 Enquanto a janela estiver vigente e não houver candidato, o valor permanece reservado para a obrigação. Encerrada a janela, a reserva é liberada e o saldo retorna à conta do Advertiser.
 
-Realocação cria novo Slot, Quote e reserva. Nunca reescreve o Slot falho.
+Realocação é automática dentro do mandato original da Campaign. Ela cria novo Slot, Quote e reserva e nunca reescreve o Slot falho. Falha não autoriza ampliar critérios, ultrapassar preço, trocar público ou sair da janela aceita pelo Advertiser.
+
+O Slot falho não recebe nova tentativa do mesmo anúncio. O Edge ocupa somente o restante daquela janela com fallback institucional não monetizado e reporta a falha. Campaign Management inicia a realocação em novo Slot; diagnóstico e correção do equipamento pertencem ao fluxo operacional correspondente.
+
+Falha comprovadamente restrita ao Creative remove esse conteúdo das próximas alocações até correção ou nova versão, sem retirar a TV inteira. Falha operacional da TV/Player ou causa desconhecida torna a TV indisponível para novas alocações pagas até recuperação publicada por TV Network. Campaign Management não diagnostica a causa e não substitui indisponibilidade por suposição.
+
+Campaign Management volta a considerar a TV somente após receber disponibilidade operacional recuperada do owner. Teste institucional, confirmação humana ou retorno de conexão observados isoladamente não autorizam alocação comercial.
 
 ## 14. Overdelivery
 
@@ -496,7 +505,7 @@ Novas exibições são interrompidas, Campaign é pausada e Advertiser é notifi
 
 ### 21.1 Grade de parceiros e blocos contíguos
 
-Slots permanecem atômicos em 15 segundos. Freemium local compõe no máximo dois consecutivos; Campaign Mostarda pode exigir bloco maior. Slot confirmado é imutável. Ausência de bloco produz sugestões explicáveis e nunca realocação silenciosa. Pré-seleção cria hold temporário; somente confirmação válida produz reserva definitiva. A autoridade detalhada é [PARTNER_NETWORK_OPERATING_MODEL.md](../product/PARTNER_NETWORK_OPERATING_MODEL.md).
+Slots permanecem janelas atômicas, fixas e exclusivas de 15 segundos. Creative menor não reduz o Slot nem permite antecipar o seguinte. Freemium local compõe no máximo dois consecutivos; Campaign Mostarda pode exigir bloco maior. Slot confirmado é imutável. Ausência de bloco produz sugestões explicáveis e nunca realocação silenciosa. Pré-seleção cria hold temporário; somente confirmação válida produz reserva definitiva. A autoridade detalhada é [PARTNER_NETWORK_OPERATING_MODEL.md](../product/PARTNER_NETWORK_OPERATING_MODEL.md).
 
 `OPEN-036..048` foram fechados pelo documento “Fechamento do Campaign Management”. Não permanecem decisões específicas abertas neste contexto. Parâmetros numéricos vivem em políticas operacionais versionadas e não alteram a semântica aqui definida.
 

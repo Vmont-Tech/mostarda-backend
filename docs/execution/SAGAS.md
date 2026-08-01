@@ -116,8 +116,8 @@ Passos 4A e 4B não têm ordem normativa fixa enquanto `OPEN-011` estiver aberto
 | 6 | Transporte disponível/indisponível | `SubmitPlaybackEvent` ou `QueuePlaybackEvent` | `PlaybackEventSubmitted/Queued` | Timeout de submissão preserva o mesmo Event |
 | 7 | Cloud observa `PlaybackFinished` válido para Slot | `RecordSlotDelivered → Slot` | `SlotDelivered` | Não torna Slot EVIDENCED |
 
-**Timeout/retry:** tolerância de 15s é `OPEN-004`; janela/TTL quantitativos `OPEN-031`. Recuperação não soma trechos de tentativas.  
-**Compensação:** falha física publica fatos; não cobra, não cria Evidence válida e pode criar nova tentativa se janela/política permitirem.  
+**Timeout/retry:** conclusão exige final natural do Creative; janela/TTL quantitativos permanecem `OPEN-031`. Recuperação não soma trechos de tentativas.
+**Compensação:** interrupção anterior ao final publica fatos, não cobra, não cria Evidence válida, libera a reserva por fato explícito, executa fallback institucional até o fim do Slot e encaminha o anúncio para novo Slot conforme realocação.
 **Ordering/gaps:** sequência local acompanha evento offline; gap bloqueia validação dependente.  
 **Resultado:** PlaybackEvent assinado/submetido ou fato explícito de falha.
 
@@ -290,12 +290,16 @@ A Saga vigente coordena manutenção e disponibilidade como serviço. Nenhum flu
 | Passo | Fato/condição | Command e owner | Resultado |
 | --- | --- | --- | --- |
 | 1 | falha terminal confirma ausência de execução válida | `ReleaseBudgetReservation → CampaignBudget` | reserva liberada uma vez |
-| 2 | Campaign continua ativa e dentro da janela | `RequestSlotReallocation → Campaign` | busca autorizada |
-| 3 | candidatos satisfazem restrições e equivalência | `QuotePrice → PricingPolicy` | novos Quotes |
-| 4 | budget ainda disponível | `AuthorizeBudgetReservation → CampaignBudget` | nova reserva |
-| 5 | oportunidade ainda livre | `ReserveSlot → Slot` | novo Slot com nova identidade |
+| 2 | Campaign continua ativa e dentro da janela | `RequestSlotReallocation → Campaign` | busca automática autorizada pelo mandato original |
+| 3 | mesma TV possui outro horário compatível | `QuotePrice → PricingPolicy` | primeira classe de candidatos |
+| 4 | mesma TV indisponível | buscar TV já escolhida e depois TV equivalente | candidatos preservam todas as restrições originais |
+| 5 | candidato satisfaz equivalência e preço autorizado | `QuotePrice → PricingPolicy` | novo Quote |
+| 6 | budget ainda disponível | `AuthorizeBudgetReservation → CampaignBudget` | nova reserva |
+| 7 | oportunidade ainda livre | `ReserveSlot → Slot` | novo Slot com nova identidade |
 
-Realocação é automática antes de refund. Cada tentativa usa identidade própria ligada à obrigação original. Falha de uma tentativa não altera o Slot histórico e não permite cobrança sem Evidence.
+Realocação é automática antes de refund, mas somente dentro das escolhas originais. A busca prioriza a mesma TV, depois TVs escolhidas e então TVs equivalentes. Cada tentativa usa identidade própria ligada à obrigação original. Falha de uma tentativa não altera o Slot histórico e não permite cobrança sem Evidence.
+
+Não existe retry físico dentro do Slot falho. O restante da janela pertence ao fallback institucional e a nova tentativa comercial sempre referencia outro Slot.
 
 O domínio de equivalência está fechado; tolerâncias quantitativas e limites de tentativa/tempo são parâmetros operacionais versionados. Na ausência de versão válida, a implementação não pode relaxar targeting, aumentar preço ou prolongar janela por inferência.
 

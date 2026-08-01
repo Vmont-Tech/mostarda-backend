@@ -90,7 +90,7 @@ Este documento é normativo. Ele especializa a [Especificação Oficial](../spec
 ## 9. Auditoria e tempo
 
 62. `EXE-INV-062` — Toda decisão relevante registra ator ou sistema, autoridade, motivo, pré-estado, pós-estado, revisão, políticas, instante, resultado, correlação e causação.
-63. `EXE-INV-063` — Relógio do dispositivo pode divergir. Evidence Validator registra e avalia a divergência por política; a tolerância exata permanece `OPEN-004/005`.
+63. `EXE-INV-063` — Relógio do dispositivo pode divergir, mas essa divergência não substitui a confirmação do final natural do Creative. Evidence Validator registra e avalia o drift por política; interrupção anterior ao final é inválida e não é cobrada. Falha posterior, durante o frame final congelado, não reverte a conclusão e recebe registro de incidente separado.
 64. `EXE-INV-064` — Histórico auditável é append-only. Prazo de retenção permanece `OPEN-001`; até decisão aceita, fatos necessários a prova, dinheiro, segurança e disputa são preservados.
 65. `EXE-INV-065` — Dados pessoais e sensoriais obedecem minimização, consentimento e autorização. Replay nunca amplia finalidade ou público do dado.
 
