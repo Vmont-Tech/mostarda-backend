@@ -2,7 +2,7 @@
 
 **Status:** APPROVED BY FOUNDER — candidate for normative synchronization  
 **Date:** 2026-08-01  
-**Scope:** local telemetry acquisition, Telemetry Ledger, audience projections and public consumption contracts  
+**Scope:** local telemetry acquisition, Telemetry Ledger, audience projections and public consumption contracts
 
 ## 1. Purpose
 
