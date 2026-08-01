@@ -58,15 +58,29 @@ const assertNoAffirmativeContradictions = (document) => {
 };
 
 const normalizeConcept = (value) => value.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
-const forbiddenArtifactConcept = /\b(?:compatibility|matrix|evaluation)\b/i;
+const isForbiddenCompatibilityArtifact = (value) => {
+  const words = new Set(normalizeConcept(value).toLowerCase().match(/[a-z]+/g) ?? []);
+  if (words.has("compatibility")) return true;
+  if (!words.has("matrix")) return false;
+  return ["consumer", "revision", "evaluate", "evaluation"].some((word) => words.has(word));
+};
+
+const assertAllowedArtifactConcept = (value) => {
+  assert.equal(
+    isForbiddenCompatibilityArtifact(value),
+    false,
+    `forbidden compatibility matrix/evaluation artifact: ${value}`,
+  );
+};
+
 const assertNoCompatibilityArtifacts = (catalog) => {
   for (const line of catalog.split(/\r?\n/)) {
     if (/^#{1,6}\s/.test(line)) {
-      assert.doesNotMatch(normalizeConcept(line.replace(/^#{1,6}\s+/, "")), forbiddenArtifactConcept);
+      assertAllowedArtifactConcept(line.replace(/^#{1,6}\s+/, ""));
     }
     if (/^\|/.test(line) || /^[-*]\s/.test(line)) {
       for (const token of line.matchAll(/`([^`]+)`/g)) {
-        assert.doesNotMatch(normalizeConcept(token[1]), forbiddenArtifactConcept);
+        assertAllowedArtifactConcept(token[1]);
       }
     }
   }
@@ -195,5 +209,13 @@ test("compatibility authority positively prohibits and catalogs contain no new i
     "| `EvaluateMatrixEvent` | producer |",
   ]) {
     assert.throws(() => assertNoCompatibilityArtifacts(disguised), /matrix|evaluation/i);
+  }
+
+  for (const unrelated of [
+    "| `ModelEvaluationCompleted` | AI |",
+    "## RiskEvaluation",
+    "| `TransformationMatrix` | Analytics |",
+  ]) {
+    assert.doesNotThrow(() => assertNoCompatibilityArtifacts(unrelated));
   }
 });
