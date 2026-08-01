@@ -448,7 +448,7 @@ Edge Runtime is sole producer; Telemetry Context validates it.
 ### Compatibility and version evolution
 Schema selection uses only `TelemetrySchemaVersion`; unsupported versions are rejected without partial interpretation.
 ### Dependencies
-The ten READY scalar/status contracts and opaque external references; no infrastructure artifact.
+Transitively blocked by PARTIAL `TelemetrySchemaVersion`, `CollectorVersion`, `CapabilityVersion`, and `CollectionPolicyVersion`. Independently certified identities/status and opaque external references do not bypass any PARTIAL version dependency; no infrastructure artifact is authorized.
 ### Required tests
 Every field invariant/error, closure, hash-purpose separation, retry idempotency/conflict, version retention, and missing-versus-zero.
 
@@ -470,7 +470,7 @@ Telemetry Context validator, after successful append.
 ### Compatibility and version evolution
 `eventSchemaVersion` selects shape; unknown versions fail and original envelopes are preserved.
 ### Dependencies
-READY `TelemetryBucket` and `TelemetryEventId`; repository/topic mechanisms remain denied.
+Transitively blocked by PARTIAL `TelemetryBucket`, which carries its own PARTIAL version dependencies. `TelemetryEventId` does not bypass that block; repository/topic mechanisms remain denied.
 ### Required tests
 Envelope fields, producer, time order, append-before-event, duplicate/conflict, unsupported version, and provenance retention.
 
@@ -492,7 +492,7 @@ Telemetry Context validator.
 ### Compatibility and version evolution
 Unknown event versions or reason codes fail rather than map to a generic reason.
 ### Dependencies
-READY identity/version contracts; API/broker mechanisms remain denied.
+Transitively blocked by PARTIAL `TelemetrySchemaVersion`. Independently certified identity contracts do not bypass that block; API/broker mechanisms remain denied.
 ### Required tests
 Every reason, envelope fields, producer, absence of append, duplicate/conflict, and unsupported version/reason.
 
@@ -504,7 +504,7 @@ Telemetry Context.
 ### Conceptual schema v1
 The complete section 5 immutable record: projection/TV/Venue identities, exact rolling fifteen-minute window, covered buckets, missing/rejected intervals, contributing capabilities, all provenance versions, confidence, coverage, and calculation/validity times.
 ### Error codes
-Exactly the ten record validation codes in section 5, plus shared scalar/version errors; lifecycle-event and applier errors are not part of this READY artifact.
+Exactly the ten record validation codes in section 5, plus shared scalar/version errors; lifecycle-event and applier errors are not part of this PARTIAL record artifact.
 ### Lifecycle and terminality
 The record represents one immutable snapshot with no independent lifecycle authority. Any later improvement is a new projection.
 ### Replay and rebuild
@@ -514,7 +514,7 @@ Telemetry Context; the projection builder algorithm/scheduling remains outside a
 ### Compatibility and version evolution
 Projection schema and policy versions remain independent; unsupported versions fail and historical provenance is retained.
 ### Dependencies
-READY identities/status/versions and accepted bucket identities; applier, lifecycle events, storage, and consumers remain denied.
+Transitively blocked by PARTIAL `TelemetrySchemaVersion`, `CollectorVersion`, `CapabilityVersion`, `CollectionPolicyVersion`, `AudienceProjectionVersion`, and `AudienceProjectionPolicyVersion`. Independently certified identities/status and accepted bucket identities do not bypass those blocks; applier, lifecycle events, storage, and consumers remain denied.
 ### Required tests
 All fields, interval/uniqueness/provenance rules, confidence/coverage/validity, deterministic reconstruction, and ledger non-mutation.
 

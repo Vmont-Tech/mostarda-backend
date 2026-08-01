@@ -79,6 +79,29 @@ test("Telemetry gate explicitly excludes infrastructure and uncertified contract
   assert.match(gate, /TelemetryBucketClosed[^\n]*IMPLEMENTATION_PARTIAL/);
 });
 
+test("PARTIAL composites name every transitive blocker without stale READY dependency claims", async () => {
+  const gate = await read("implementationGate");
+  const blockers = new Map([
+    ["TelemetryBucket", ["TelemetrySchemaVersion", "CollectorVersion", "CapabilityVersion", "CollectionPolicyVersion"]],
+    ["TelemetryBucketAccepted", ["TelemetryBucket"]],
+    ["TelemetryBucketRejected", ["TelemetrySchemaVersion"]],
+    ["AudienceProjection", ["TelemetrySchemaVersion", "CollectorVersion", "CapabilityVersion", "CollectionPolicyVersion", "AudienceProjectionVersion", "AudienceProjectionPolicyVersion"]],
+  ]);
+
+  for (const [artifact, dependencies] of blockers) {
+    const start = gate.indexOf(`## Artifact: ${artifact}\n`);
+    assert.notEqual(start, -1, `missing ${artifact} section`);
+    const dependenciesStart = gate.indexOf("### Dependencies\n", start);
+    const dependenciesEnd = gate.indexOf("\n### Required tests", dependenciesStart);
+    const section = gate.slice(dependenciesStart, dependenciesEnd);
+    assert.doesNotMatch(section, /\bREADY\b/, `${artifact} has stale READY dependency claim`);
+    assert.match(section, /transitively blocked/i);
+    for (const dependency of dependencies) {
+      assert.match(section, new RegExp(`\\b${dependency}\\b`), `${artifact} must name ${dependency}`);
+    }
+  }
+});
+
 const read = (name) => readFile(docs[name], "utf8");
 
 test("DEC-063 certifies the complete Telemetry authority boundary", async () => {
