@@ -147,8 +147,9 @@ The evaluation stops at the first blocking condition and records exactly one cau
 4. Validate identity, integrity and authenticity
 5. Resolve explicitly requested historical revision when replaying
 6. Validate effective period for the evaluation instant
-7. Look up the exact entry key
-8. Produce CompatibilityDecision
+7. Resolve the exact matrix entry key
+8. If the entry is absent, produce `UNSUPPORTED / ENTRY_NOT_FOUND`
+9. Otherwise, produce the declared `CompatibilityDecision`
 ```
 
 Failures map to the cause at their stage. An entry lookup miss occurs only after a valid effective matrix was loaded and produces the compatibility decision `UNSUPPORTED / ENTRY_NOT_FOUND`; it is not `COMPATIBILITY_NOT_EVALUATED`.
@@ -189,7 +190,7 @@ Every evaluation records:
 - `VersionKind` and exact `VersionValue`;
 - matrix revision;
 - evaluation instant;
-- result kind;
+- `CompatibilityEvaluationResult` as an explicit `ResultKind`: `DECISION_PRODUCED` or `COMPATIBILITY_NOT_EVALUATED`;
 - compatibility state and decision reason when produced;
 - exactly one operational cause when not evaluated;
 - experimental authorization reference when applicable;
