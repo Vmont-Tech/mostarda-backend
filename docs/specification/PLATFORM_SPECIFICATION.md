@@ -119,7 +119,9 @@ Ausência ou inelegibilidade de um recebedor NÃO redistribui sua parcela às de
 
 Contextos NÃO DEVEM ler ou alterar armazenamento de outro contexto. Colaboração ocorre por Commands ao owner, Events ou contratos públicos conceituais. Integrações externas DEVEM passar por anti-corruption boundary.
 
-Telemetry Context possui exclusivamente accepted observations, Telemetry Ledger e `AudienceProjection`. A projeção é um internal Telemetry projection e não introduz Audience Bounded Context. Buckets imutáveis de um minuto são normalmente enviados em batches de cinco minutos e alimentam uma janela móvel de quinze minutos. Somente novos `PricingQuote` podem consumir uma projeção válida; decisões já aplicadas não mudam. Telemetry e Audience nunca criam Evidence: Evidence Ledger alone materializes EvidenceRecord de `PlaybackEvent` e `PlaybackSignature`.
+### SPEC-TEL-001 — Telemetry Ledger e AudienceProjection (`DEC-063`)
+
+`DEC-063` governa esta sincronização: Telemetry Context possui exclusivamente accepted observations, Telemetry Ledger e `AudienceProjection`. A projeção é um internal Telemetry projection e não introduz Audience Bounded Context. Buckets imutáveis de um minuto são normalmente enviados em batches de cinco minutos e alimentam uma janela móvel de quinze minutos. Somente novos `PricingQuote` podem consumir uma projeção válida; applied PricingQuotes remain unchanged, InventoryHolds remain unchanged, reserved or sold Slots remain unchanged e prices remain unchanged. Telemetry e Audience nunca criam Evidence. Edge/Playback produces authoritative playback facts como `PlaybackEvent` e `PlaybackSignature`; Evidence Ledger alone materializes EvidenceRecord.
 
 ### Por que estes limites existem
 

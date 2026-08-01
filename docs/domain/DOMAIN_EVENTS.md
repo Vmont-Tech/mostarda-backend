@@ -84,12 +84,14 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `AudienceProjectionProduced` | Telemetry Context | Hipótese operacional versionada produzida de observações aceitas. |
 | `AudienceProjectionExpired` | Telemetry Context | Projeção ultrapassou sua validade e não pode mais ser consumida como atual. |
 | `AudienceProjectionInvalidated` | Telemetry Context | Fonte ou policy invalidou o uso da projeção sem apagar o histórico. |
-| `TelemetryCapabilityChanged` | Edge Runtime | Condição ou versão observada de collector/capability mudou. |
+| `TelemetryCapabilityChanged` | Família conceitual, não instanciável | Mudança de capability; tipos concretos abaixo distinguem a fonte. |
+| `EdgeTelemetryCapabilityChanged` | Edge Runtime | Condição ou versão de collector/capability observada localmente mudou. |
+| `TvCapabilityChanged` | TV Network | TV capability owner alterou o suporte ou estado autoritativo da capability. |
 | `TelemetryIncidentReported` | Família conceitual, não instanciável | Família de incident reporting; tipos concretos abaixo eliminam ambiguidade. |
 | `EdgeTelemetryIncidentReported` | Edge Runtime | Incidente de coleta, armazenamento ou transporte local. |
 | `TelemetryValidationIncidentReported` | Telemetry Context | Incidente de validação, integridade, schema ou ordering. |
 
-Each concrete event type has one authoritative producer. Se Edge e Telemetry reportarem incidentes distintos, nomes e schemas concretos permanecem distintos; a família `TelemetryIncidentReported` nunca autoriza producer ambíguo.
+Each concrete event type has one authoritative producer. `TelemetryCapabilityChanged` e `TelemetryIncidentReported` são somente famílias conceituais. Mudanças do Edge e do TV capability owner usam nomes e schemas concretos distintos, assim como incidentes do Edge e da validação Telemetry; nenhuma família autoriza producer ambíguo.
 
 ## Evidence (produtor: Evidence Ledger no Cloud; fatos de playback produzidos no Edge)
 
@@ -109,7 +111,7 @@ Each concrete event type has one authoritative producer. Se Edge e Telemetry rep
 | `EvidenceReversed` | Evento compensatório (append-only). |
 | `LedgerSnapshotAnchored` | Snapshot do Ledger ancorado publicamente. |
 
-Edge/Playback produz `PlaybackEvent` e `PlaybackSignature`. Evidence Ledger alone materializes EvidenceRecord; Telemetry e AudienceProjection nunca produzem Evidence.
+Edge/Playback produces authoritative playback facts: `PlaybackEvent` e `PlaybackSignature`. Evidence Ledger alone materializes EvidenceRecord; Telemetry e AudienceProjection nunca produzem Evidence.
 
 ## Pricing (produtor: Pricing Engine)
 

@@ -81,7 +81,7 @@ Pricing Engine NÃO:
 
 Pricing pode receber snapshots autorizados de inventário, Venue, demanda, ocupação e telemetria. Receber um snapshot não transfere ownership: Pricing NÃO corrige nem completa estado pertencente ao contexto produtor.
 
-Quando Telemetry for insumo, Pricing consome somente `AudienceProjection` válida, versionada e produzida pelo Telemetry Context sobre rolling fifteen-minute window. Only new PricingQuotes may consume essa projeção. Ela nunca altera quote `APPLIED`, `InventoryHold`, Slot reservado/vendido, cobrança, Evidence ou Settlement. Ausência, baixa cobertura ou confiança insuficiente remove o fator ao invés de inventar audiência; dado não confiável nunca aumenta preço.
+Quando Telemetry for insumo, Pricing consome somente `AudienceProjection` válida, versionada e produzida pelo Telemetry Context sobre rolling fifteen-minute window. Only new PricingQuotes may consume essa projeção. Applied PricingQuotes remain unchanged; InventoryHolds remain unchanged; reserved or sold Slots remain unchanged; prices remain unchanged. Cobrança, Evidence e Settlement também não mudam. Ausência, baixa cobertura ou confiança insuficiente remove o fator ao invés de inventar audiência; dado não confiável nunca aumenta preço.
 
 ## 4. Linguagem do domínio
 
