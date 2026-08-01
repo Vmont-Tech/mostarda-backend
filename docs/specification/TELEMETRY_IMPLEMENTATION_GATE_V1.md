@@ -2,7 +2,7 @@
 
 **Status:** mechanical code-generation gate  
 **Normative domain source:** `docs/domain/TELEMETRY.md` (`DEC-063`)  
-**Scope:** value contracts, the immutable minute bucket, acceptance/rejection events, the audience projection state, and its pure applier
+**Scope:** value contracts, the immutable minute bucket, acceptance/rejection events, and the immutable audience projection record
 
 READY_MANIFEST: ["TelemetryBucketId","AudienceProjectionId","TelemetryEventId","TelemetryCapabilityStatus","TelemetrySchemaVersion","CollectorVersion","CapabilityVersion","CollectionPolicyVersion","AudienceProjectionVersion","AudienceProjectionPolicyVersion","TelemetryBucket","TelemetryBucketAccepted","TelemetryBucketRejected","AudienceProjection"]
 
@@ -151,7 +151,7 @@ READY bucket, identity, version, instant, and hash contracts. Ledger storage imp
 
 Test each rejection reason; accepted-after-append ordering; rejected-without-append; producer literal; time ordering (`recordedAt >= observedAt`); duplicate idempotency; conflict rejection; unsupported versions; and preservation of causation, correlation, ordering, and hashes.
 
-## 5. `AudienceProjection` and lifecycle events
+## 5. `AudienceProjection` immutable record
 
 ### Conceptual schema v1
 
@@ -167,23 +167,22 @@ Test each rejection reason; accepted-after-append ordering; rejected-without-app
 - `audienceProjectionVersion: AudienceProjectionVersion`, `audienceProjectionPolicyVersion: AudienceProjectionPolicyVersion`
 - `confidence: ConfidenceMetric`, `coveragePermille: integer 0..1000`
 - `calculatedAt: Instant`, `validFrom: Instant`, `validUntil: Instant`, where `validFrom <= calculatedAt < validUntil`
-- `state`, exactly `CURRENT | EXPIRED | INVALIDATED`; `invalidationReason?: SOURCE_OBSERVATION_INVALIDATED | POLICY_INVALIDATED`, required only for `INVALIDATED`
 
 ### Error codes
 
-Validation returns exactly `INVALID_PROJECTION_WINDOW`, `EMPTY_COVERED_BUCKETS`, `DUPLICATE_COVERED_BUCKET`, `INTERVAL_OUTSIDE_WINDOW`, `OVERLAPPING_EXCEPTION_INTERVAL`, `EMPTY_CONTRIBUTING_CAPABILITIES`, `DUPLICATE_CONTRIBUTING_CAPABILITY`, `EMPTY_VERSION_PROVENANCE`, `INVALID_PROJECTION_COVERAGE`, `INVALID_VALIDITY_INTERVAL`, `INVALID_PROJECTION_STATE`, `MISSING_INVALIDATION_REASON`, `UNEXPECTED_INVALIDATION_REASON`, plus shared errors.
+Validation returns exactly `INVALID_PROJECTION_WINDOW`, `EMPTY_COVERED_BUCKETS`, `DUPLICATE_COVERED_BUCKET`, `INTERVAL_OUTSIDE_WINDOW`, `OVERLAPPING_EXCEPTION_INTERVAL`, `EMPTY_CONTRIBUTING_CAPABILITIES`, `DUPLICATE_CONTRIBUTING_CAPABILITY`, `EMPTY_VERSION_PROVENANCE`, `INVALID_PROJECTION_COVERAGE`, `INVALID_VALIDITY_INTERVAL`, plus shared errors.
 
 ### Lifecycle and terminality
 
-The immutable record declares whether it is current, expired, or invalidated. Expired and invalidated records remain historical, and a later calculation has a new `projectionId`. This gate does not define event-driven state transitions.
+The projection is an immutable snapshot with a declared validity interval and no independent lifecycle authority. A later calculation has a new `projectionId`. Expiration/invalidation events and event-driven transitions are outside this READY record contract.
 
 ### Replay and rebuild
 
-The normative design establishes that rebuilding a projection never mutates the Telemetry Ledger, but does not define replay metadata or the complete transition behavior for an applier. Consequently `AudienceProjectionApplier` and its three lifecycle event artifacts are `IMPLEMENTATION_PARTIAL` and denied.
+Rebuilding the immutable record from the same accepted observations and recorded versions is deterministic and never mutates the Telemetry Ledger.
 
 ### Producer
 
-Telemetry Context is the sole producer of all three concrete lifecycle events. The projection builder algorithm and its scheduling are not authorized by this gate; it must supply a record satisfying this complete state schema.
+Telemetry Context produces the immutable record. The projection builder algorithm and scheduling are not authorized by this gate.
 
 ### Compatibility and version evolution
 
@@ -191,11 +190,11 @@ Projection shape and derivation semantics remain separate via `audienceProjectio
 
 ### Dependencies
 
-Only READY values, accepted bucket identities, rejection reason codes, and lifecycle events. Pricing, Analytics, Marketplace, AI, Evidence, storage, transport, and the projection builder are consumers or external mechanisms, not dependencies authorized here.
+Only READY values, accepted bucket identities, and rejection reason codes. Lifecycle events, Pricing, Analytics, Marketplace, AI, Evidence, storage, transport, and the projection builder are not dependencies authorized here.
 
 ### Required tests
 
-Validate all required fields, interval bounds, uniqueness, provenance, confidence/coverage, validity, and state/reason combinations; test the full transition table and every error code; prove event replay idempotency and conflict detection; fold a stream twice with identical output; prove rebuild performs no I/O and leaves input buckets byte-equivalent.
+Validate every required field, interval bound, uniqueness constraint, provenance value, confidence/coverage value, and validity invariant; rebuild the same inputs twice with identical record content and prove input buckets remain byte-equivalent.
 
 ## Artifact: TelemetryBucketId
 Status: `IMPLEMENTATION_READY`
@@ -475,11 +474,11 @@ Status: `IMPLEMENTATION_READY`
 ### Unique owner
 Telemetry Context.
 ### Conceptual schema v1
-The complete section 5 immutable record: projection/TV/Venue identities, exact rolling fifteen-minute window, covered buckets, missing/rejected intervals, contributing capabilities, all provenance versions, confidence, coverage, calculation/validity times, and current/expired/invalidated state qualification.
+The complete section 5 immutable record: projection/TV/Venue identities, exact rolling fifteen-minute window, covered buckets, missing/rejected intervals, contributing capabilities, all provenance versions, confidence, coverage, and calculation/validity times.
 ### Error codes
-Exactly the validation codes in section 5 through `UNEXPECTED_INVALIDATION_REASON`, plus shared scalar/version errors; applier-only errors are not part of this READY artifact.
+Exactly the ten record validation codes in section 5, plus shared scalar/version errors; lifecycle-event and applier errors are not part of this READY artifact.
 ### Lifecycle and terminality
-The record represents one immutable snapshot. Any later improvement is a new projection; expired or invalidated records remain historical.
+The record represents one immutable snapshot with no independent lifecycle authority. Any later improvement is a new projection.
 ### Replay and rebuild
 Rebuild deterministically recreates record content from accepted observations under recorded versions and never mutates the Telemetry Ledger; event-fold behavior is not certified.
 ### Producer
@@ -489,11 +488,13 @@ Projection schema and policy versions remain independent; unsupported versions f
 ### Dependencies
 READY identities/status/versions and accepted bucket identities; applier, lifecycle events, storage, and consumers remain denied.
 ### Required tests
-All fields, interval/uniqueness/provenance rules, confidence/coverage/validity/state qualification, deterministic reconstruction, and ledger non-mutation.
+All fields, interval/uniqueness/provenance rules, confidence/coverage/validity, deterministic reconstruction, and ledger non-mutation.
 
-## Non-READY artifacts
+## Non-READY PARTIAL lifecycle and event artifacts
 
-`AudienceProjectionApplier`, `AudienceProjectionProduced`, `AudienceProjectionExpired`, and `AudienceProjectionInvalidated` are `IMPLEMENTATION_PARTIAL`: the normative design lacks replay metadata and complete transition/error behavior. `TelemetryCaptured`, `TelemetryBucketClosed`, `EdgeTelemetryCapabilityChanged`, `EdgeTelemetryIncidentReported`, `TelemetryValidationIncidentReported`, `TelemetryCapabilityChanged`, `TelemetryIncidentReported`, `CapabilityDeclared`, `CapabilityValidated`, `CapabilityRejected`, `CapabilityActivated`, `CapabilityDegraded`, `CapabilitySuspended`, `CapabilityRecovered`, and `CapabilityRetired` are `IMPLEMENTATION_PARTIAL`: their complete v1 payload/error schemas are absent. All remain denied.
+`AudienceProjectionApplier`, `AudienceProjectionProduced`, `AudienceProjectionExpired`, and `AudienceProjectionInvalidated` are `IMPLEMENTATION_PARTIAL`: the normative design lacks replay metadata, complete event schemas, and complete transition/error behavior. No transition table, stream fold, duplicate-event behavior, or applier dependency is certified by this gate.
+
+`TelemetryCaptured`, `TelemetryBucketClosed`, `EdgeTelemetryCapabilityChanged`, `EdgeTelemetryIncidentReported`, `TelemetryValidationIncidentReported`, `TelemetryCapabilityChanged`, `TelemetryIncidentReported`, `CapabilityDeclared`, `CapabilityValidated`, `CapabilityRejected`, `CapabilityActivated`, `CapabilityDegraded`, `CapabilitySuspended`, `CapabilityRecovered`, and `CapabilityRetired` are `IMPLEMENTATION_PARTIAL`: their complete v1 payload/error schemas are absent. All PARTIAL artifacts remain denied.
 
 ## 6. Gate conclusion
 

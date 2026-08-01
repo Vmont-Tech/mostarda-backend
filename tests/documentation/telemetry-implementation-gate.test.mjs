@@ -41,22 +41,25 @@ test("Telemetry implementation gate mechanically closes every READY artifact", a
   ];
   const ready = JSON.parse(gate.match(/^READY_MANIFEST: (\[[^\n]+\])$/m)?.[1] ?? "null");
   assert.ok(Array.isArray(ready));
+  const artifactStarts = [...gate.matchAll(/^## Artifact: ([^\n]+)$/gm)];
   for (const artifact of ready) {
-    const escaped = artifact.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const section = gate.match(
-      new RegExp(`^## Artifact: ${escaped}\\n([\\s\\S]*?)(?=^## Artifact: |^## Non-READY|\\Z)`, "m"),
-    )?.[1];
+    const current = artifactStarts.find((match) => match[1] === artifact);
+    const next = artifactStarts.find((match) => (match.index ?? 0) > (current?.index ?? Infinity));
+    const nonReady = gate.indexOf("\n## Non-READY", current?.index);
+    const end = next?.index ?? (nonReady >= 0 ? nonReady : gate.length);
+    const section = current ? gate.slice((current.index ?? 0) + current[0].length, end) : undefined;
     assert.ok(section, `missing bounded certification section for ${artifact}`);
     assert.match(section, /Status: `IMPLEMENTATION_READY`/);
     for (const heading of requiredHeadings) {
-      assert.match(section, new RegExp(`^### ${heading}$`, "im"), `${artifact}: ${heading}`);
+      const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      assert.match(
+        section,
+        new RegExp(`^### ${escaped}\\n(?=\\S)`, "m"),
+        `${artifact}: ${heading} must be non-empty`,
+      );
     }
   }
   assert.doesNotMatch(gate, /\b(?:TBD|TODO|placeholder)\b/i);
-  assert.match(gate, /TelemetryBucket[\s\S]*IMPLEMENTATION_READY/);
-  assert.match(gate, /AudienceProjection[\s\S]*IMPLEMENTATION_READY/);
-  assert.match(gate, /TelemetryBucketAccepted[\s\S]*IMPLEMENTATION_READY/);
-  assert.match(gate, /TelemetryBucketRejected[\s\S]*IMPLEMENTATION_READY/);
   assert.doesNotMatch(gate, /AudienceProjectionApplier[^\n]*IMPLEMENTATION_READY/);
 });
 

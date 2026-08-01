@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -39,23 +40,13 @@ test("artifact absent from the matrix is denied by default", () => {
 });
 
 test("only the exact mechanically certified telemetry artifacts are authorized", () => {
-  const artifacts = [
-    "TelemetryBucketId",
-    "AudienceProjectionId",
-    "TelemetryEventId",
-    "TelemetryCapabilityStatus",
-    "TelemetrySchemaVersion",
-    "CollectorVersion",
-    "CapabilityVersion",
-    "CollectionPolicyVersion",
-    "AudienceProjectionVersion",
-    "AudienceProjectionPolicyVersion",
-    "TelemetryBucket",
-    "TelemetryBucketAccepted",
-    "TelemetryBucketRejected",
-    "AudienceProjection",
-  ];
-
+  const gate = readFileSync(
+    new URL("../../docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md", import.meta.url),
+    "utf8",
+  );
+  const artifacts = JSON.parse(
+    gate.match(/^READY_MANIFEST: (\[[^\n]+\])$/m)?.[1] ?? "null",
+  );
   assert.deepEqual(telemetryAuthorizedArtifacts, artifacts);
 
   for (const artifact of artifacts) {
@@ -68,13 +59,8 @@ test("only the exact mechanically certified telemetry artifacts are authorized",
   }
 });
 
-test("every named PARTIAL telemetry artifact and infrastructure artifact remains denied", () => {
+test("every named PARTIAL telemetry artifact is explicitly rejected with gate provenance", () => {
   for (const artifact of [
-    "TelemetryAdapter",
-    "TelemetryIngestionService",
-    "TelemetryRepository",
-    "TelemetryTopic",
-    "TelemetryBroker",
     "TelemetryCaptured",
     "TelemetryBucketClosed",
     "EdgeTelemetryCapabilityChanged",
@@ -94,12 +80,29 @@ test("every named PARTIAL telemetry artifact and infrastructure artifact remains
     "AudienceProjectionProduced",
     "AudienceProjectionExpired",
     "AudienceProjectionInvalidated",
+  ]) {
+    assert.deepEqual(authorizationFor(artifact), {
+      artifact,
+      status: "IMPLEMENTATION_PARTIAL",
+      source: "TELEMETRY_IMPLEMENTATION_GATE_V1.md",
+    });
+  }
+});
+
+test("telemetry infrastructure remains absent and denied by default", () => {
+  for (const artifact of [
+    "TelemetryAdapter",
+    "TelemetryIngestionService",
+    "TelemetryRepository",
+    "TelemetryTopic",
+    "TelemetryBroker",
     "TelemetryApi",
   ]) {
-    assert.equal(
-      authorizationFor(artifact).status,
-      "IMPLEMENTATION_BLOCKED_ARCHITECTURE",
-    );
+    assert.deepEqual(authorizationFor(artifact), {
+      artifact,
+      status: "IMPLEMENTATION_BLOCKED_ARCHITECTURE",
+      source: "CGS-A-1 deny-by-default",
+    });
   }
 });
 

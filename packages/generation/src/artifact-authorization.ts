@@ -59,6 +59,37 @@ for (const artifact of telemetryAuthorizedArtifacts) {
   );
 }
 
+for (const artifact of [
+  "TelemetryCaptured",
+  "TelemetryBucketClosed",
+  "EdgeTelemetryCapabilityChanged",
+  "EdgeTelemetryIncidentReported",
+  "TelemetryValidationIncidentReported",
+  "TelemetryCapabilityChanged",
+  "TelemetryIncidentReported",
+  "CapabilityDeclared",
+  "CapabilityValidated",
+  "CapabilityRejected",
+  "CapabilityActivated",
+  "CapabilityDegraded",
+  "CapabilitySuspended",
+  "CapabilityRecovered",
+  "CapabilityRetired",
+  "AudienceProjectionApplier",
+  "AudienceProjectionProduced",
+  "AudienceProjectionExpired",
+  "AudienceProjectionInvalidated",
+]) {
+  registry.set(
+    artifact,
+    Object.freeze({
+      artifact,
+      status: "IMPLEMENTATION_PARTIAL",
+      source: "TELEMETRY_IMPLEMENTATION_GATE_V1.md",
+    }),
+  );
+}
+
 registry.set(
   "GovernanceCase",
   Object.freeze({
