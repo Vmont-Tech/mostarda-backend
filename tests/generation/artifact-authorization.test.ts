@@ -7,6 +7,7 @@ import {
   assertGenerationAuthorized,
   authorizationFor,
   telemetryAuthorizedArtifacts,
+  telemetryPartialArtifacts,
 } from "../../packages/generation/src/index.ts";
 
 test("only explicitly READY artifacts pass the generation gate", () => {
@@ -48,6 +49,12 @@ test("only the exact mechanically certified telemetry artifacts are authorized",
     gate.match(/^READY_MANIFEST: (\[[^\n]+\])$/m)?.[1] ?? "null",
   );
   assert.deepEqual(telemetryAuthorizedArtifacts, artifacts);
+  assert.equal(new Set(artifacts).size, artifacts.length);
+
+  const matrixReady = [...gate.matchAll(/^\| `([^`,]+)` \| `IMPLEMENTATION_READY` \|/gm)].map(
+    (match) => match[1],
+  );
+  assert.deepEqual(matrixReady, artifacts);
 
   for (const artifact of artifacts) {
     assert.deepEqual(authorizationFor(artifact), {
@@ -60,27 +67,21 @@ test("only the exact mechanically certified telemetry artifacts are authorized",
 });
 
 test("every named PARTIAL telemetry artifact is explicitly rejected with gate provenance", () => {
-  for (const artifact of [
-    "TelemetryCaptured",
-    "TelemetryBucketClosed",
-    "EdgeTelemetryCapabilityChanged",
-    "EdgeTelemetryIncidentReported",
-    "TelemetryValidationIncidentReported",
-    "TelemetryCapabilityChanged",
-    "TelemetryIncidentReported",
-    "CapabilityDeclared",
-    "CapabilityValidated",
-    "CapabilityRejected",
-    "CapabilityActivated",
-    "CapabilityDegraded",
-    "CapabilitySuspended",
-    "CapabilityRecovered",
-    "CapabilityRetired",
-    "AudienceProjectionApplier",
-    "AudienceProjectionProduced",
-    "AudienceProjectionExpired",
-    "AudienceProjectionInvalidated",
-  ]) {
+  const gate = readFileSync(
+    new URL("../../docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md", import.meta.url),
+    "utf8",
+  );
+  const artifacts = JSON.parse(
+    gate.match(/^PARTIAL_MANIFEST: (\[[^\n]+\])$/m)?.[1] ?? "null",
+  );
+  assert.deepEqual(telemetryPartialArtifacts, artifacts);
+  assert.equal(new Set(artifacts).size, artifacts.length);
+  assert.equal(
+    artifacts.some((artifact: string) => telemetryAuthorizedArtifacts.includes(artifact as never)),
+    false,
+  );
+
+  for (const artifact of artifacts) {
     assert.deepEqual(authorizationFor(artifact), {
       artifact,
       status: "IMPLEMENTATION_PARTIAL",

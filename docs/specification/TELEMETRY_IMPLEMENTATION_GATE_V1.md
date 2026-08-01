@@ -5,6 +5,7 @@
 **Scope:** value contracts, the immutable minute bucket, acceptance/rejection events, and the immutable audience projection record
 
 READY_MANIFEST: ["TelemetryBucketId","AudienceProjectionId","TelemetryEventId","TelemetryCapabilityStatus","TelemetrySchemaVersion","CollectorVersion","CapabilityVersion","CollectionPolicyVersion","AudienceProjectionVersion","AudienceProjectionPolicyVersion","TelemetryBucket","TelemetryBucketAccepted","TelemetryBucketRejected","AudienceProjection"]
+PARTIAL_MANIFEST: ["TelemetryCaptured","TelemetryBucketClosed","EdgeTelemetryCapabilityChanged","EdgeTelemetryIncidentReported","TelemetryValidationIncidentReported","TelemetryCapabilityChanged","TelemetryIncidentReported","CapabilityDeclared","CapabilityValidated","CapabilityRejected","CapabilityActivated","CapabilityDegraded","CapabilitySuspended","CapabilityRecovered","CapabilityRetired","AudienceProjectionApplier","AudienceProjectionProduced","AudienceProjectionExpired","AudienceProjectionInvalidated"]
 
 This gate certifies only the names marked `IMPLEMENTATION_READY` below. The following are not authorized: adapters; not authorized: ingestion services; not authorized: API; not authorized: repositories; not authorized: topics; not authorized: brokers. Persistence mappings, transport envelopes, and deployment resources are likewise excluded. An artifact absent from the READY list remains denied by CGS-A-1. Public event families not concretized here remain non-READY.
 
@@ -26,8 +27,25 @@ This gate certifies only the names marked `IMPLEMENTATION_READY` below. The foll
 | `TelemetryBucketAccepted` | `IMPLEMENTATION_READY` | Telemetry Context | Telemetry Context validator, after ledger append | `TelemetryBucket`, `TelemetryEventId` |
 | `TelemetryBucketRejected` | `IMPLEMENTATION_READY` | Telemetry Context | Telemetry Context validator, without accepted-observation append | `TelemetryBucketId`, `TelemetryEventId` |
 | `AudienceProjection` | `IMPLEMENTATION_READY` | Telemetry Context | projection builder is outside this gate | accepted bucket identities and READY versions |
-| `AudienceProjectionApplier`, `AudienceProjectionProduced`, `AudienceProjectionExpired`, `AudienceProjectionInvalidated` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | Telemetry Context | replay metadata and complete transition behavior are absent from the normative design |
-| `TelemetryCaptured`, `TelemetryBucketClosed`, `EdgeTelemetryCapabilityChanged`, capability-owner transition events, `EdgeTelemetryIncidentReported`, `TelemetryValidationIncidentReported` | `IMPLEMENTATION_PARTIAL` | owners are stated by `TELEMETRY.md` | stated there | complete v1 payload/error schemas are absent |
+| `TelemetryCaptured` | `IMPLEMENTATION_PARTIAL` | Edge Runtime | Edge Runtime | complete v1 payload/error schema absent |
+| `TelemetryBucketClosed` | `IMPLEMENTATION_PARTIAL` | Telemetry acquisition contract | Edge Runtime | complete v1 payload/error schema absent |
+| `EdgeTelemetryCapabilityChanged` | `IMPLEMENTATION_PARTIAL` | Edge Runtime | Edge Runtime | complete v1 payload/error schema absent |
+| `EdgeTelemetryIncidentReported` | `IMPLEMENTATION_PARTIAL` | Edge Runtime | Edge Runtime | complete v1 payload/error schema absent |
+| `TelemetryValidationIncidentReported` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | Telemetry Context | complete v1 payload/error schema absent |
+| `TelemetryCapabilityChanged` | `IMPLEMENTATION_PARTIAL` | conceptual family only | none | not a concrete event artifact |
+| `TelemetryIncidentReported` | `IMPLEMENTATION_PARTIAL` | conceptual family only | none | not a concrete event artifact |
+| `CapabilityDeclared` | `IMPLEMENTATION_PARTIAL` | TV Network capability owner | TV Network capability owner | complete telemetry-use contract absent |
+| `CapabilityValidated` | `IMPLEMENTATION_PARTIAL` | TV Network capability owner | TV Network capability owner | complete telemetry-use contract absent |
+| `CapabilityRejected` | `IMPLEMENTATION_PARTIAL` | TV Network capability owner | TV Network capability owner | complete telemetry-use contract absent |
+| `CapabilityActivated` | `IMPLEMENTATION_PARTIAL` | TV Network capability owner | TV Network capability owner | complete telemetry-use contract absent |
+| `CapabilityDegraded` | `IMPLEMENTATION_PARTIAL` | TV Network capability owner | TV Network capability owner | complete telemetry-use contract absent |
+| `CapabilitySuspended` | `IMPLEMENTATION_PARTIAL` | TV Network capability owner | TV Network capability owner | complete telemetry-use contract absent |
+| `CapabilityRecovered` | `IMPLEMENTATION_PARTIAL` | TV Network capability owner | TV Network capability owner | complete telemetry-use contract absent |
+| `CapabilityRetired` | `IMPLEMENTATION_PARTIAL` | TV Network capability owner | TV Network capability owner | complete telemetry-use contract absent |
+| `AudienceProjectionApplier` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | none | replay metadata and complete transitions absent |
+| `AudienceProjectionProduced` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | Telemetry Context | complete v1 event/replay contract absent |
+| `AudienceProjectionExpired` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | Telemetry Context | complete v1 event/replay contract absent |
+| `AudienceProjectionInvalidated` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | Telemetry Context | complete v1 event/replay contract absent |
 
 The conceptual families `TelemetryCapabilityChanged` and `TelemetryIncidentReported` are not concrete artifacts and are not authorized. No READY artifact authorizes a dependency by association.
 
@@ -492,9 +510,7 @@ All fields, interval/uniqueness/provenance rules, confidence/coverage/validity, 
 
 ## Non-READY PARTIAL lifecycle and event artifacts
 
-`AudienceProjectionApplier`, `AudienceProjectionProduced`, `AudienceProjectionExpired`, and `AudienceProjectionInvalidated` are `IMPLEMENTATION_PARTIAL`: the normative design lacks replay metadata, complete event schemas, and complete transition/error behavior. No transition table, stream fold, duplicate-event behavior, or applier dependency is certified by this gate.
-
-`TelemetryCaptured`, `TelemetryBucketClosed`, `EdgeTelemetryCapabilityChanged`, `EdgeTelemetryIncidentReported`, `TelemetryValidationIncidentReported`, `TelemetryCapabilityChanged`, `TelemetryIncidentReported`, `CapabilityDeclared`, `CapabilityValidated`, `CapabilityRejected`, `CapabilityActivated`, `CapabilityDegraded`, `CapabilitySuspended`, `CapabilityRecovered`, and `CapabilityRetired` are `IMPLEMENTATION_PARTIAL`: their complete v1 payload/error schemas are absent. All PARTIAL artifacts remain denied.
+Every artifact in `PARTIAL_MANIFEST` is `IMPLEMENTATION_PARTIAL` and remains denied. Projection lifecycle artifacts lack replay metadata, complete event schemas, and complete transition/error behavior; no transition table, stream fold, or duplicate-event behavior is certified. The other PARTIAL contracts lack a complete telemetry-specific v1 payload/error schema or are conceptual families rather than concrete event artifacts.
 
 ## 6. Gate conclusion
 

@@ -59,7 +59,7 @@ for (const artifact of telemetryAuthorizedArtifacts) {
   );
 }
 
-for (const artifact of [
+export const telemetryPartialArtifacts = Object.freeze([
   "TelemetryCaptured",
   "TelemetryBucketClosed",
   "EdgeTelemetryCapabilityChanged",
@@ -79,7 +79,9 @@ for (const artifact of [
   "AudienceProjectionProduced",
   "AudienceProjectionExpired",
   "AudienceProjectionInvalidated",
-]) {
+] as const);
+
+for (const artifact of telemetryPartialArtifacts) {
   registry.set(
     artifact,
     Object.freeze({
