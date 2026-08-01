@@ -365,15 +365,11 @@ Uma implementação somente declara conformidade quando:
 
 **TBS-EVO-009:** versões anteriores permanecem auditáveis.
 
-## 19. Não objetivos
-
-A TBS não escolhe linguagem, framework, classes, exceptions, Result type físico, banco, broker, Event Store, serializer, API protocol, DI, storage, compressão, frequência de snapshot, timeout, TTL, retry count, batch size, threshold, SLO ou estrutura de arquivos.
-
-## Contract compatibility evaluation
+## 19. Contract compatibility evaluation
 
 **TBS-COMP-001:** An operation resolves exactly one `CompatibilityScopeId` before matrix discovery. Scope inheritance, global/default fallback and composition are prohibited.
 
-**TBS-COMP-002:** Evaluation stops at the first blocking condition, records exactly one cause, and Later stages are not evaluated. The deterministic order is `COMPATIBILITY_SCOPE_NOT_RESOLVED`, `MATRIX_NOT_FOUND`, `MATRIX_UNAVAILABLE`, `MATRIX_CORRUPTED`, `MATRIX_VERSION_UNRESOLVABLE`, `MATRIX_NOT_EFFECTIVE`.
+**TBS-COMP-002:** Evaluation stops at the first blocking condition, records exactly one cause, and later stages are not evaluated. The deterministic order is `COMPATIBILITY_SCOPE_NOT_RESOLVED`, `MATRIX_NOT_FOUND`, `MATRIX_UNAVAILABLE`, `MATRIX_CORRUPTED`, `MATRIX_VERSION_UNRESOLVABLE`, `MATRIX_NOT_EFFECTIVE`.
 
 **TBS-COMP-003:** Only after loading a valid and effective matrix does an absent exact six-field entry produce `DECISION_PRODUCED` with `UNSUPPORTED / ENTRY_NOT_FOUND`. Matrix absence, retrieval failure, corruption, unresolved historical revision or ineffective period produces `COMPATIBILITY_NOT_EVALUATED`, never `UNSUPPORTED`.
 
@@ -385,8 +381,14 @@ A TBS não escolhe linguagem, framework, classes, exceptions, Result type físic
 
 **TBS-COMP-007:** `UNSUPPORTED` is a completed decision. Non-evaluation rejects without a compatibility decision. Retry after non-evaluation is permitted only with the same operation identity and cannot mutate the producer artifact or the prior attempt.
 
-**TBS-COMP-008:** Every append-only audit record carries an explicit `ResultKind`: `DECISION_PRODUCED` with state and reason, or `COMPATIBILITY_NOT_EVALUATED` with exactly one cause. It also records operation, consumer, scope and scope-contract revision, complete artifact key, matrix revision, evaluation instant, correlation and causation, and experimental authorization when applicable.
+**TBS-COMP-008:** Every append-only audit record has these common required fields: operation identity, consumer identity, evaluation instant, correlation identity, causation identity, evaluation stage and explicit `ResultKind`. `DECISION_PRODUCED` includes state and reason; `COMPATIBILITY_NOT_EVALUATED` includes exactly one cause.
 
 **TBS-COMP-009:** `DEPRECATED` produces an identical functional result to `SUPPORTED` and adds operational replacement observability only; it never changes business behavior.
 
 **TBS-COMP-010:** `EXPERIMENTAL` processing requires explicit authorization, and its output is marked experimental. It cannot replace official results without consumer-specific normative authority.
+
+**TBS-COMP-011:** Stage-dependent audit fields are recorded only after their values are established. `CompatibilityScopeId`, scope-contract revision and the complete six-field entry key appear only after scope resolution. Matrix revision appears only after matrix discovery and retrieval. With `COMPATIBILITY_SCOPE_NOT_RESOLVED`, all scope, complete-key and matrix fields are structurally absent. With `MATRIX_NOT_FOUND` or `MATRIX_UNAVAILABLE`, matrix revision is structurally absent. Every unavailable field is structurally absent while stage and cause remain explicit; no sentinel or default may represent an unavailable identity.
+
+## 20. Não objetivos
+
+A TBS não escolhe linguagem, framework, classes, exceptions, Result type físico, banco, broker, Event Store, serializer, API protocol, DI, storage, compressão, frequência de snapshot, timeout, TTL, retry count, batch size, threshold, SLO ou estrutura de arquivos.
