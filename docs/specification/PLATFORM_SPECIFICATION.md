@@ -123,6 +123,12 @@ Contextos NÃO DEVEM ler ou alterar armazenamento de outro contexto. Colaboraç�
 
 `DEC-063` governa esta sincronização: Telemetry Context possui exclusivamente accepted observations, Telemetry Ledger e `AudienceProjection`. A projeção é um internal Telemetry projection e não introduz Audience Bounded Context. Buckets imutáveis de um minuto são normalmente enviados em batches de cinco minutos e alimentam uma janela móvel de quinze minutos. Somente novos `PricingQuote` podem consumir uma projeção válida; applied PricingQuotes remain unchanged, InventoryHolds remain unchanged, reserved or sold Slots remain unchanged e prices remain unchanged. Telemetry e Audience nunca criam Evidence. Edge/Playback produces authoritative playback facts como `PlaybackEvent` e `PlaybackSignature`; Evidence Ledger alone materializes EvidenceRecord.
 
+## SPEC-COMP-001 — Consumer-owned contract compatibility (`DEC-064`)
+
+Producer contracts own opaque canonical version identities and their syntax, but make no claim about a consumer's ability to process them. Each consumer exclusively owns its scoped immutable compatibility declarations and may decide differently from every other consumer without changing the producer artifact. Configuration Service distributes only immutable consumer-authored matrix revisions and has no authoring, inference or selection authority.
+
+Compatibility is closed by default and exact-key based. A valid effective matrix produces one of `SUPPORTED`, `DEPRECATED`, `EXPERIMENTAL` or `UNSUPPORTED`; an absent entry produces exactly `UNSUPPORTED / ENTRY_NOT_FOUND`. Operational inability to evaluate produces `COMPATIBILITY_NOT_EVALUATED` with one deterministic first-blocking cause, never a fifth state. Scope has no inheritance, global/default fallback or composition. Real-time uses the effective current revision; replay explicitly identifies its historical revision. This cross-cutting contract does not introduce a new Bounded Context, aggregate, command or event.
+
 ### Por que estes limites existem
 
 Os limites não são organização de pastas. Eles impedem que uma decisão seja tomada por quem não possui seus invariantes. Se Campaign consultasse diretamente Payment, poderia confundir um pagamento recebido com dinheiro compensado. Se Settlement pagasse, uma falha externa poderia reabrir um cálculo de direitos já encerrado. Se TV Network conhecesse Campaign, disponibilidade física passaria a depender de regra comercial. Se Quantum recebesse PlaybackEvent, a camada institucional passaria a conhecer detalhes que não precisa provar.

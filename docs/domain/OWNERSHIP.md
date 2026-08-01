@@ -59,6 +59,10 @@
 | Dashboard (apresentação e estado de UI) | **Frontend** | — | Frontend nunca calcula métrica. |
 | Notificações e preferências de canal | **Cloud** (Notifications) | Frontend | |
 
+## Consumer compatibility authority
+
+For every producer artifact, each consumer has exclusive authority over its own immutable scoped compatibility declarations. Pricing, Analytics, Marketplace and AI own separate matrices and may reach different decisions; one consumer cannot publish or alter another consumer's matrix. Producers own canonical version identity and syntax, not consumer support. Configuration Service distributes consumer-authored revisions only and never chooses, changes or infers a compatibility decision. This authority is cross-cutting and creates no additional domain owner.
+
 ## Consequências práticas
 
 1. Se dois contextos precisam do mesmo dado, um é dono e o outro mantém **cópia de leitura** derivada de evento — explicitamente marcada como derivada.

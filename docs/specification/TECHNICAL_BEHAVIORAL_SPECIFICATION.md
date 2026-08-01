@@ -369,3 +369,21 @@ Uma implementação somente declara conformidade quando:
 
 A TBS não escolhe linguagem, framework, classes, exceptions, Result type físico, banco, broker, Event Store, serializer, API protocol, DI, storage, compressão, frequência de snapshot, timeout, TTL, retry count, batch size, threshold, SLO ou estrutura de arquivos.
 
+## Contract compatibility evaluation
+
+**TBS-COMP-001:** An operation resolves exactly one `CompatibilityScopeId` before matrix discovery. Scope inheritance, global/default fallback and composition are prohibited.
+
+**TBS-COMP-002:** Evaluation stops at the first blocking condition, records exactly one cause, and Later stages are not evaluated. The deterministic order is `COMPATIBILITY_SCOPE_NOT_RESOLVED`, `MATRIX_NOT_FOUND`, `MATRIX_UNAVAILABLE`, `MATRIX_CORRUPTED`, `MATRIX_VERSION_UNRESOLVABLE`, `MATRIX_NOT_EFFECTIVE`.
+
+**TBS-COMP-003:** Only after loading a valid and effective matrix does an absent exact six-field entry produce `DECISION_PRODUCED` with `UNSUPPORTED / ENTRY_NOT_FOUND`. Matrix absence, retrieval failure, corruption, unresolved historical revision or ineffective period produces `COMPATIBILITY_NOT_EVALUATED`, never `UNSUPPORTED`.
+
+**TBS-COMP-004:** The exact lookup key is `ConsumerId + CompatibilityScopeId + ProducerContext + ArtifactType + VersionKind + VersionValue`. Duplicate or contradictory complete keys invalidate the immutable revision.
+
+**TBS-COMP-005:** For each consumer and scope, effective intervals are non-overlapping and activation is atomic. Before instant `T` the predecessor applies; at and after `T` the successor applies. Two revisions cannot be percentage-rolled within one scope.
+
+**TBS-COMP-006:** Real-time evaluation selects the current effective revision at the evaluation instant. Replay uses an explicitly identified historical revision; if it cannot be recovered, the result is `COMPATIBILITY_NOT_EVALUATED / MATRIX_VERSION_UNRESOLVABLE`. Current state never substitutes silently.
+
+**TBS-COMP-007:** `UNSUPPORTED` is a completed decision. Non-evaluation rejects without a compatibility decision. Retry after non-evaluation is permitted only with the same operation identity and cannot mutate the producer artifact or the prior attempt.
+
+**TBS-COMP-008:** Every append-only audit record carries an explicit `ResultKind`: `DECISION_PRODUCED` with state and reason, or `COMPATIBILITY_NOT_EVALUATED` with exactly one cause. It also records operation, consumer, scope and scope-contract revision, complete artifact key, matrix revision, evaluation instant, correlation and causation, and experimental authorization when applicable.
+

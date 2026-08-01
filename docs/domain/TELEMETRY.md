@@ -47,3 +47,7 @@ The following versions are independent; they must never be collapsed into a gene
 - `PricingPolicyVersion`: uso autorizado da projeção no cálculo de preço.
 
 Mudança de significado observável, input aceito, output, derivação, interpretação de confiança ou compatibilidade publica uma versão sucessora e nunca reinterpreta o histórico. Upcast autorizado ocorre no owner receptor e preserva o envelope imutável original.
+
+## Compatibility boundary
+
+Telemetry records the producer-supplied exact canonical version identities and their `VersionKind` as immutable provenance. It never evaluates consumer compatibility, declares whether Pricing, Analytics, Marketplace or AI can process an identity, or mutates historical observations when consumer support changes. Telemetry does not own a consumer `CompatibilityMatrix`; each consuming context owns its own scoped immutable declarations. Configuration Service may distribute those declarations only.
