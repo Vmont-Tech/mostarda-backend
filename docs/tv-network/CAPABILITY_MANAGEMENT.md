@@ -1,5 +1,7 @@
 # Capability Management
 
+Para `CapabilityVersion`, o TV Network capability owner declara inicialmente `VersionSyntax = OPAQUE_TOKEN_V1` conforme `DEC-065`.
+
 ## Modelo
 
 Capability descreve declarativamente o que uma TV consegue oferecer no plano operacional. Ela é contrato observável, não implementação.

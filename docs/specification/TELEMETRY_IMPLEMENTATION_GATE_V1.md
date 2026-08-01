@@ -1,7 +1,7 @@
 # Telemetry Implementation Gate V1
 
 **Status:** mechanical code-generation gate  
-**Normative domain source:** `docs/domain/TELEMETRY.md` (`DEC-063`)  
+**Normative domain sources:** `docs/domain/TELEMETRY.md` (`DEC-063`), `docs/domain/CONTRACT_COMPATIBILITY.md` (`DEC-064`, `DEC-065`), and the producer-owned syntax declarations cited by each version artifact
 **Scope:** value contracts, the immutable minute bucket, acceptance/rejection events, and the immutable audience projection record
 
 READY_MANIFEST: ["TelemetryBucketId","AudienceProjectionId","TelemetryEventId","TelemetryCapabilityStatus","TelemetrySchemaVersion","CollectorVersion","CapabilityVersion","CollectionPolicyVersion","AudienceProjectionVersion","AudienceProjectionPolicyVersion"]
@@ -56,7 +56,7 @@ All fields are required unless explicitly marked optional. `Instant` is an RFC 3
 ### Conceptual schema v1
 
 - `TelemetryBucketId`, `AudienceProjectionId`, `TelemetryEventId`: non-empty opaque UTF-8 strings, compared byte-for-byte after transport decoding. They have no parseable business components.
-- Each named version type is a non-empty opaque UTF-8 string: `TelemetrySchemaVersion`, `CollectorVersion`, `CapabilityVersion`, `CollectionPolicyVersion`, `AudienceProjectionVersion`, and `AudienceProjectionPolicyVersion`. Types are not interchangeable.
+- Each named version type is an opaque exact `VersionValue`: `TelemetrySchemaVersion`, `CollectorVersion`, `CapabilityVersion`, `CollectionPolicyVersion`, `AudienceProjectionVersion`, and `AudienceProjectionPolicyVersion`. Each owner declares initially `VersionSyntax = OPAQUE_TOKEN_V1`, whose exact lexical grammar is `[A-Za-z0-9][A-Za-z0-9._:+-]*`. Types are not interchangeable.
 - `TelemetryCapabilityStatus` is exactly `AVAILABLE | UNAVAILABLE | DISABLED | DEGRADED | FAILED`.
 - External references (`TVId`, `VenueId`, `EdgeInstallationId`, `DeviceId`, `PlayerInstallationId`, `CampaignId`) are opaque non-empty strings owned by their source contexts. Their presence here does not authorize their generation. `PlayerInstallationId` and `CampaignId` are optional; omission, rather than an empty sentinel, means not applicable/not permitted.
 - `CanonicalHash` is `{ algorithm: "SHA-256"; canonicalizationVersion: non-empty string; digestBase64Url: non-empty unpadded base64url string }`.
@@ -64,27 +64,27 @@ All fields are required unless explicitly marked optional. `Instant` is an RFC 3
 
 ### Error codes
 
-Scalar construction returns exactly `EMPTY_OPAQUE_VALUE`, `INVALID_INSTANT`, `INVALID_NON_NEGATIVE_INTEGER`, `INVALID_BASE64URL`, `UNSUPPORTED_HASH_ALGORITHM`, or `NON_FINITE_CONFIDENCE`. A wrong semantic version type is a compile-time type error.
+Version identity construction returns `INVALID_VERSION_IDENTITY_REPRESENTATION` if and only if `OPAQUE_TOKEN_V1` lexical validation fails. It performs no existence, latest, compatibility, or SemVer check. Other scalar construction returns exactly `EMPTY_OPAQUE_VALUE`, `INVALID_INSTANT`, `INVALID_NON_NEGATIVE_INTEGER`, `INVALID_BASE64URL`, `UNSUPPORTED_HASH_ALGORITHM`, or `NON_FINITE_CONFIDENCE`. A wrong version type is a compile-time type error.
 
 ### Lifecycle and terminality
 
-Values are immutable and have no lifecycle. A version or identity is never edited or reused to mean something else.
+Values are immutable. Version representation has no semantics, ordering, equivalence, lifecycle or strategy. Syntax may evolve only through a new producer contract revision.
 
 ### Replay and rebuild
 
-Decoding the same valid scalar is deterministic. Replay preserves its exact value and semantic type.
+Decoding the same valid scalar is deterministic. Replay preserves the exact historical value and type.
 
 ### Compatibility and version evolution
 
-Readers accept only explicitly supported opaque version values. Unsupported values fail with `UNSUPPORTED_TELEMETRY_SCHEMA_VERSION`, `UNSUPPORTED_AUDIENCE_PROJECTION_VERSION`, or `UNSUPPORTED_POLICY_VERSION`; they are never partially interpreted. New enum members are breaking for exhaustive v1 readers.
+Version identity comparison is binary exact case-sensitive: `v2` and `V2` are different identities. There is no normalization, coercion or case folding. Compatibility evaluation is separate and consumer-owned. New enum members are breaking for exhaustive v1 readers.
 
 ### Dependencies
 
-Only UTF-8, RFC 3339, safe-integer, and base64url validation; no repository or transport dependency.
+Version identities depend on owner declarations of `OPAQUE_TOKEN_V1` under `DEC-065`; other scalars depend on RFC 3339, safe-integer, UTF-8, and base64url validation. A transport maximum length is deferred and is not lexical version semantics. There is no repository or transport dependency.
 
 ### Required tests
 
-Round-trip every opaque type; reject empty values and malformed timestamps/hashes; prove version types cannot be interchanged; exhaustively test the five capability statuses and unsupported versions.
+Round-trip every opaque type; reject malformed version identities, empty non-version opaque values, and malformed timestamps/hashes; prove version types cannot be interchanged; exhaustively test the five capability statuses.
 
 ## 3. `TelemetryBucket`
 
@@ -303,11 +303,11 @@ Status: `IMPLEMENTATION_READY`
 ### Unique owner
 Telemetry Context, as exclusive owner of telemetry acquisition contracts and schemas.
 ### Conceptual schema v1
-Opaque exact `VersionValue` branded `TelemetrySchemaVersion`; its producer-defined `VersionSyntax` and canonical representation are authoritative.
+Opaque exact `VersionValue` branded `TelemetrySchemaVersion`. Telemetry declares `VersionSyntax = OPAQUE_TOKEN_V1`, exactly `[A-Za-z0-9][A-Za-z0-9._:+-]*`. Comparison is binary exact case-sensitive, so `v2` and `V2` are different identities. There is no normalization, coercion, or ordering; no case folding, semantics, equivalence, lifecycle or strategy. A transport maximum length is deferred and is not lexical version semantics.
 ### Error codes
-Only `INVALID_VERSION_IDENTITY_REPRESENTATION`; construction never reports unsupported-version errors.
+Only `INVALID_VERSION_IDENTITY_REPRESENTATION`, if and only if the lexical grammar fails. Construction performs no existence, latest, compatibility, or SemVer check and never reports unsupported-version errors.
 ### Lifecycle and terminality
-Immutable identity with no normalization, coercion, or ordering; a meaning or shape change publishes a distinct value.
+The identity is immutable; the representation contract has no lifecycle or version strategy. Syntax may evolve only through a new producer contract revision, with exact history preserved.
 ### Replay and rebuild
 Replay preserves the exact `VersionValue` bytes and never reinterprets them.
 ### Producer
@@ -315,7 +315,7 @@ Telemetry Context defines `VersionSyntax`, canonical representation, and publish
 ### Compatibility and version evolution
 Compatibility evaluation is excluded from identity construction and is consumer-owned under `CONTRACT_COMPATIBILITY`; no compatibility, normalization, coercion, or ordering is inferred.
 ### Dependencies
-Producer-defined `VersionSyntax` identity validation only; compatibility evaluation is not a dependency.
+`TELEMETRY.md` owner declaration of `OPAQUE_TOKEN_V1` and `CONTRACT_COMPATIBILITY.md` representation rules; compatibility evaluation is not a dependency.
 ### Required tests
 Brand separation, invalid identity representation rejection, exact canonical round-trip/replay, and absence of compatibility inference or unsupported-version construction errors.
 
@@ -324,11 +324,11 @@ Status: `IMPLEMENTATION_READY`
 ### Unique owner
 Edge Runtime, owner of the collector implementation and algorithm that produced a measurement.
 ### Conceptual schema v1
-Opaque exact `VersionValue` branded `CollectorVersion`; its producer-defined `VersionSyntax` and canonical representation are authoritative.
+Opaque exact `VersionValue` branded `CollectorVersion`. Edge Runtime declares `VersionSyntax = OPAQUE_TOKEN_V1`, exactly `[A-Za-z0-9][A-Za-z0-9._:+-]*`. Comparison is binary exact case-sensitive, so `v2` and `V2` are different identities. There is no normalization, coercion, or ordering; no case folding, semantics, equivalence, lifecycle or strategy. A transport maximum length is deferred and is not lexical version semantics.
 ### Error codes
-Only `INVALID_VERSION_IDENTITY_REPRESENTATION`; construction never reports unsupported-version errors.
+Only `INVALID_VERSION_IDENTITY_REPRESENTATION`, if and only if the lexical grammar fails. Construction performs no existence, latest, compatibility, or SemVer check and never reports unsupported-version errors.
 ### Lifecycle and terminality
-Immutable identity with no normalization, coercion, or ordering; algorithm changes publish a distinct value.
+The identity is immutable; the representation contract has no lifecycle or version strategy. Syntax may evolve only through a new producer contract revision, with exact history preserved.
 ### Replay and rebuild
 Replay preserves the exact `VersionValue` bytes.
 ### Producer
@@ -336,7 +336,7 @@ Edge Runtime collector producer defines `VersionSyntax` and canonical representa
 ### Compatibility and version evolution
 Compatibility evaluation is excluded from identity construction and is consumer-owned under `CONTRACT_COMPATIBILITY`; no compatibility, normalization, coercion, or ordering is inferred.
 ### Dependencies
-Producer-defined `VersionSyntax` identity validation only; compatibility evaluation is not a dependency.
+`EDGE_RUNTIME.md` owner declaration of `OPAQUE_TOKEN_V1` and `CONTRACT_COMPATIBILITY.md` representation rules; compatibility evaluation is not a dependency.
 ### Required tests
 Brand separation, invalid identity representation rejection, exact canonical round-trip/replay, and absence of compatibility inference or unsupported-version construction errors.
 
@@ -345,11 +345,11 @@ Status: `IMPLEMENTATION_READY`
 ### Unique owner
 TV Network capability owner, whose authoritative capability transitions are listed by `TELEMETRY.md`.
 ### Conceptual schema v1
-Opaque exact `VersionValue` branded `CapabilityVersion`; its producer-defined `VersionSyntax` and canonical representation are authoritative.
+Opaque exact `VersionValue` branded `CapabilityVersion`. TV Network capability owner declares `VersionSyntax = OPAQUE_TOKEN_V1`, exactly `[A-Za-z0-9][A-Za-z0-9._:+-]*`. Comparison is binary exact case-sensitive, so `v2` and `V2` are different identities. There is no normalization, coercion, or ordering; no case folding, semantics, equivalence, lifecycle or strategy. A transport maximum length is deferred and is not lexical version semantics.
 ### Error codes
-Only `INVALID_VERSION_IDENTITY_REPRESENTATION`; construction never reports unsupported-version errors.
+Only `INVALID_VERSION_IDENTITY_REPRESENTATION`, if and only if the lexical grammar fails. Construction performs no existence, latest, compatibility, or SemVer check and never reports unsupported-version errors.
 ### Lifecycle and terminality
-Immutable identity with no normalization, coercion, or ordering; behavior changes publish a distinct value.
+The identity is immutable; the representation contract has no lifecycle or version strategy. Syntax may evolve only through a new producer contract revision, with exact history preserved.
 ### Replay and rebuild
 Replay preserves the exact declared `VersionValue` bytes.
 ### Producer
@@ -357,7 +357,7 @@ TV Network capability owner defines `VersionSyntax` and canonical representation
 ### Compatibility and version evolution
 Compatibility evaluation is excluded from identity construction and is consumer-owned under `CONTRACT_COMPATIBILITY`; no compatibility, normalization, coercion, ordering, or collector-version substitution is inferred.
 ### Dependencies
-Producer-defined `VersionSyntax` identity validation only; capability transition events and compatibility evaluation remain excluded.
+`CAPABILITY_MANAGEMENT.md` owner declaration of `OPAQUE_TOKEN_V1` and `CONTRACT_COMPATIBILITY.md` representation rules; capability transition events and compatibility evaluation remain excluded.
 ### Required tests
 Brand separation, invalid identity representation rejection, exact canonical round-trip/replay, and absence of compatibility inference or unsupported-version construction errors.
 
@@ -366,11 +366,11 @@ Status: `IMPLEMENTATION_READY`
 ### Unique owner
 Telemetry Context, owner of collection authorization, minimization, and validation rules.
 ### Conceptual schema v1
-Opaque exact `VersionValue` branded `CollectionPolicyVersion`; its producer-defined `VersionSyntax` and canonical representation are authoritative.
+Opaque exact `VersionValue` branded `CollectionPolicyVersion`. Telemetry declares `VersionSyntax = OPAQUE_TOKEN_V1`, exactly `[A-Za-z0-9][A-Za-z0-9._:+-]*`. Comparison is binary exact case-sensitive, so `v2` and `V2` are different identities. There is no normalization, coercion, or ordering; no case folding, semantics, equivalence, lifecycle or strategy. A transport maximum length is deferred and is not lexical version semantics.
 ### Error codes
-Only `INVALID_VERSION_IDENTITY_REPRESENTATION`; construction never reports unsupported-version errors.
+Only `INVALID_VERSION_IDENTITY_REPRESENTATION`, if and only if the lexical grammar fails. Construction performs no existence, latest, compatibility, or SemVer check and never reports unsupported-version errors.
 ### Lifecycle and terminality
-Immutable identity with no normalization, coercion, or ordering; policy changes publish a distinct value.
+The identity is immutable; the representation contract has no lifecycle or version strategy. Syntax may evolve only through a new producer contract revision, with exact history preserved.
 ### Replay and rebuild
 Replay preserves the exact active `VersionValue` bytes and never reinterprets them.
 ### Producer
@@ -378,7 +378,7 @@ Telemetry Context collection-policy owner defines `VersionSyntax` and canonical 
 ### Compatibility and version evolution
 Compatibility evaluation is excluded from identity construction and is consumer-owned under `CONTRACT_COMPATIBILITY`; no compatibility, normalization, coercion, or ordering is inferred.
 ### Dependencies
-Producer-defined `VersionSyntax` identity validation only; compatibility evaluation is not a dependency.
+`TELEMETRY.md` owner declaration of `OPAQUE_TOKEN_V1` and `CONTRACT_COMPATIBILITY.md` representation rules; compatibility evaluation is not a dependency.
 ### Required tests
 Brand separation, invalid identity representation rejection, exact canonical round-trip/replay, and absence of compatibility inference or unsupported-version construction errors.
 
@@ -387,11 +387,11 @@ Status: `IMPLEMENTATION_READY`
 ### Unique owner
 Telemetry Context, exclusive owner of `AudienceProjection`.
 ### Conceptual schema v1
-Opaque exact `VersionValue` branded `AudienceProjectionVersion`; its producer-defined `VersionSyntax` and canonical representation are authoritative.
+Opaque exact `VersionValue` branded `AudienceProjectionVersion`. Telemetry declares `VersionSyntax = OPAQUE_TOKEN_V1`, exactly `[A-Za-z0-9][A-Za-z0-9._:+-]*`. Comparison is binary exact case-sensitive, so `v2` and `V2` are different identities. There is no normalization, coercion, or ordering; no case folding, semantics, equivalence, lifecycle or strategy. A transport maximum length is deferred and is not lexical version semantics.
 ### Error codes
-Only `INVALID_VERSION_IDENTITY_REPRESENTATION`; construction never reports unsupported-version errors.
+Only `INVALID_VERSION_IDENTITY_REPRESENTATION`, if and only if the lexical grammar fails. Construction performs no existence, latest, compatibility, or SemVer check and never reports unsupported-version errors.
 ### Lifecycle and terminality
-Immutable identity with no normalization, coercion, or ordering; shape changes publish a distinct value.
+The identity is immutable; the representation contract has no lifecycle or version strategy. Syntax may evolve only through a new producer contract revision, with exact history preserved.
 ### Replay and rebuild
 Replay and rebuild preserve the exact `VersionValue` bytes and never reinterpret predecessors.
 ### Producer
@@ -399,7 +399,7 @@ Telemetry Context defines `VersionSyntax` and canonical representation; its proj
 ### Compatibility and version evolution
 Compatibility evaluation is excluded from identity construction and is consumer-owned under `CONTRACT_COMPATIBILITY`; no compatibility, normalization, coercion, ordering, or policy-version substitution is inferred.
 ### Dependencies
-Producer-defined `VersionSyntax` identity validation only; compatibility evaluation and projection builder are excluded.
+`TELEMETRY.md` owner declaration of `OPAQUE_TOKEN_V1` and `CONTRACT_COMPATIBILITY.md` representation rules; compatibility evaluation and projection builder are excluded.
 ### Required tests
 Brand separation, invalid identity representation rejection, exact canonical round-trip/replay, and absence of compatibility inference or unsupported-version construction errors.
 
@@ -408,11 +408,11 @@ Status: `IMPLEMENTATION_READY`
 ### Unique owner
 Telemetry Context, owner of projection confidence, coverage, validity, and derivation semantics.
 ### Conceptual schema v1
-Opaque exact `VersionValue` branded `AudienceProjectionPolicyVersion`; its producer-defined `VersionSyntax` and canonical representation are authoritative.
+Opaque exact `VersionValue` branded `AudienceProjectionPolicyVersion`. Telemetry declares `VersionSyntax = OPAQUE_TOKEN_V1`, exactly `[A-Za-z0-9][A-Za-z0-9._:+-]*`. Comparison is binary exact case-sensitive, so `v2` and `V2` are different identities. There is no normalization, coercion, or ordering; no case folding, semantics, equivalence, lifecycle or strategy. A transport maximum length is deferred and is not lexical version semantics.
 ### Error codes
-Only `INVALID_VERSION_IDENTITY_REPRESENTATION`; construction never reports unsupported-version errors.
+Only `INVALID_VERSION_IDENTITY_REPRESENTATION`, if and only if the lexical grammar fails. Construction performs no existence, latest, compatibility, or SemVer check and never reports unsupported-version errors.
 ### Lifecycle and terminality
-Immutable identity with no normalization, coercion, or ordering; semantic changes publish a distinct value.
+The identity is immutable; the representation contract has no lifecycle or version strategy. Syntax may evolve only through a new producer contract revision, with exact history preserved.
 ### Replay and rebuild
 Replay and rebuild preserve the exact selected `VersionValue` bytes and never reinterpret historical confidence.
 ### Producer
@@ -420,7 +420,7 @@ Telemetry Context defines `VersionSyntax` and canonical representation and publi
 ### Compatibility and version evolution
 Compatibility evaluation is excluded from identity construction and is consumer-owned under `CONTRACT_COMPATIBILITY`; no compatibility, normalization, coercion, ordering, or projection-version substitution is inferred.
 ### Dependencies
-Producer-defined `VersionSyntax` identity validation only; compatibility evaluation is not a dependency.
+`TELEMETRY.md` owner declaration of `OPAQUE_TOKEN_V1` and `CONTRACT_COMPATIBILITY.md` representation rules; compatibility evaluation is not a dependency.
 ### Required tests
 Brand separation, invalid identity representation rejection, exact canonical round-trip/replay, and absence of compatibility inference or unsupported-version construction errors.
 

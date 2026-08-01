@@ -4,7 +4,10 @@ This document defines the domain ownership and vocabulary for consumer-owned con
 
 ## Producer-owned version identity
 
-`VersionValue` is an opaque identity. The producer of each `VersionKind` defines `VersionSyntax` and one canonical representation for every revision. The platform preserves the exact canonical value supplied by that producer. Consumers compare exact identities: no normalization, coercion, ordering or implicit semantic interpretation is permitted unless that producer contract explicitly defines it for the particular `VersionKind`.
+`VersionValue` is an opaque identity. `OPAQUE_TOKEN_V1` is the shared initial representation contract: its lexical grammar is exactly `[A-Za-z0-9][A-Za-z0-9._:+-]*`. Comparison is binary exact case-sensitive, so `v2` and `V2` are different identities. There is no normalization or coercion and no semantics, ordering, equivalence, lifecycle or strategy. Construction returns `INVALID_VERSION_IDENTITY_REPRESENTATION` if and only if the lexical grammar fails; it performs no existence, latest, compatibility, or SemVer check. Syntax may evolve only through a new producer contract revision, and history preserves the exact prior value. A transport maximum length is deferred and is not lexical version semantics.
+
+The producer of each `VersionKind` defines `VersionSyntax` and one canonical representation. The platform preserves the exact canonical value supplied by that producer.
+No normalization, coercion, ordering or implicit semantic interpretation is permitted.
 
 `ContractSchemaVersion`, `CollectorVersion`, `CapabilityVersion`, `ProjectionVersion`, `PolicyVersion` and `CompatibilityMatrixRevision` identify different semantic subjects even when their text is equal. Constructing or retaining a version identity makes no compatibility claim.
 

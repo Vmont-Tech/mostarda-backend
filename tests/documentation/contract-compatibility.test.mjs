@@ -8,11 +8,15 @@ const paths = {
   platform: new URL("../../docs/specification/PLATFORM_SPECIFICATION.md", import.meta.url),
   tbs: new URL("../../docs/specification/TECHNICAL_BEHAVIORAL_SPECIFICATION.md", import.meta.url),
   telemetry: new URL("../../docs/domain/TELEMETRY.md", import.meta.url),
+  edge: new URL("../../docs/tv-network/EDGE_RUNTIME.md", import.meta.url),
+  capabilities: new URL("../../docs/tv-network/CAPABILITY_MANAGEMENT.md", import.meta.url),
   ownership: new URL("../../docs/domain/OWNERSHIP.md", import.meta.url),
   aggregates: new URL("../../docs/domain/AGGREGATES.md", import.meta.url),
   commands: new URL("../../docs/execution/COMMANDS.md", import.meta.url),
   events: new URL("../../docs/domain/DOMAIN_EVENTS.md", import.meta.url),
 };
+
+const opaqueTokenPattern = String.raw`[A-Za-z0-9][A-Za-z0-9._:+-]*`;
 
 const read = (name) => readFile(paths[name], "utf8");
 
@@ -131,6 +135,37 @@ test("domain compatibility authority defines consumer-local vocabulary and close
   assert.match(lifecycle, /complete six-field entry key[^.]*only after scope resolution/i);
   assert.match(lifecycle, /unavailable fields are structurally absent/i);
   assert.match(lifecycle, /no sentinel or default value/i);
+});
+
+test("DEC-065 defines OPAQUE_TOKEN_V1 as representation without version semantics", async () => {
+  const [compatibility, platform, tbs, decisions] = await Promise.all([
+    read("compatibility"), read("platform"), read("tbs"), read("decisions"),
+  ]);
+  for (const document of [compatibility, platform, tbs]) {
+    assert.match(document, /`OPAQUE_TOKEN_V1`/);
+    assert.ok(document.includes(opaqueTokenPattern));
+    assert.match(document, /binary exact case-sensitive/i);
+    assert.match(document, /`v2`[^.]*`V2`[^.]*different/i);
+    assert.match(document, /`INVALID_VERSION_IDENTITY_REPRESENTATION`[^.]*if and only if[^.]*lexical grammar fails/i);
+    assert.match(document, /no (?:existence, latest, compatibility, or SemVer|existence\/latest\/compatibility\/SemVer) check/i);
+    assert.match(document, /no normalization or coercion/i);
+    assert.match(document, /transport maximum length[^.]*not[^.]*lexical version semantics/i);
+  }
+  assert.match(decisions, /^\| `DEC-065` \|[^\n]*OPAQUE_TOKEN_V1[^\n]*ACCEPTED \|$/m);
+});
+
+test("each version producer declares OPAQUE_TOKEN_V1 for its owned identities", async () => {
+  const [telemetry, edge, capabilities] = await Promise.all([
+    read("telemetry"), read("edge"), read("capabilities"),
+  ]);
+  for (const artifact of [
+    "TelemetrySchemaVersion",
+    "CollectionPolicyVersion",
+    "AudienceProjectionVersion",
+    "AudienceProjectionPolicyVersion",
+  ]) assert.match(telemetry, new RegExp(`\\b${artifact}\\b[^\\n]*VersionSyntax[^\\n]*OPAQUE_TOKEN_V1`));
+  assert.match(edge, /\bCollectorVersion\b[^\n]*VersionSyntax[^\n]*OPAQUE_TOKEN_V1/);
+  assert.match(capabilities, /\bCapabilityVersion\b[^\n]*VersionSyntax[^\n]*OPAQUE_TOKEN_V1/);
 });
 
 test("TBS independently defines deterministic observable evaluation behavior", async () => {

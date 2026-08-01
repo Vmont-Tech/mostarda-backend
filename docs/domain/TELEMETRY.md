@@ -38,12 +38,12 @@ Todo contrato preserva identidade do evento e produtor, causation, correlation, 
 
 The following versions are independent; they must never be collapsed into a generic `version`:
 
-- `TelemetrySchemaVersion`: significado e forma das medições e buckets;
+- `TelemetrySchemaVersion`: significado e forma das medições e buckets; owner Telemetry declara `VersionSyntax = OPAQUE_TOKEN_V1`;
 - `CollectorVersion`: algoritmo/implementação que produziu a medição;
 - `CapabilityVersion`: comportamento e suporte declarados pela capability;
-- `CollectionPolicyVersion`: autorização, minimização e regras de coleta;
-- `AudienceProjectionVersion`: schema e contrato de derivação da projeção;
-- `AudienceProjectionPolicyVersion`: confiança, cobertura, validade e semântica de derivação;
+- `CollectionPolicyVersion`: autorização, minimização e regras de coleta; owner Telemetry declara `VersionSyntax = OPAQUE_TOKEN_V1`;
+- `AudienceProjectionVersion`: schema e contrato de derivação da projeção; owner Telemetry declara `VersionSyntax = OPAQUE_TOKEN_V1`;
+- `AudienceProjectionPolicyVersion`: confiança, cobertura, validade e semântica de derivação; owner Telemetry declara `VersionSyntax = OPAQUE_TOKEN_V1`;
 - `PricingPolicyVersion`: uso autorizado da projeção no cálculo de preço.
 
 Mudança de significado observável, input aceito, output, derivação, interpretação de confiança ou compatibilidade publica uma versão sucessora e nunca reinterpreta o histórico. Upcast autorizado ocorre no owner receptor e preserva o envelope imutável original.
