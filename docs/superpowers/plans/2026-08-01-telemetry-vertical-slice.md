@@ -118,6 +118,66 @@ git add docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md packages/generati
 git commit -m "docs: authorize certified telemetry artifacts"
 ```
 
+### Architecture Review Gate — mandatory manual approval
+
+**Execution rule:** This is a blocking manual gate. Task 3 and every later task remain prohibited until the review record is completed, committed and explicitly marked `APPROVED`. Passing automated tests alone cannot satisfy or bypass this gate.
+
+**Files:**
+- Create: `docs/reviews/TELEMETRY_ARCHITECTURE_REVIEW_GATE_V1.md`
+- Test: `tests/documentation/telemetry-architecture-review-gate.test.mjs`
+
+- [ ] **Gate 1: Verify no Bounded Context was introduced**
+
+Inspect the Bounded Context catalog, Platform Specification, `TELEMETRY.md` and the staged diff. Record objective references proving that no `Audience`, `Telemetry Audience` or equivalent new Bounded Context exists.
+
+- [ ] **Gate 2: Verify unique AudienceProjection ownership**
+
+Record that `AudienceProjection` is an internal, rebuildable read artifact produced exclusively by Telemetry Context from the Telemetry Ledger. Confirm that Pricing, Analytics, Marketplace and AI receive read-only public contracts and cannot produce, promote, expire or invalidate it.
+
+- [ ] **Gate 3: Verify Evidence authority**
+
+Record that Edge/Playback produces `PlaybackEvent` and `PlaybackSignature`, while Evidence Ledger remains the only materializer and validator of `EvidenceRecord`. Confirm that TelemetryBucket, Telemetry Ledger and AudienceProjection cannot create Evidence or financial eligibility.
+
+- [ ] **Gate 4: Verify Pricing remains a consumer**
+
+Record that Pricing consumes only an authorized AudienceProjection snapshot, calculates only prospective quotes and cannot accept/reject telemetry buckets, mutate the Telemetry Ledger or alter applied/held/sold prices.
+
+- [ ] **Gate 5: Verify every promoted artifact against the implementation gate**
+
+For each READY artifact in `artifact-authorization.ts`, cite the exact section of `TELEMETRY_IMPLEMENTATION_GATE_V1.md` that closes owner, schema, errors, lifecycle, replay, versioning and compatibility. Any artifact lacking one item must remain PARTIAL/BLOCKED.
+
+- [ ] **Gate 6: Write the failing enforcement test**
+
+```js
+test("implementation cannot start before the manual architecture gate is approved", () => {
+  const review = read("docs/reviews/TELEMETRY_ARCHITECTURE_REVIEW_GATE_V1.md");
+  assert.match(review, /Status:\s*APPROVED/);
+  for (const invariant of [
+    "NO_NEW_BOUNDED_CONTEXT",
+    "AUDIENCE_PROJECTION_OWNED_BY_TELEMETRY",
+    "EVIDENCE_LEDGER_ONLY_MATERIALIZER",
+    "PRICING_READ_ONLY_CONSUMER",
+    "AUTHORIZED_ARTIFACTS_MATCH_GATE",
+  ]) assert.match(review, new RegExp(`${invariant}:\\s*PASS`));
+});
+```
+
+- [ ] **Gate 7: Perform the manual review and record evidence**
+
+The reviewer must list reviewed commits, reviewed files, each invariant as `PASS` or `FAIL`, evidence paths and the final status. Any `FAIL`, missing evidence or unresolved contradiction produces `REJECTED` and blocks Task 3.
+
+- [ ] **Gate 8: Run all pre-implementation gates**
+
+Run: `npm run test:docs && npm run test:architecture && git diff --check`  
+Expected: PASS and review status `APPROVED`.
+
+- [ ] **Gate 9: Commit the signed review record**
+
+```bash
+git add docs/reviews/TELEMETRY_ARCHITECTURE_REVIEW_GATE_V1.md tests/documentation/telemetry-architecture-review-gate.test.mjs
+git commit -m "docs: approve telemetry architecture review gate"
+```
+
 ### Task 3: Implement identities and capability observations
 
 **Files:**
