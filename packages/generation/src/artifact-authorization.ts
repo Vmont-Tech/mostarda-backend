@@ -36,16 +36,6 @@ export const telemetryAuthorizedArtifacts = Object.freeze([
   "AudienceProjectionId",
   "TelemetryEventId",
   "TelemetryCapabilityStatus",
-  "TelemetrySchemaVersion",
-  "CollectorVersion",
-  "CapabilityVersion",
-  "CollectionPolicyVersion",
-  "AudienceProjectionVersion",
-  "AudienceProjectionPolicyVersion",
-  "TelemetryBucket",
-  "TelemetryBucketAccepted",
-  "TelemetryBucketRejected",
-  "AudienceProjection",
 ] as const);
 
 for (const artifact of telemetryAuthorizedArtifacts) {
@@ -60,6 +50,16 @@ for (const artifact of telemetryAuthorizedArtifacts) {
 }
 
 export const telemetryPartialArtifacts = Object.freeze([
+  "TelemetrySchemaVersion",
+  "CollectorVersion",
+  "CapabilityVersion",
+  "CollectionPolicyVersion",
+  "AudienceProjectionVersion",
+  "AudienceProjectionPolicyVersion",
+  "TelemetryBucket",
+  "TelemetryBucketAccepted",
+  "TelemetryBucketRejected",
+  "AudienceProjection",
   "TelemetryCaptured",
   "TelemetryBucketClosed",
   "EdgeTelemetryCapabilityChanged",

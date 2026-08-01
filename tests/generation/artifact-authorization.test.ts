@@ -109,6 +109,26 @@ test("telemetry infrastructure remains absent and denied by default", () => {
   }
 });
 
+test("underspecified versions and their composite dependents remain PARTIAL", () => {
+  for (const artifact of [
+    "TelemetrySchemaVersion",
+    "CollectorVersion",
+    "CapabilityVersion",
+    "CollectionPolicyVersion",
+    "AudienceProjectionVersion",
+    "AudienceProjectionPolicyVersion",
+    "TelemetryBucket",
+    "TelemetryBucketAccepted",
+    "TelemetryBucketRejected",
+    "AudienceProjection",
+  ]) {
+    const authorization = authorizationFor(artifact);
+    assert.equal(authorization.status, "IMPLEMENTATION_PARTIAL");
+    assert.equal(authorization.source, "TELEMETRY_IMPLEMENTATION_GATE_V1.md");
+    assert.throws(() => assertGenerationAuthorized(artifact), ArtifactGenerationBlocked);
+  }
+});
+
 test("registry enumeration exhaustively exposes telemetry gate provenance without mutation leaks", () => {
   assert.equal(
     typeof artifactAuthorizationModule.registeredArtifactAuthorizations,
@@ -161,12 +181,12 @@ test("registry enumeration exhaustively exposes telemetry gate provenance withou
   assert.deepEqual(authorizationFor(first.artifact), first);
 });
 
-test("READY telemetry composites do not authorize their excluded mechanisms", () => {
+test("READY telemetry values do not authorize excluded mechanisms or PARTIAL composites", () => {
   const dependencies = new Map([
-    ["TelemetryBucket", ["TelemetryAdapter", "TelemetryIngestionService"]],
-    ["TelemetryBucketAccepted", ["TelemetryRepository", "TelemetryTopic"]],
-    ["TelemetryBucketRejected", ["TelemetryBroker", "TelemetryApi"]],
-    ["AudienceProjection", ["AudienceProjectionApplier", "AudienceProjectionProduced"]],
+    ["TelemetryBucketId", ["TelemetryBucket", "TelemetryAdapter", "TelemetryIngestionService"]],
+    ["TelemetryEventId", ["TelemetryBucketAccepted", "TelemetryRepository", "TelemetryTopic"]],
+    ["AudienceProjectionId", ["AudienceProjection", "AudienceProjectionApplier"]],
+    ["TelemetryCapabilityStatus", ["TelemetryBroker", "TelemetryApi"]],
   ]);
   for (const [artifact, excluded] of dependencies) {
     assert.doesNotThrow(() => assertGenerationAuthorized(artifact));

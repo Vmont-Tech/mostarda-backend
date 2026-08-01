@@ -4,8 +4,8 @@
 **Normative domain source:** `docs/domain/TELEMETRY.md` (`DEC-063`)  
 **Scope:** value contracts, the immutable minute bucket, acceptance/rejection events, and the immutable audience projection record
 
-READY_MANIFEST: ["TelemetryBucketId","AudienceProjectionId","TelemetryEventId","TelemetryCapabilityStatus","TelemetrySchemaVersion","CollectorVersion","CapabilityVersion","CollectionPolicyVersion","AudienceProjectionVersion","AudienceProjectionPolicyVersion","TelemetryBucket","TelemetryBucketAccepted","TelemetryBucketRejected","AudienceProjection"]
-PARTIAL_MANIFEST: ["TelemetryCaptured","TelemetryBucketClosed","EdgeTelemetryCapabilityChanged","EdgeTelemetryIncidentReported","TelemetryValidationIncidentReported","TelemetryCapabilityChanged","TelemetryIncidentReported","CapabilityDeclared","CapabilityValidated","CapabilityRejected","CapabilityActivated","CapabilityDegraded","CapabilitySuspended","CapabilityRecovered","CapabilityRetired","AudienceProjectionApplier","AudienceProjectionProduced","AudienceProjectionExpired","AudienceProjectionInvalidated"]
+READY_MANIFEST: ["TelemetryBucketId","AudienceProjectionId","TelemetryEventId","TelemetryCapabilityStatus"]
+PARTIAL_MANIFEST: ["TelemetrySchemaVersion","CollectorVersion","CapabilityVersion","CollectionPolicyVersion","AudienceProjectionVersion","AudienceProjectionPolicyVersion","TelemetryBucket","TelemetryBucketAccepted","TelemetryBucketRejected","AudienceProjection","TelemetryCaptured","TelemetryBucketClosed","EdgeTelemetryCapabilityChanged","EdgeTelemetryIncidentReported","TelemetryValidationIncidentReported","TelemetryCapabilityChanged","TelemetryIncidentReported","CapabilityDeclared","CapabilityValidated","CapabilityRejected","CapabilityActivated","CapabilityDegraded","CapabilitySuspended","CapabilityRecovered","CapabilityRetired","AudienceProjectionApplier","AudienceProjectionProduced","AudienceProjectionExpired","AudienceProjectionInvalidated"]
 
 This gate certifies only the names marked `IMPLEMENTATION_READY` below. The following are not authorized: adapters; not authorized: ingestion services; not authorized: API; not authorized: repositories; not authorized: topics; not authorized: brokers. Persistence mappings, transport envelopes, and deployment resources are likewise excluded. An artifact absent from the READY list remains denied by CGS-A-1. Public event families not concretized here remain non-READY.
 
@@ -17,16 +17,16 @@ This gate certifies only the names marked `IMPLEMENTATION_READY` below. The foll
 | `AudienceProjectionId` | `IMPLEMENTATION_READY` | Telemetry Context | none; value type | UTF-8 string validation |
 | `TelemetryEventId` | `IMPLEMENTATION_READY` | Telemetry Context | none; value type | UTF-8 string validation |
 | `TelemetryCapabilityStatus` | `IMPLEMENTATION_READY` | Telemetry Context contract; Edge observes the value | Edge Runtime collector | none |
-| `TelemetrySchemaVersion` | `IMPLEMENTATION_READY` | Telemetry Context | none; value type | UTF-8 string validation |
-| `CollectorVersion` | `IMPLEMENTATION_READY` | Edge Runtime | Edge Runtime collector | UTF-8 string validation |
-| `CapabilityVersion` | `IMPLEMENTATION_READY` | TV Network capability owner | TV Network capability owner | UTF-8 string validation |
-| `CollectionPolicyVersion` | `IMPLEMENTATION_READY` | Telemetry Context | none; value type | UTF-8 string validation |
-| `AudienceProjectionVersion` | `IMPLEMENTATION_READY` | Telemetry Context | none; value type | UTF-8 string validation |
-| `AudienceProjectionPolicyVersion` | `IMPLEMENTATION_READY` | Telemetry Context | none; value type | UTF-8 string validation |
-| `TelemetryBucket` | `IMPLEMENTATION_READY` | Telemetry Context owns the acquisition contract; Edge Runtime produces instances | Edge Runtime | READY value contracts above; opaque external references |
-| `TelemetryBucketAccepted` | `IMPLEMENTATION_READY` | Telemetry Context | Telemetry Context validator, after ledger append | `TelemetryBucket`, `TelemetryEventId` |
-| `TelemetryBucketRejected` | `IMPLEMENTATION_READY` | Telemetry Context | Telemetry Context validator, without accepted-observation append | `TelemetryBucketId`, `TelemetryEventId` |
-| `AudienceProjection` | `IMPLEMENTATION_READY` | Telemetry Context | projection builder is outside this gate | accepted bucket identities and READY versions |
+| `TelemetrySchemaVersion` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | none; value type | supported version set/compatibility lookup absent |
+| `CollectorVersion` | `IMPLEMENTATION_PARTIAL` | Edge Runtime | Edge Runtime collector | supported version set/compatibility lookup absent |
+| `CapabilityVersion` | `IMPLEMENTATION_PARTIAL` | TV Network capability owner | TV Network capability owner | supported version set/compatibility lookup absent |
+| `CollectionPolicyVersion` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | none; value type | supported version set/compatibility lookup absent |
+| `AudienceProjectionVersion` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | none; value type | supported version set/compatibility lookup absent |
+| `AudienceProjectionPolicyVersion` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | none; value type | supported version set/compatibility lookup absent |
+| `TelemetryBucket` | `IMPLEMENTATION_PARTIAL` | Telemetry Context owns the acquisition contract; Edge Runtime produces instances | Edge Runtime | blocked by PARTIAL version dependencies |
+| `TelemetryBucketAccepted` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | Telemetry Context validator, after ledger append | blocked by PARTIAL `TelemetryBucket` dependency |
+| `TelemetryBucketRejected` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | Telemetry Context validator, without accepted-observation append | blocked by PARTIAL `TelemetrySchemaVersion` dependency |
+| `AudienceProjection` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | projection builder is outside this gate | blocked by PARTIAL version dependencies |
 | `TelemetryCaptured` | `IMPLEMENTATION_PARTIAL` | Edge Runtime | Edge Runtime | complete v1 payload/error schema absent |
 | `TelemetryBucketClosed` | `IMPLEMENTATION_PARTIAL` | Telemetry acquisition contract | Edge Runtime | complete v1 payload/error schema absent |
 | `EdgeTelemetryCapabilityChanged` | `IMPLEMENTATION_PARTIAL` | Edge Runtime | Edge Runtime | complete v1 payload/error schema absent |
@@ -299,7 +299,8 @@ None.
 Exhaust all five values, reject all others, and preserve missing-versus-zero semantics.
 
 ## Artifact: TelemetrySchemaVersion
-Status: `IMPLEMENTATION_READY`
+Status: `IMPLEMENTATION_PARTIAL`
+Reason: supported version set/compatibility lookup absent.
 ### Unique owner
 Telemetry Context, as exclusive owner of telemetry acquisition contracts and schemas.
 ### Conceptual schema v1
@@ -320,7 +321,8 @@ UTF-8 validation only.
 Brand separation, empty and unsupported rejection, round-trip, and historical preservation.
 
 ## Artifact: CollectorVersion
-Status: `IMPLEMENTATION_READY`
+Status: `IMPLEMENTATION_PARTIAL`
+Reason: supported version set/compatibility lookup absent.
 ### Unique owner
 Edge Runtime, owner of the collector implementation and algorithm that produced a measurement.
 ### Conceptual schema v1
@@ -341,7 +343,8 @@ UTF-8 validation only.
 Brand separation, empty and unsupported rejection, round-trip, and historical preservation.
 
 ## Artifact: CapabilityVersion
-Status: `IMPLEMENTATION_READY`
+Status: `IMPLEMENTATION_PARTIAL`
+Reason: supported version set/compatibility lookup absent.
 ### Unique owner
 TV Network capability owner, whose authoritative capability transitions are listed by `TELEMETRY.md`.
 ### Conceptual schema v1
@@ -362,7 +365,8 @@ UTF-8 validation only; capability transition events remain denied.
 Brand separation, empty and unsupported rejection, round-trip, and source-value preservation.
 
 ## Artifact: CollectionPolicyVersion
-Status: `IMPLEMENTATION_READY`
+Status: `IMPLEMENTATION_PARTIAL`
+Reason: supported version set/compatibility lookup absent.
 ### Unique owner
 Telemetry Context, owner of collection authorization, minimization, and validation rules.
 ### Conceptual schema v1
@@ -383,7 +387,8 @@ UTF-8 validation only.
 Brand separation, empty and unsupported rejection, round-trip, and historical preservation.
 
 ## Artifact: AudienceProjectionVersion
-Status: `IMPLEMENTATION_READY`
+Status: `IMPLEMENTATION_PARTIAL`
+Reason: supported version set/compatibility lookup absent.
 ### Unique owner
 Telemetry Context, exclusive owner of `AudienceProjection`.
 ### Conceptual schema v1
@@ -404,7 +409,8 @@ UTF-8 validation only.
 Brand separation, empty and unsupported rejection, round-trip, and rebuild preservation.
 
 ## Artifact: AudienceProjectionPolicyVersion
-Status: `IMPLEMENTATION_READY`
+Status: `IMPLEMENTATION_PARTIAL`
+Reason: supported version set/compatibility lookup absent.
 ### Unique owner
 Telemetry Context, owner of projection confidence, coverage, validity, and derivation semantics.
 ### Conceptual schema v1
@@ -425,7 +431,8 @@ UTF-8 validation only.
 Brand separation, empty and unsupported rejection, round-trip, and confidence preservation.
 
 ## Artifact: TelemetryBucket
-Status: `IMPLEMENTATION_READY`
+Status: `IMPLEMENTATION_PARTIAL`
+Reason: transitively blocked by PARTIAL version contracts; no dependency may be promoted by association.
 ### Unique owner
 Telemetry Context owns the acquisition contract and validation boundary.
 ### Conceptual schema v1
@@ -446,7 +453,8 @@ The ten READY scalar/status contracts and opaque external references; no infrast
 Every field invariant/error, closure, hash-purpose separation, retry idempotency/conflict, version retention, and missing-versus-zero.
 
 ## Artifact: TelemetryBucketAccepted
-Status: `IMPLEMENTATION_READY`
+Status: `IMPLEMENTATION_PARTIAL`
+Reason: transitively blocked by PARTIAL `TelemetryBucket`; no dependency may be promoted by association.
 ### Unique owner
 Telemetry Context.
 ### Conceptual schema v1
@@ -467,7 +475,8 @@ READY `TelemetryBucket` and `TelemetryEventId`; repository/topic mechanisms rema
 Envelope fields, producer, time order, append-before-event, duplicate/conflict, unsupported version, and provenance retention.
 
 ## Artifact: TelemetryBucketRejected
-Status: `IMPLEMENTATION_READY`
+Status: `IMPLEMENTATION_PARTIAL`
+Reason: transitively blocked by PARTIAL `TelemetrySchemaVersion`; no dependency may be promoted by association.
 ### Unique owner
 Telemetry Context.
 ### Conceptual schema v1
@@ -488,7 +497,8 @@ READY identity/version contracts; API/broker mechanisms remain denied.
 Every reason, envelope fields, producer, absence of append, duplicate/conflict, and unsupported version/reason.
 
 ## Artifact: AudienceProjection
-Status: `IMPLEMENTATION_READY`
+Status: `IMPLEMENTATION_PARTIAL`
+Reason: transitively blocked by PARTIAL version contracts; no dependency may be promoted by association.
 ### Unique owner
 Telemetry Context.
 ### Conceptual schema v1
@@ -509,6 +519,10 @@ READY identities/status/versions and accepted bucket identities; applier, lifecy
 All fields, interval/uniqueness/provenance rules, confidence/coverage/validity, deterministic reconstruction, and ledger non-mutation.
 
 ## Non-READY PARTIAL lifecycle and event artifacts
+
+The six version artifacts `TelemetrySchemaVersion`, `CollectorVersion`, `CapabilityVersion`, `CollectionPolicyVersion`, `AudienceProjectionVersion`, and `AudienceProjectionPolicyVersion` are PARTIAL for the exact reason: supported version set/compatibility lookup absent. The gate defines no allowlist or default and therefore cannot implement its unsupported-version errors or compatibility tests.
+
+The dependency closure is mechanical: `TelemetryBucket` depends on the first four PARTIAL version artifacts; `TelemetryBucketAccepted` depends on PARTIAL `TelemetryBucket`; `TelemetryBucketRejected` depends on PARTIAL `TelemetrySchemaVersion`; and `AudienceProjection` depends on all six PARTIAL version artifacts. These four composite records are consequently PARTIAL and denied rather than promoted by association.
 
 Every artifact in `PARTIAL_MANIFEST` is `IMPLEMENTATION_PARTIAL` and remains denied. Projection lifecycle artifacts lack replay metadata, complete event schemas, and complete transition/error behavior; no transition table, stream fold, or duplicate-event behavior is certified. The other PARTIAL contracts lack a complete telemetry-specific v1 payload/error schema or are conceptual families rather than concrete event artifacts.
 
