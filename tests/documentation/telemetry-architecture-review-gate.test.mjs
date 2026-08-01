@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
@@ -10,6 +11,18 @@ const implementationGatePath = new URL(
   "../../docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md",
   import.meta.url,
 );
+const repositoryRoot = new URL("../../", import.meta.url);
+
+const sourcePaths = {
+  design: new URL("../../docs/superpowers/specs/2026-08-01-edge-telemetry-pricing-design.md", import.meta.url),
+  telemetry: new URL("../../docs/domain/TELEMETRY.md", import.meta.url),
+  contexts: new URL("../../docs/domain/BOUNDED_CONTEXTS.md", import.meta.url),
+  ownership: new URL("../../docs/domain/OWNERSHIP.md", import.meta.url),
+  platform: new URL("../../docs/specification/PLATFORM_SPECIFICATION.md", import.meta.url),
+  events: new URL("../../docs/domain/DOMAIN_EVENTS.md", import.meta.url),
+  evidence: new URL("../../docs/domain/EVIDENCE_PIPELINE.md", import.meta.url),
+  pricing: new URL("../../docs/domain/PRICING_ENGINE.md", import.meta.url),
+};
 
 const boundedSection = (document, heading) => {
   const marker = `## ${heading}`;
@@ -17,6 +30,12 @@ const boundedSection = (document, heading) => {
   assert.notEqual(start, -1, `missing section: ${heading}`);
   const end = document.indexOf("\n## ", start + marker.length);
   return document.slice(start, end === -1 ? document.length : end);
+};
+
+const lineContaining = (document, needle) => {
+  const line = document.split(/\r?\n/).find((candidate) => candidate.includes(needle));
+  assert.ok(line, `missing bounded source line containing: ${needle}`);
+  return line;
 };
 
 test("records the approved Telemetry architecture review verdict and immutable scope", async () => {
@@ -38,6 +57,12 @@ test("records the approved Telemetry architecture review verdict and immutable s
   const scope = boundedSection(review, "Reviewed scope");
   assert.match(scope, /^Reviewed head: `757d9b0`$/m);
   assert.match(scope, /^Reviewed range: `7029c40\.\.757d9b0`$/m);
+
+  execFileSync("git", ["cat-file", "-e", "757d9b0^{commit}"], { cwd: repositoryRoot });
+  execFileSync("git", ["cat-file", "-e", "7029c40^{commit}"], { cwd: repositoryRoot });
+  execFileSync("git", ["merge-base", "--is-ancestor", "7029c40", "757d9b0"], {
+    cwd: repositoryRoot,
+  });
 });
 
 test("provides bounded reviewer evidence for every invariant", async () => {
@@ -59,7 +84,9 @@ test("provides bounded reviewer evidence for every invariant", async () => {
     "docs/domain/OWNERSHIP.md",
     "docs/specification/PLATFORM_SPECIFICATION.md",
     "docs/domain/DOMAIN_EVENTS.md",
+    "docs/domain/EVIDENCE_PIPELINE.md",
     "docs/domain/PRICING_ENGINE.md",
+    "docs/superpowers/specs/2026-08-01-edge-telemetry-pricing-design.md",
     "docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md",
     "packages/generation/src/artifact-authorization.ts",
     "tests/generation/artifact-authorization.test.ts",
@@ -74,6 +101,40 @@ test("provides bounded reviewer evidence for every invariant", async () => {
   assert.match(evidence, /READY and PARTIAL sets remain disjoint/i);
 });
 
+test("authoritative sources directly preserve all five architecture invariants", async () => {
+  const sources = Object.fromEntries(
+    await Promise.all(
+      Object.entries(sourcePaths).map(async ([name, path]) => [name, await readFile(path, "utf8")]),
+    ),
+  );
+
+  assert.match(lineContaining(sources.design, "does not introduce an Audience Bounded Context"), /internal, versioned and rebuildable Telemetry read artifact/);
+  assert.match(lineContaining(sources.telemetry, "does not introduce an Audience Bounded Context"), /internal Telemetry projection/);
+  assert.match(lineContaining(sources.contexts, "Telemetry Ledger append-only"), /`AudienceProjection` interna/);
+  assert.match(lineContaining(sources.ownership, "| AudienceProjection |"), /\*\*Telemetry Context\*\*.*Pricing Engine, AI, Analytics, Marketplace/);
+  assert.match(lineContaining(sources.platform, "não introduz Audience Bounded Context"), /Telemetry Context possui exclusivamente/);
+  assert.match(lineContaining(sources.telemetry, "nenhum consumidor pode produzi-la ou alterá-la"), /internal Telemetry projection/);
+
+  for (const name of ["telemetry", "events"]) {
+    const evidenceBoundary = lineContaining(sources[name], "Edge/Playback produces authoritative playback facts");
+    assert.match(evidenceBoundary, /Evidence Ledger alone materializes EvidenceRecord/);
+  }
+  assert.match(lineContaining(sources.evidence, "somente o Evidence Ledger materializa"), /Edge produz `PlaybackEvent`.*`EvidenceRecord`/);
+  assert.match(lineContaining(sources.evidence, "| `PlaybackSignature` |"), /Edge Runtime/);
+
+  for (const [name, needle] of [
+    ["telemetry", "Only new PricingQuotes may consume"],
+    ["pricing", "Only new PricingQuotes may consume"],
+    ["platform", "Somente novos `PricingQuote` podem consumir"],
+  ]) {
+    const pricingBoundary = lineContaining(sources[name], needle);
+    assert.match(pricingBoundary, /applied PricingQuotes remain unchanged/i);
+    assert.match(pricingBoundary, /InventoryHolds remain unchanged/);
+    assert.match(pricingBoundary, /reserved or sold Slots remain unchanged/);
+    assert.match(pricingBoundary, /prices remain unchanged/);
+  }
+});
+
 test("records exact manifests and denies infrastructure authorization", async () => {
   const [review, gate] = await Promise.all([
     readFile(reviewPath, "utf8"),
@@ -86,6 +147,80 @@ test("records exact manifests and denies infrastructure authorization", async ()
   assert.equal(ready.length, 14);
   assert.equal(partial.length, 19);
   assert.equal(new Set([...ready, ...partial]).size, 33);
+
+  const denied = [
+    "TelemetryService",
+    "TelemetryAPI",
+    "TelemetryRepository",
+    "TelemetryTopic",
+    "TelemetryBroker",
+    "TelemetryAdapter",
+    "TelemetryIngestionService",
+    "TelemetryPersistenceMapping",
+    "TelemetryTransportEnvelope",
+    "TelemetryDeploymentResource",
+  ];
+  const authorizationModule = new URL(
+    "../../packages/generation/src/artifact-authorization.ts",
+    import.meta.url,
+  ).href;
+  const script = `
+    import {
+      telemetryAuthorizedArtifacts,
+      telemetryPartialArtifacts,
+      authorizationFor,
+      assertGenerationAuthorized,
+    } from ${JSON.stringify(authorizationModule)};
+    const names = ${JSON.stringify({ ready, partial, denied })};
+    const exercise = (artifact) => {
+      const authorization = authorizationFor(artifact);
+      try {
+        assertGenerationAuthorized(artifact);
+        return { artifact, status: authorization.status, allowed: true };
+      } catch (error) {
+        return { artifact, status: authorization.status, allowed: false, thrownStatus: error.status };
+      }
+    };
+    process.stdout.write(JSON.stringify({
+      exportedReady: [...telemetryAuthorizedArtifacts],
+      exportedPartial: [...telemetryPartialArtifacts],
+      readyResults: names.ready.map(exercise),
+      partialResults: names.partial.map(exercise),
+      deniedResults: names.denied.map(exercise),
+    }));
+  `;
+  const report = JSON.parse(
+    execFileSync(
+      process.execPath,
+      ["--experimental-strip-types", "--input-type=module", "--eval", script],
+      { cwd: repositoryRoot, encoding: "utf8" },
+    ),
+  );
+
+  assert.deepEqual(report.exportedReady, ready);
+  assert.deepEqual(report.exportedPartial, partial);
+  assert.deepEqual(
+    report.readyResults,
+    ready.map((artifact) => ({ artifact, status: "IMPLEMENTATION_READY", allowed: true })),
+  );
+  assert.deepEqual(
+    report.partialResults,
+    partial.map((artifact) => ({
+      artifact,
+      status: "IMPLEMENTATION_PARTIAL",
+      allowed: false,
+      thrownStatus: "IMPLEMENTATION_PARTIAL",
+    })),
+  );
+  assert.deepEqual(
+    report.deniedResults,
+    denied.map((artifact) => ({
+      artifact,
+      status: "IMPLEMENTATION_BLOCKED_ARCHITECTURE",
+      allowed: false,
+      thrownStatus: "IMPLEMENTATION_BLOCKED_ARCHITECTURE",
+    })),
+  );
   assert.match(authorization, /^READY count: 14$/m);
   assert.match(authorization, /^PARTIAL count: 19$/m);
   assert.match(authorization, /^Unknown artifacts: denied$/m);
@@ -104,11 +239,15 @@ test("records reviewed files, commands, results, and the non-blocking whitespace
   const note = boundedSection(review, "Audit note");
 
   assert.match(files, /The reviewer directly inspected/);
+  assert.match(files, /`docs\/domain\/EVIDENCE_PIPELINE\.md` — authoritative Evidence materialization pipeline/);
+  assert.match(files, /`docs\/superpowers\/specs\/2026-08-01-edge-telemetry-pricing-design\.md` — approved design baseline/);
   assert.match(commands, /`git diff --name-only 7029c40\.\.757d9b0` — PASS/);
   assert.match(commands, /supporting evidence, not a substitute for direct inspection/i);
   assert.match(commands, /`npm run test:docs` — PASS/);
   assert.match(commands, /`npm run test:architecture` — PASS/);
   assert.match(commands, /`git diff --check` — PASS/);
+  assert.match(commands, /^Evidence type: `structured command record`$/m);
+  assert.match(commands, /^Claim boundary: `recorded result; not cryptographic proof of historical output`$/m);
   assert.match(note, /markdown trailing whitespace outside the architecture verdict/i);
   assert.match(note, /current branch passes `git diff --check`/i);
 });

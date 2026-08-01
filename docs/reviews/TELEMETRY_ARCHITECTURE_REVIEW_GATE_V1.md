@@ -37,7 +37,8 @@ The review assessed the architecture and authorization changes in that immutable
 
 ### Evidence materialization
 
-- `docs/domain/TELEMETRY.md:9`, `docs/domain/DOMAIN_EVENTS.md:114`, and `docs/domain/OWNERSHIP.md:67` state that Edge/Playback produces authoritative playback facts (`PlaybackEvent` and `PlaybackSignature`) and Evidence Ledger alone materializes `EvidenceRecord`.
+- `docs/superpowers/specs/2026-08-01-edge-telemetry-pricing-design.md:21-23,102-106` is the approved design boundary: Playback owns execution facts, Telemetry owns accepted observations and projection, and Evidence Ledger owns evidence materialization.
+- `docs/domain/TELEMETRY.md:9`, `docs/domain/DOMAIN_EVENTS.md:114`, `docs/domain/OWNERSHIP.md:67`, and `docs/domain/EVIDENCE_PIPELINE.md:30,36-38` state that Edge/Playback produces authoritative playback facts (`PlaybackEvent` and `PlaybackSignature`) and Evidence Ledger alone materializes `EvidenceRecord`.
 - Telemetry and `AudienceProjection` cannot materialize Evidence, and no reviewed artifact creates a bypass around Evidence Ledger.
 
 ### Pricing consumption
@@ -62,13 +63,14 @@ The registry and implementation gate contain the same READY and PARTIAL names. T
 
 ## Reviewed files
 
-The reviewer directly inspected the changed architecture, domain, gate, authorization, and supporting-test files:
+The reviewer directly inspected the changed architecture, domain, gate, authorization, and supporting-test files, plus the unchanged authoritative design and Evidence pipeline sources needed to validate the cross-context claims:
 
 - `docs/domain/AGGREGATES.md`
 - `docs/domain/ASSETS.md`
 - `docs/domain/BOUNDED_CONTEXTS.md`
 - `docs/domain/CAPABILITIES.md`
 - `docs/domain/DOMAIN_EVENTS.md`
+- `docs/domain/EVIDENCE_PIPELINE.md` — authoritative Evidence materialization pipeline
 - `docs/domain/OWNERSHIP.md`
 - `docs/domain/PRICING_ENGINE.md`
 - `docs/domain/TELEMETRY.md`
@@ -76,6 +78,7 @@ The reviewer directly inspected the changed architecture, domain, gate, authoriz
 - `docs/specification/PLATFORM_SPECIFICATION.md`
 - `docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md`
 - `docs/superpowers/plans/2026-08-01-telemetry-vertical-slice.md`
+- `docs/superpowers/specs/2026-08-01-edge-telemetry-pricing-design.md` — approved design baseline
 - `docs/tv-network/EDGE_RUNTIME.md`
 - `packages/generation/src/artifact-authorization.ts`
 - `tests/documentation/telemetry-implementation-gate.test.mjs`
@@ -83,9 +86,13 @@ The reviewer directly inspected the changed architecture, domain, gate, authoriz
 
 ## Commands and results
 
+Evidence type: `structured command record`
+Claim boundary: `recorded result; not cryptographic proof of historical output`
+
 - `git diff --name-only 7029c40..757d9b0` — PASS; identified the reviewed file set above.
 - Direct bounded inspection with `git diff 7029c40..757d9b0 -- <path>` and `rg -n <invariant> <reviewed-paths>` — PASS for all five criteria.
-- Manifest comparison against `packages/generation/src/artifact-authorization.ts` — PASS: READY 14, PARTIAL 19, disjoint, unknown denied.
+- Repository-native TypeScript import of `packages/generation/src/artifact-authorization.ts` — PASS: exported READY 14 and PARTIAL 19 exactly match the manifests; `authorizationFor` and `assertGenerationAuthorized` were exercised for every entry.
+- Named denial exercise — PASS: service, API, repository, topic, broker, adapter, ingestion, persistence, transport, and deployment artifact names resolve to `IMPLEMENTATION_BLOCKED_ARCHITECTURE` and throw when generation is asserted.
 - `node --test tests/documentation/telemetry-architecture-review-gate.test.mjs` — PASS.
 - `npm run test:docs` — PASS.
 - `npm run test:architecture` — PASS.
