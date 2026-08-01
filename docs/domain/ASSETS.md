@@ -73,16 +73,15 @@ Para cada Asset, a Facet declara também o **Service** que o consome, a **Policy
 
 ## Telemetry
 
+Esta seção é regida por `DEC-063`. Edge origina fatos físicos; Telemetry Context possui exclusivamente accepted observations, Telemetry Ledger e `AudienceProjection`. Heartbeat e Device Health permanecem assets de TV Network.
+
 | Asset | Descrição | Tipo | Origem | Dono | Persistência | Criticidade |
 | --- | --- | --- | --- | --- | --- | --- |
-| Presence Count | Pessoas presentes (anônimo) | série temporal | Edge | Edge | local→durável | Média |
-| Dwell Time Average | Permanência média | série temporal | Edge | Edge | durável | Média |
-| Confidence Score | Confiança da medição | ConfidenceScore | Edge | Edge | durável | Alta |
-| Heat Map Snapshot | Distribuição espacial agregada | agregado | Edge | Edge | durável | Baixa |
-| Occupancy Level | Nível de ocupação | OccupancyLevel | Edge | Edge | durável | Alta |
-| Peak Hours Profile | Perfil de picos | agregado derivado | Analytics | Cloud | durável | Média |
-| Movement Pattern | Padrão de fluxo | agregado | Edge | Edge | durável | Baixa |
-| Average Distance | Distância média da audiência | escalar | Edge | Edge | durável | Baixa |
+| Closed Telemetry Bucket | Fato físico local imutável ainda não aceito | bucket civil de um minuto | Edge | Edge | fila local até confirmação | Alta |
+| Accepted Observation | Bucket validado e aceito | envelope imutável | Edge | Telemetry Context | append-only | Alta |
+| Telemetry Ledger | Livro-razão das observações aceitas | ledger append-only | Telemetry Context | Telemetry Context | append-only | Crítica |
+| AudienceProjection | Hipótese operacional reconstruível | projeção versionada | Telemetry Context | Telemetry Context | durável/reconstruível | Alta |
+| Projection Confidence | Confiança e cobertura sob policy versionada | métrica versionada | Telemetry Context | Telemetry Context | durável/reconstruível | Alta |
 
 ## Evidence
 
@@ -103,7 +102,7 @@ Para cada Asset, a Facet declara também o **Service** que o consome, a **Policy
 | --- | --- | --- | --- | --- | --- | --- |
 | Current CPM | CPM vigente do inventário | Money | Pricing Engine | Cloud | durável | Crítica |
 | Dynamic Multiplier | Multiplicador aplicado | escalar | Pricing Engine | Cloud | durável | Crítica |
-| Current Occupancy | Ocupação usada no cálculo | OccupancyLevel | Telemetry | Cloud | durável | Alta |
+| Current Occupancy | Input derivado autorizado para novo quote | AudienceProjection | Telemetry Context | Pricing Engine (snapshot de leitura) | imutável no quote | Alta |
 | Peak Factor | Fator de horário de pico | escalar | Pricing Engine | Cloud | durável | Alta |
 | Demand Index | Índice de demanda | escalar | Pricing Engine | Cloud | durável | Alta |
 | Price Floor / Ceiling | Limites comerciais | Money | Cloud | Cloud | durável | Alta |
@@ -133,10 +132,10 @@ Para cada Asset, a Facet declara também o **Service** que o consome, a **Policy
 
 | Asset | Descrição | Tipo | Origem | Dono | Persistência | Criticidade |
 | --- | --- | --- | --- | --- | --- | --- |
-| Last Heartbeat At | Instante do último sinal | timestamp | Edge | Cloud | durável | Alta |
-| Heartbeat Interval | Periodicidade configurada | escalar | Cloud | Cloud | durável | Média |
-| Liveness State | Vivo/ausente | enum derivado | Cloud | Cloud | durável | Alta |
-| SLA Counter | Tempo fora do ar acumulado | agregado derivado | Cloud | Cloud | durável | Crítica |
+| Last Heartbeat At | Instante do último sinal | timestamp | Edge | TV Network | durável | Alta |
+| Heartbeat Interval | Periodicidade configurada | escalar | TV Network | TV Network | durável | Média |
+| Liveness State | Vivo/ausente | enum derivado | TV Network | TV Network | durável | Alta |
+| SLA Counter | Tempo fora do ar acumulado | agregado derivado | TV Network | TV Network | durável | Crítica |
 
 ## Maintenance
 
@@ -189,11 +188,11 @@ Para cada Asset, a Facet declara também o **Service** que o consome, a **Policy
 
 | Asset | Descrição | Tipo | Origem | Dono | Persistência | Criticidade |
 | --- | --- | --- | --- | --- | --- | --- |
-| Device Health | Estado consolidado | DeviceHealth | Edge | Edge | durável | Alta |
-| Temperature / CPU / Memory / Storage | Recursos do mini PC | série temporal | Edge | Edge | durável | Média |
-| Network Quality | Conectividade | série temporal | Edge | Edge | durável | Alta |
-| HDMI Signal State | Sinal para a tela | enum | Edge | Edge | durável | Alta |
-| Severity Level | Gravidade atual | enum derivado | Edge | Cloud | durável | Alta |
+| Device Health | Estado consolidado | DeviceHealth | Edge | TV Network | durável | Alta |
+| Temperature / CPU / Memory / Storage | Recursos do mini PC | série temporal | Edge | TV Network | durável | Média |
+| Network Quality | Conectividade | série temporal | Edge | TV Network | durável | Alta |
+| HDMI Signal State | Sinal para a tela | enum | Edge | TV Network | durável | Alta |
+| Severity Level | Gravidade atual | enum derivado | TV Network | TV Network | durável | Alta |
 
 ## Security
 

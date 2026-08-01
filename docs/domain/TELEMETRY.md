@@ -36,7 +36,7 @@ Todo contrato preserva identidade do evento e produtor, causation, correlation, 
 
 ## 5. Versionamento semântico
 
-The following versions are independent e versions are independent entre si; they must never be collapsed into a generic `version`:
+The following versions are independent; they must never be collapsed into a generic `version`:
 
 - `TelemetrySchemaVersion`: significado e forma das medições e buckets;
 - `CollectorVersion`: algoritmo/implementação que produziu a medição;

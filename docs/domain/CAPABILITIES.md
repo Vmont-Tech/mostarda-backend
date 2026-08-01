@@ -1,6 +1,8 @@
 # CAPABILITIES — Mostarda
 
-Toda **TV** é tratada como um **Container de Capabilities**. Uma Capability é uma competência declarada — aquilo que aquela TV é capaz de executar. Duas TVs podem ter conjuntos diferentes de Capabilities (ex.: uma sem câmera não declara `Health Monitoring` de audiência).
+Toda **TV** é tratada como um **Container de Capabilities**. Uma Capability é uma competência declarada — aquilo que aquela TV é capaz de executar. Duas TVs podem ter conjuntos diferentes de Capabilities (por exemplo, uma TV sem câmera declara o collector correspondente como `UNAVAILABLE`).
+
+As fronteiras de Telemetry deste catálogo são regidas por `DEC-063`: Edge mantém a coleta física e publica observações; Telemetry Context possui exclusivamente accepted observations, Telemetry Ledger e `AudienceProjection`. Heartbeat e Device Health permanecem sob autoridade de TV Network.
 
 ## Regras
 
@@ -29,11 +31,11 @@ Toda **TV** é tratada como um **Container de Capabilities**. Uma Capability é 
 
 ## Telemetry
 
-- **Objetivo:** medir o ambiente e o dispositivo.
-- **Responsabilidades:** coletar presença, dwell time, ocupação, movimento, distância, luminosidade e conectividade; enviar em lote; nunca inferir valor financeiro.
-- **Dependências:** Health Monitoring, sensores/câmera do mundo físico, Security (anonimização).
-- **Gera:** `PresenceUpdated`, `DwellTimeUpdated`, `OccupancyChanged`, `HeatMapGenerated`, `PeakHourDetected`, `TelemetryBatchSubmitted`, `TelemetryGapDetected`.
-- **Consome:** `TelemetryPolicyUpdated`, `HeartbeatMissed`.
+- **Objetivo:** coletar no Edge sinais autorizados do ambiente e do equipamento para validação pelo Telemetry Context.
+- **Responsabilidades:** produzir fatos locais assinados, fechar buckets civis imutáveis de um minuto e preservar capability, cobertura, confiança, policy, sequência e integridade; nunca aceitar observações, manter o Ledger, produzir AudienceProjection ou inferir valor financeiro.
+- **Dependências:** sensores/câmera do mundo físico e Security (autenticidade, confidencialidade e anonimização).
+- **Gera:** `TelemetryCaptured`, `TelemetryBucketClosed`, `EdgeTelemetryCapabilityChanged`, `EdgeTelemetryIncidentReported`.
+- **Consome:** políticas de coleta versionadas publicadas pelo Telemetry Context; não consome Heartbeat como dado de audiência.
 
 ## Playback Reporting
 

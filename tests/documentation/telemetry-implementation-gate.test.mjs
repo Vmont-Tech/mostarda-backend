@@ -16,6 +16,10 @@ const docs = {
   events: new URL("../../docs/domain/DOMAIN_EVENTS.md", import.meta.url),
   pricing: new URL("../../docs/domain/PRICING_ENGINE.md", import.meta.url),
   edge: new URL("../../docs/tv-network/EDGE_RUNTIME.md", import.meta.url),
+  capabilities: new URL("../../docs/domain/CAPABILITIES.md", import.meta.url),
+  aggregates: new URL("../../docs/domain/AGGREGATES.md", import.meta.url),
+  contexts: new URL("../../docs/domain/BOUNDED_CONTEXTS.md", import.meta.url),
+  assets: new URL("../../docs/domain/ASSETS.md", import.meta.url),
 };
 
 const read = (name) => readFile(docs[name], "utf8");
@@ -38,7 +42,8 @@ test("DEC-063 certifies the complete Telemetry authority boundary", async () => 
   assert.match(decision, /QR.*NFC.*bypass Edge/i);
   assert.match(decision, /optional collectors.*degrade explicitly/i);
   assert.match(decision, /Evidence Ledger alone materializes EvidenceRecord/i);
-  assert.match(platform, /(?:SPEC-TEL-001|`DEC-063`).*Telemetry Context/is);
+  assert.match(platform, /### SPEC-TEL-001[^\n]*`DEC-063`/i);
+  assert.match(platform, /`DEC-063` governa esta sincronização:[^\n]*Telemetry Context/i);
 });
 
 test("Telemetry is the unique owner and AudienceProjection stays internal", async () => {
@@ -47,51 +52,54 @@ test("Telemetry is the unique owner and AudienceProjection stays internal", asyn
     read("ownership"),
     read("platform"),
   ]);
-  const corpus = `${telemetry}\n${ownership}\n${platform}`;
-
   assert.match(ownership, /Telemetry Ledger[^\n]*\*\*Telemetry Context\*\*/i);
   assert.match(ownership, /AudienceProjection[^\n]*\*\*Telemetry Context\*\*/i);
   assert.doesNotMatch(ownership, /\|\s*Telemetria\s*\|\s*\*\*Edge\*\*/i);
-  assert.match(corpus, /AudienceProjection.*internal.*Telemetry (?:projection|read artifact)/is);
-  assert.match(corpus, /does not introduce an Audience Bounded Context/i);
+  assert.match(telemetry, /AudienceProjection[^\n]*internal Telemetry projection/i);
+  assert.match(telemetry, /does not introduce an Audience Bounded Context/i);
+  assert.match(platform, /AudienceProjection[^\n]*internal Telemetry projection/i);
+  assert.match(platform, /não introduz Audience Bounded Context/i);
 });
 
 test("Telemetry and Audience cannot materialize Evidence", async () => {
-  const corpus = (
-    await Promise.all([read("telemetry"), read("platform"), read("events")])
-  ).join("\n");
+  const [telemetry, platform, events] = await Promise.all([
+    read("telemetry"),
+    read("platform"),
+    read("events"),
+  ]);
 
-  assert.match(corpus, /Evidence Ledger alone materializes EvidenceRecord/i);
-  assert.match(corpus, /Telemetry (?:and|or) Audience.*(?:never|must not|cannot).*Evidence/is);
-  assert.match(corpus, /PlaybackEvent.*PlaybackSignature.*Evidence Ledger/is);
-  assert.match(
-    corpus,
-    /Edge\/Playback produces authoritative playback facts.*PlaybackEvent.*PlaybackSignature/is,
-  );
+  for (const document of [telemetry, platform, events]) {
+    assert.match(document, /Evidence Ledger alone materializes EvidenceRecord/i);
+    assert.match(document, /Edge\/Playback produces authoritative playback facts[^\n]*PlaybackEvent[^\n]*PlaybackSignature/i);
+  }
+  assert.match(telemetry, /Telemetry and Audience cannot materialize Evidence/i);
+  assert.match(platform, /Telemetry e Audience nunca criam Evidence/i);
+  assert.match(events, /Telemetry e AudienceProjection nunca produzem Evidence/i);
 });
 
 test("accepted telemetry never changes an existing commercial commitment", async () => {
-  const corpus = (
-    await Promise.all([read("telemetry"), read("platform"), read("pricing")])
-  ).join("\n");
-
-  assert.match(corpus, /applied (?:Pricing)?Quotes? remain unchanged/i);
-  assert.match(corpus, /InventoryHolds? remain unchanged/i);
-  assert.match(corpus, /reserved or sold Slots remain unchanged/i);
-  assert.match(corpus, /prices remain unchanged/i);
+  const documents = await Promise.all([
+    read("telemetry"),
+    read("platform"),
+    read("pricing"),
+  ]);
+  for (const document of documents) {
+    assert.match(document, /applied (?:Pricing)?Quotes? remain unchanged/i);
+    assert.match(document, /InventoryHolds? remain unchanged/i);
+    assert.match(document, /reserved or sold Slots remain unchanged/i);
+    assert.match(document, /prices remain unchanged/i);
+  }
 });
 
 test("optional Wi-Fi and camera collectors report degradation without stopping playback", async () => {
   const telemetry = await read("telemetry");
   const edge = await read("edge");
-  const corpus = `${telemetry}\n${edge}`;
-
-  assert.match(corpus, /Wi-Fi.*camera.*absence or failure.*explicitly reported/is);
-  assert.match(corpus, /playback continues/i);
   for (const document of [telemetry, edge]) {
+    assert.match(document, /Wi-Fi and camera absence or failure is explicitly reported/i);
+    assert.match(document, /playback continues/i);
     assert.match(
       document,
-      /`AVAILABLE`.*`UNAVAILABLE`.*`DISABLED`.*`DEGRADED`.*`FAILED`/is,
+      /`AVAILABLE`[^\n]*`UNAVAILABLE`[^\n]*`DISABLED`[^\n]*`DEGRADED`[^\n]*`FAILED`/i,
     );
   }
 });
@@ -102,15 +110,21 @@ test("minute buckets, batching, projection window, and QR or NFC routing are exp
     read("edge"),
     read("platform"),
   ]);
-  const corpus = `${telemetry}\n${edge}\n${platform}`;
-
-  assert.match(corpus, /one-minute bucket.*immutable/is);
-  assert.match(corpus, /five-minute batch/is);
-  assert.match(corpus, /rolling fifteen-minute (?:observation )?window/i);
-  assert.match(corpus, /only new (?:Pricing)?Quotes? may consume/i);
-  assert.match(corpus, /QR.*NFC.*bypass Edge/is);
-  assert.match(corpus, /Edge only renders QR/i);
-  assert.match(corpus, /optional collectors.*degrade explicitly/is);
+  assert.match(telemetry, /one-minute bucket[^\n]*immutable/i);
+  assert.match(telemetry, /five-minute batch/i);
+  assert.match(telemetry, /rolling fifteen-minute observation window/i);
+  assert.match(telemetry, /only new PricingQuotes may consume/i);
+  assert.match(telemetry, /QR and NFC bypass Edge/i);
+  assert.match(telemetry, /Edge only renders QR/i);
+  assert.match(telemetry, /optional collectors degrade explicitly/i);
+  assert.match(edge, /one-minute bucket[^\n]*immutable/i);
+  assert.match(edge, /five-minute batch/i);
+  assert.match(edge, /QR and NFC bypass Edge/i);
+  assert.match(edge, /Edge only renders QR/i);
+  assert.match(platform, /Buckets imutáveis de um minuto[^\n]*batches de cinco minutos/i);
+  assert.match(platform, /janela móvel de quinze minutos/i);
+  assert.match(platform, /Somente novos `PricingQuote` podem consumir/i);
+  assert.match(platform, /QR and NFC bypass Edge/i);
 });
 
 test("the nine telemetry event families have unambiguous producers", async () => {
@@ -131,10 +145,10 @@ test("the nine telemetry event families have unambiguous producers", async () =>
     assert.match(events, new RegExp(`\\b${event}\\b`));
   }
 
-  assert.match(events, /each concrete event type.*one authoritative producer/is);
-  assert.match(events, /EdgeTelemetryIncidentReported/is);
-  assert.match(events, /TelemetryValidationIncidentReported/is);
-  assert.match(events, /EdgeTelemetryCapabilityChanged.*Edge Runtime/is);
+  assert.match(events, /each concrete event type[^\n]*one authoritative producer/i);
+  assert.match(events, /`EdgeTelemetryIncidentReported`[^\n]*Edge Runtime/i);
+  assert.match(events, /`TelemetryValidationIncidentReported`[^\n]*Telemetry Context/i);
+  assert.match(events, /`EdgeTelemetryCapabilityChanged`[^\n]*Edge Runtime/i);
   assert.doesNotMatch(events, /\bTvCapabilityChanged\b/);
   for (const event of [
     "CapabilityDeclared",
@@ -175,4 +189,36 @@ test("telemetry semantic versions remain independent", async () => {
 
   assert.match(telemetry, /versions are independent/i);
   assert.match(telemetry, /must never be collapsed into a generic `version`/i);
+  assert.doesNotMatch(telemetry, /independent e versions are independent entre si/i);
+});
+
+test("active domain catalogs are synchronized to DEC-063", async () => {
+  const [capabilities, aggregates, contexts, assets] = await Promise.all([
+    read("capabilities"),
+    read("aggregates"),
+    read("contexts"),
+    read("assets"),
+  ]);
+  const obsoleteEvents = /PresenceUpdated|DwellTimeUpdated|OccupancyChanged|HeatMapGenerated|PeakHourDetected|MovementPatternUpdated|TelemetryBatchSubmitted|TelemetryGapDetected/;
+
+  for (const document of [capabilities, aggregates, contexts, assets]) {
+    assert.match(document, /`DEC-063`/);
+  }
+  assert.match(capabilities, /TelemetryCaptured[^\n]*TelemetryBucketClosed/i);
+  assert.doesNotMatch(capabilities, obsoleteEvents);
+  assert.doesNotMatch(capabilities, /Health Monitoring de audiência/i);
+  assert.match(aggregates, /## Telemetry Ledger Aggregate — contexto Telemetry/i);
+  assert.match(aggregates, /\*\*Root:\*\* `TelemetryLedger`; owner exclusivo: Telemetry Context/i);
+  assert.match(aggregates, /AudienceProjection[^\n]*Telemetry Context/i);
+  assert.doesNotMatch(aggregates, obsoleteEvents);
+  assert.doesNotMatch(aggregates, /TelemetrySeries Aggregate/i);
+  assert.doesNotMatch(aggregates, /TVCapability Aggregate — contexto Edge Runtime/i);
+  assert.match(aggregates, /TVCapability Aggregate — contexto TV Network/i);
+  assert.match(contexts, /accepted observations[^\n]*Telemetry Ledger[^\n]*AudienceProjection/i);
+  assert.doesNotMatch(contexts, /saúde em tempo real \(Telemetry\)/i);
+  assert.match(contexts, /Heartbeat[^\n]*TV Network|Device Health[^\n]*TV Network/i);
+  assert.match(assets, /Telemetry Ledger[^\n]*Telemetry Context/i);
+  assert.match(assets, /AudienceProjection[^\n]*Telemetry Context/i);
+  assert.doesNotMatch(assets, /Confidence Score[^\n]*\| Edge \| Edge \| durável/i);
+  assert.doesNotMatch(assets, /Current Occupancy[^\n]*\| Telemetry \| Cloud \| durável/i);
 });

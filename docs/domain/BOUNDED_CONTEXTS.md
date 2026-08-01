@@ -2,6 +2,8 @@
 
 Fonte única da verdade sobre as fronteiras do domínio. Vocabulário conforme [`DOMAIN_DICTIONARY.md`](./DOMAIN_DICTIONARY.md). Nenhuma implementação futura pode violar estas fronteiras.
 
+As fronteiras de Telemetry são especializadas por `DEC-063`.
+
 ## Regras gerais de fronteira
 
 1. Um contexto **nunca** lê o banco de dados de outro contexto.
@@ -27,7 +29,8 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 
 - **Responsabilidade:** ciclo de vida e disponibilidade operacional da frota — **TV**, **Venue**, Device Registry, EdgeInstallation, Capability Registry, health, heartbeat, manutenção, rollout, rollback e Fleet.
 - **Pertence:** cadastro e identidade (`TV ID`), vínculo TV↔Venue↔proprietários, atributos de contexto do Venue, instalação/provisionamento, inventário, estado operacional, Capability declarativa, Desired/Current/Observed State, conectividade e manutenção. Ver [`../tv-network/TV_NETWORK_ARCHITECTURE.md`](../tv-network/TV_NETWORK_ARCHITECTURE.md).
-- **NÃO pertence:** software embarcado e fila local (Edge Runtime), saúde em tempo real (Telemetry), preço do inventário (Pricing Engine), pagamento ao parceiro (Settlement) ou autorização de benefício/manutenção (Hardware Continuity).
+- **NÃO pertence:** software embarcado e fila local (Edge Runtime), preço do inventário (Pricing Engine), pagamento ao parceiro (Settlement) ou autorização de benefício/manutenção (Hardware Continuity).
+- **Autoridade operacional preservada:** Heartbeat e Device Health pertencem a TV Network; Edge apenas produz os fatos físicos correspondentes.
 - **Conversa com:** Edge Runtime, Telemetry, Hardware Continuity, Notifications e Analytics por fatos operacionais; não conhece Campaign, Pricing, Evidence, Settlement ou Financial Platform.
 - **Proprietário:** Cloud.
 
@@ -49,11 +52,11 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 
 ## 5. Telemetry
 
-- **Responsabilidade:** dados operacionais e de audiência do dispositivo/ambiente.
-- **Pertence:** heartbeat, saúde do dispositivo, conectividade, presença, dwell time, ocupação, mapas de calor, incidentes.
-- **NÃO pertence:** prova fiscal (Evidence Ledger — telemetria **nunca** substitui Evidence), preço (Pricing Engine), decisão de exibição.
+- **Responsabilidade:** validar fatos de coleta e manter accepted observations, Telemetry Ledger append-only e `AudienceProjection` interna conforme `DEC-063`.
+- **Pertence:** contratos de aquisição/validação, aceite ou rejeição de buckets, observações aceitas, Telemetry Ledger e lifecycle da AudienceProjection.
+- **NÃO pertence:** coleta física (Edge Runtime), Heartbeat e Device Health (TV Network), Evidence (Evidence Ledger), preço (Pricing Engine) ou decisão de exibição.
 - **Conversa com:** Edge Runtime, Pricing Engine, AI Orchestration, Analytics, TV Network, Notifications.
-- **Proprietário:** Edge (produção) / Cloud (custódia).
+- **Proprietário:** Telemetry Context no Cloud; Edge é produtor de fatos, nunca coproprietário da custódia.
 
 ## 6. Pricing Engine
 
