@@ -78,6 +78,10 @@ test("every named PARTIAL telemetry artifact is explicitly rejected with gate pr
   );
   assert.deepEqual(telemetryPartialArtifacts, artifacts);
   assert.equal(new Set(artifacts).size, artifacts.length);
+  const matrixPartial = [
+    ...gate.matchAll(/^\| `([^`,]+)` \| `IMPLEMENTATION_PARTIAL` \|/gm),
+  ].map((match) => match[1]);
+  assert.deepEqual(matrixPartial, artifacts);
   assert.equal(
     artifacts.some((artifact: string) => telemetryAuthorizedArtifacts.includes(artifact as never)),
     false,
