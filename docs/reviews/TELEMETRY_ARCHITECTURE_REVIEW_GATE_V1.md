@@ -1,54 +1,61 @@
 # Telemetry Architecture Review Gate V1
 
-This record preserves a previously completed manual Architecture Review Gate and records its subsequent invalidation. It is not a current approval. Automated tests are supporting evidence only and cannot restore approval.
+This record contains the current manual Architecture Review Gate and preserves the earlier invalidated review as history. The current verdict is based on direct auditor inspection; automated tests are supporting evidence only.
 
-## Verdict
+## Current verdict
 
-Status: INVALIDATED_BY_AUTHORIZATION_CHANGE
-PRIOR_APPROVAL: INVALIDATED
-TASK_3_AND_LATER: BLOCKED_PENDING_NEW_MANUAL_REVIEW
+Status: APPROVED
+NO_NEW_BOUNDED_CONTEXT: PASS
+AUDIENCE_PROJECTION_OWNED_BY_TELEMETRY: PASS
+EVIDENCE_LEDGER_ONLY_MATERIALIZER: PASS
+PRICING_READ_ONLY_CONSUMER: PASS
+AUTHORIZED_ARTIFACTS_MATCH_GATE: PASS
 
-Commit `801514f` demoted six underspecified version contracts and four transitive composite dependents. Because the reviewed authorization set changed after the immutable reviewed range, the former approval cannot authorize Task 3 or any later implementation work. A new manual Architecture Review Gate is required.
+This approval applies only to the reviewed scope and the exact four READY artifacts. It changes no domain decision and grants no authority to any PARTIAL or infrastructure artifact.
 
 ## Reviewed scope
 
-Reviewed head: `757d9b0`
-Reviewed range: `7029c40..757d9b0`
+Reviewed head: `6851900d803c5f840509800086aa0b412fc600f2`
+Reviewed range: `7a0c1313de57b7ab49dfe5674ccd166fa5d558d2..6851900d`
+
+The auditor reviewed the immutable head and range above. Governing source assertions were checked from `git show 6851900d:<path>`, not inferred from later worktree content.
+
+## Historical invalidated approval
+
+Historical status: INVALIDATED_BY_AUTHORIZATION_CHANGE
+Historical reviewed head: `757d9b0`
+Historical reviewed range: `7029c40..757d9b0`
 Invalidating authorization commit: `801514f`
 
-The prior review assessed only that immutable range. Its evidence remains historical, but its verdict is invalidated and does not authorize later implementation tasks or change any domain decision.
+The approval originally recorded for `757d9b0` remains invalid historical evidence. It is not the current verdict and grants no authority. The current approval above is a new manual review of the reduced 4/29 authorization set at `6851900d`.
 
 ## Reviewer evidence
 
 ### No new bounded context
 
-- `docs/superpowers/specs/2026-08-01-edge-telemetry-pricing-design.md:39-45` explicitly keeps Audience inside Telemetry and excludes an Audience Bounded Context.
-- `docs/domain/TELEMETRY.md:5-9` assigns acquisition, validation, the ledger, and the projection to Telemetry and denies a separate Audience context.
-- `docs/domain/BOUNDED_CONTEXTS.md:55-56` places the ledger and internal projection within the Telemetry Context.
-- `docs/domain/OWNERSHIP.md:26` assigns `AudienceProjection` to Telemetry Context.
-- `docs/specification/PLATFORM_SPECIFICATION.md:109,122-124` repeats that boundary in the platform authority map and `SPEC-TEL-001`.
+- `docs/superpowers/specs/2026-08-01-edge-telemetry-pricing-design.md:39-45` keeps Audience inside Telemetry and excludes an Audience Bounded Context.
+- `docs/domain/TELEMETRY.md:5-9`, `docs/domain/BOUNDED_CONTEXTS.md:55-56`, `docs/domain/OWNERSHIP.md:26`, and `docs/specification/PLATFORM_SPECIFICATION.md:109,122-124` preserve that boundary at reviewed head `6851900d`.
 
 ### AudienceProjection ownership
 
-- `docs/domain/TELEMETRY.md:5-7` makes Telemetry the exclusive producer and denies mutation by consumers.
-- `docs/domain/OWNERSHIP.md:26` names Telemetry Context as owner and Pricing, AI, Analytics, and Marketplace as read-only consumers.
-- `docs/specification/PLATFORM_SPECIFICATION.md:122-124` preserves the same ownership boundary; no consumer acquires write or lifecycle authority.
+- `docs/domain/TELEMETRY.md:5-7` makes Telemetry the exclusive projection producer and denies consumer mutation.
+- `docs/domain/OWNERSHIP.md:26` identifies Telemetry Context as owner and Pricing, AI, Analytics, and Marketplace as read-only consumers; `docs/specification/PLATFORM_SPECIFICATION.md:122-124` preserves the same boundary.
 
 ### Evidence materialization
 
-- `docs/superpowers/specs/2026-08-01-edge-telemetry-pricing-design.md:21-23,102-106` is the approved design boundary: Playback owns execution facts, Telemetry owns accepted observations and projection, and Evidence Ledger owns evidence materialization.
-- `docs/domain/TELEMETRY.md:9`, `docs/domain/DOMAIN_EVENTS.md:114`, `docs/domain/OWNERSHIP.md:67`, and `docs/domain/EVIDENCE_PIPELINE.md:30,36-38` state that Edge/Playback produces authoritative playback facts (`PlaybackEvent` and `PlaybackSignature`) and Evidence Ledger alone materializes `EvidenceRecord`.
-- Telemetry and `AudienceProjection` cannot materialize Evidence, and no reviewed artifact creates a bypass around Evidence Ledger.
+- `docs/superpowers/specs/2026-08-01-edge-telemetry-pricing-design.md:21-23,102-106` separates Playback facts, Telemetry observations/projection, and Evidence materialization.
+- `docs/domain/TELEMETRY.md:9`, `docs/domain/DOMAIN_EVENTS.md:114`, `docs/domain/OWNERSHIP.md:67`, and `docs/domain/EVIDENCE_PIPELINE.md:30,36-38` state that Edge/Playback produces authoritative playback facts and Evidence Ledger alone materializes `EvidenceRecord`. No bypass exists.
 
 ### Pricing consumption
 
-- `docs/domain/TELEMETRY.md:27`, `docs/domain/PRICING_ENGINE.md:84`, and `docs/specification/PLATFORM_SPECIFICATION.md:124` limit projection use to prospective quotes.
-- Pricing is a read-only consumer: applied quotes, holds, reserved or sold slots, and prices remain unchanged.
+- `docs/domain/TELEMETRY.md:27`, `docs/domain/PRICING_ENGINE.md:84`, and `docs/specification/PLATFORM_SPECIFICATION.md:124` restrict Telemetry projection use to prospective quotes.
+- Pricing remains read-only: applied quotes, holds, reserved or sold slots, and prices remain unchanged.
 
 ### Artifact authorization
 
-- `docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md:7-10` defines the exact READY/PARTIAL manifests, denies unknown artifacts, and excludes infrastructure.
-- `packages/generation/src/artifact-authorization.ts` matches those manifests; `tests/generation/artifact-authorization.test.ts` supplies supporting executable evidence that READY and PARTIAL sets remain disjoint and unknown artifacts remain denied.
+- `docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md` contains exact, disjoint READY and PARTIAL manifests and a matching 33-row matrix.
+- `packages/generation/src/artifact-authorization.ts` contains the same registry sets; `tests/generation/artifact-authorization.test.ts` provides supporting exhaustive registry evidence. READY and PARTIAL sets remain disjoint and unknown artifacts remain denied.
+- `packages/telemetry/src/index.ts`, `packages/telemetry/src/identities.ts`, `packages/telemetry/src/capability.ts`, and `packages/telemetry/package.json` expose only the implementation surface backed by the four READY contracts.
 
 ## Authorization audit
 
@@ -58,49 +65,69 @@ Unknown artifacts: denied
 Infrastructure authorization: none
 Architecture bypass: none
 
-The current registry and implementation gate contain the same READY and PARTIAL names. The sets are disjoint. The six version artifacts were demoted because the supported version set/compatibility lookup absent defect prevents their unsupported-version behavior from being implemented. `TelemetryBucket`, both bucket decision events, and `AudienceProjection` were demoted transitively. A new manual Architecture Review Gate is required before Task 3 or later work may proceed.
+The manifest, matrix, registry, and package implementation/export surface agree at reviewed head `6851900d`. The READY set is exactly `TelemetryBucketId`, `AudienceProjectionId`, `TelemetryEventId`, and `TelemetryCapabilityStatus`. All 29 PARTIAL artifacts remain denied and absent from the package export surface. The supported version set/compatibility lookup absent defect keeps the six version contracts PARTIAL, with their four composite dependents transitively PARTIAL.
 
 No services, APIs, repositories, topics, or brokers are authorized. Adapters, ingestion services, persistence mappings, transport envelopes, and deployment resources also remain outside authorization.
 
+## Reviewed commits
+
+- `4519b00` — `feat: add telemetry capability contracts`
+- `801514f` — `docs: demote underspecified telemetry versions`
+- `e54c4b7` — `docs: invalidate stale telemetry review`
+- `2ec13fa` — `docs: clarify partial telemetry dependencies`
+- `ada4f26` — `test: bind partial matrix to telemetry manifest`
+- `6851900d` — `fix: align telemetry contracts with certified gate`
+
 ## Reviewed files
 
-`git diff --name-only 7029c40..757d9b0` identified only the changed-file subset. The reviewer directly inspected those changed architecture, domain, gate, authorization, and supporting-test files; unchanged governing sources were inspected separately to validate the cross-context claims:
+`git diff --name-only 7a0c1313..6851900d` identified only the changed-file subset. The auditor directly inspected those changed files; unchanged governing sources were inspected separately through the reviewed commit snapshot.
 
-- `docs/domain/AGGREGATES.md`
-- `docs/domain/ASSETS.md`
+Changed-file subset:
+
+- `docs/reviews/TELEMETRY_ARCHITECTURE_REVIEW_GATE_V1.md`
+- `docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md`
+- `package-lock.json`
+- `packages/generation/src/artifact-authorization.ts`
+- `packages/telemetry/package.json`
+- `packages/telemetry/src/capability.ts`
+- `packages/telemetry/src/identities.ts`
+- `packages/telemetry/src/index.ts`
+- `tests/documentation/telemetry-architecture-review-gate.test.mjs`
+- `tests/documentation/telemetry-implementation-gate.test.mjs`
+- `tests/generation/artifact-authorization.test.ts`
+- `tests/telemetry/capability.test.ts`
+
+Separately inspected governing sources:
+
 - `docs/domain/BOUNDED_CONTEXTS.md`
-- `docs/domain/CAPABILITIES.md`
 - `docs/domain/DOMAIN_EVENTS.md`
 - `docs/domain/EVIDENCE_PIPELINE.md` — authoritative Evidence materialization pipeline
 - `docs/domain/OWNERSHIP.md`
 - `docs/domain/PRICING_ENGINE.md`
 - `docs/domain/TELEMETRY.md`
-- `docs/specification/DECISION_REGISTRY.md`
 - `docs/specification/PLATFORM_SPECIFICATION.md`
-- `docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md`
-- `docs/superpowers/plans/2026-08-01-telemetry-vertical-slice.md`
 - `docs/superpowers/specs/2026-08-01-edge-telemetry-pricing-design.md` — approved design baseline
-- `docs/tv-network/EDGE_RUNTIME.md`
-- `packages/generation/src/artifact-authorization.ts`
-- `tests/documentation/telemetry-implementation-gate.test.mjs`
-- `tests/generation/artifact-authorization.test.ts`
 
 ## Commands and results
 
 Evidence type: `structured command record`
 Claim boundary: `recorded result; not cryptographic proof of historical output`
 
-- `git diff --name-only 7029c40..757d9b0` — PASS; identified only the changed-file subset; unchanged governing sources were separately inspected.
-- Direct bounded inspection with `git diff 7029c40..757d9b0 -- <path>` and `rg -n <invariant> <reviewed-paths>` — PASS for all five criteria.
-- Repository-native TypeScript import of `packages/generation/src/artifact-authorization.ts` — PASS: exported READY 14 and PARTIAL 19 exactly match the manifests; `authorizationFor` and `assertGenerationAuthorized` were exercised for every entry.
-- Named denial exercise — PASS: service, API, repository, topic, broker, adapter, ingestion, persistence, transport, and deployment artifact names resolve to `IMPLEMENTATION_BLOCKED_ARCHITECTURE` and throw when generation is asserted.
-- `node --test tests/documentation/telemetry-architecture-review-gate.test.mjs` — PASS.
+- `git log --format="%H %s" 7a0c1313..6851900d` — PASS; enumerated the six reviewed commits.
+- `git diff --name-only 7a0c1313..6851900d` — PASS; identified only the changed-file subset; unchanged governing sources were separately inspected.
+- `git show 6851900d:<path>` with bounded invariant assertions — PASS for all governing sources and reviewed package/gate files.
+- Manifest/matrix/registry comparison — PASS: exact READY 4, PARTIAL 29, disjoint, and no additional Telemetry-gate registry entry.
+- Package surface inspection and runtime import — PASS: only the four READY contracts have implementation/export surface; all 29 PARTIAL artifacts are absent and generation-denied.
+- Representative service, API, repository, topic, broker, adapter, ingestion, persistence, transport, and deployment names — PASS: deny-by-default, with no infrastructure authorization.
+- `node --experimental-strip-types --test "tests/generation/*.test.ts"` — PASS.
+- `node --experimental-strip-types --test "tests/telemetry/*.test.ts"` — PASS.
 - `npm run test:docs` — PASS.
 - `npm run test:architecture` — PASS.
+- `npm run typecheck` — PASS.
 - `git diff --check` — PASS.
 
-These command records describe the prior immutable review and are not evidence of current approval. Test results are supporting evidence, not a substitute for direct inspection in a new manual review and its reviewer verdict.
+Test results are supporting evidence, not a substitute for direct inspection by the auditor.
 
 ## Audit note
 
-The historical audit mentioned markdown trailing whitespace outside the architecture verdict. The authorization change, not whitespace, invalidated approval. The current branch passes `git diff --check`.
+The historical audit mentioned markdown trailing whitespace outside the architecture verdict. It did not affect either architecture determination, and the current branch passes `git diff --check`.

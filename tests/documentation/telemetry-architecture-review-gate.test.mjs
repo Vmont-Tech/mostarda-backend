@@ -38,26 +38,34 @@ const lineContaining = (document, needle) => {
   return line;
 };
 
-test("invalidates the prior approval and blocks later tasks pending a new manual review", async () => {
+test("records the new approval while preserving the prior invalidated verdict as history", async () => {
   const review = await readFile(reviewPath, "utf8");
-  const verdict = boundedSection(review, "Verdict");
+  const verdict = boundedSection(review, "Current verdict");
 
   for (const required of [
-    "Status: INVALIDATED_BY_AUTHORIZATION_CHANGE",
-    "PRIOR_APPROVAL: INVALIDATED",
-    "TASK_3_AND_LATER: BLOCKED_PENDING_NEW_MANUAL_REVIEW",
+    "Status: APPROVED",
+    "NO_NEW_BOUNDED_CONTEXT: PASS",
+    "AUDIENCE_PROJECTION_OWNED_BY_TELEMETRY: PASS",
+    "EVIDENCE_LEDGER_ONLY_MATERIALIZER: PASS",
+    "PRICING_READ_ONLY_CONSUMER: PASS",
+    "AUTHORIZED_ARTIFACTS_MATCH_GATE: PASS",
   ]) {
     assert.ok(verdict.split(/\r?\n/).includes(required), `missing verdict: ${required}`);
   }
 
-  const scope = boundedSection(review, "Reviewed scope");
-  assert.match(scope, /^Reviewed head: `757d9b0`$/m);
-  assert.match(scope, /^Reviewed range: `7029c40\.\.757d9b0`$/m);
-  assert.match(scope, /^Invalidating authorization commit: `801514f`$/m);
+  assert.doesNotMatch(verdict, /INVALIDATED|BLOCKED_PENDING/);
+  const history = boundedSection(review, "Historical invalidated approval");
+  assert.match(history, /^Historical status: INVALIDATED_BY_AUTHORIZATION_CHANGE$/m);
+  assert.match(history, /^Historical reviewed head: `757d9b0`$/m);
+  assert.match(history, /^Invalidating authorization commit: `801514f`$/m);
 
-  execFileSync("git", ["cat-file", "-e", "757d9b0^{commit}"], { cwd: repositoryRoot });
-  execFileSync("git", ["cat-file", "-e", "7029c40^{commit}"], { cwd: repositoryRoot });
-  execFileSync("git", ["merge-base", "--is-ancestor", "7029c40", "757d9b0"], {
+  const scope = boundedSection(review, "Reviewed scope");
+  assert.match(scope, /^Reviewed head: `6851900d803c5f840509800086aa0b412fc600f2`$/m);
+  assert.match(scope, /^Reviewed range: `7a0c1313de57b7ab49dfe5674ccd166fa5d558d2\.\.6851900d`$/m);
+
+  execFileSync("git", ["cat-file", "-e", "6851900d^{commit}"], { cwd: repositoryRoot });
+  execFileSync("git", ["cat-file", "-e", "7a0c1313^{commit}"], { cwd: repositoryRoot });
+  execFileSync("git", ["merge-base", "--is-ancestor", "7a0c1313", "6851900d"], {
     cwd: repositoryRoot,
   });
 });
@@ -106,7 +114,7 @@ test("authoritative sources directly preserve all five architecture invariants",
         .replace(/^\//, "");
       return [
         name,
-        execFileSync("git", ["show", `757d9b0:${decodeURIComponent(relativePath)}`], {
+        execFileSync("git", ["show", `6851900d:${decodeURIComponent(relativePath)}`], {
           cwd: repositoryRoot,
           encoding: "utf8",
         }),
@@ -153,6 +161,14 @@ test("records exact manifests and denies infrastructure authorization", async ()
   assert.equal(ready.length, 4);
   assert.equal(partial.length, 29);
   assert.equal(new Set([...ready, ...partial]).size, 33);
+  assert.deepEqual(
+    [...gate.matchAll(/^\| `([^`]+)` \| `IMPLEMENTATION_READY` \|/gm)].map((match) => match[1]),
+    ready,
+  );
+  assert.deepEqual(
+    [...gate.matchAll(/^\| `([^`]+)` \| `IMPLEMENTATION_PARTIAL` \|/gm)].map((match) => match[1]),
+    partial,
+  );
 
   const denied = [
     "TelemetryService",
@@ -174,6 +190,7 @@ test("records exact manifests and denies infrastructure authorization", async ()
     import {
       telemetryAuthorizedArtifacts,
       telemetryPartialArtifacts,
+      registeredArtifactAuthorizations,
       authorizationFor,
       assertGenerationAuthorized,
     } from ${JSON.stringify(authorizationModule)};
@@ -190,6 +207,7 @@ test("records exact manifests and denies infrastructure authorization", async ()
     process.stdout.write(JSON.stringify({
       exportedReady: [...telemetryAuthorizedArtifacts],
       exportedPartial: [...telemetryPartialArtifacts],
+      telemetryRegistry: registeredArtifactAuthorizations().filter(({ source }) => source === "TELEMETRY_IMPLEMENTATION_GATE_V1.md"),
       readyResults: names.ready.map(exercise),
       partialResults: names.partial.map(exercise),
       deniedResults: names.denied.map(exercise),
@@ -205,6 +223,7 @@ test("records exact manifests and denies infrastructure authorization", async ()
 
   assert.deepEqual(report.exportedReady, ready);
   assert.deepEqual(report.exportedPartial, partial);
+  assert.deepEqual(report.telemetryRegistry.map(({ artifact }) => artifact), [...ready, ...partial]);
   assert.deepEqual(
     report.readyResults,
     ready.map((artifact) => ({ artifact, status: "IMPLEMENTATION_READY", allowed: true })),
@@ -230,7 +249,7 @@ test("records exact manifests and denies infrastructure authorization", async ()
   assert.match(authorization, /^READY count: 4$/m);
   assert.match(authorization, /^PARTIAL count: 29$/m);
   assert.match(authorization, /supported version set\/compatibility lookup absent/);
-  assert.match(authorization, /new manual Architecture Review Gate is required/i);
+  assert.match(authorization, /all 29 PARTIAL artifacts remain denied/i);
   assert.match(authorization, /^Unknown artifacts: denied$/m);
   assert.match(authorization, /^Infrastructure authorization: none$/m);
   assert.match(authorization, /^Architecture bypass: none$/m);
@@ -240,18 +259,94 @@ test("records exact manifests and denies infrastructure authorization", async ()
   );
 });
 
+test("reviewed telemetry package exposes exactly the four READY contracts", () => {
+  const snapshot = Object.fromEntries(
+    [
+      ["index", "packages/telemetry/src/index.ts"],
+      ["identities", "packages/telemetry/src/identities.ts"],
+      ["capability", "packages/telemetry/src/capability.ts"],
+      ["package", "packages/telemetry/package.json"],
+    ].map(([name, path]) => [
+      name,
+      execFileSync("git", ["show", `6851900d:${path}`], { cwd: repositoryRoot, encoding: "utf8" }),
+    ]),
+  );
+  assert.equal(snapshot.index.trim(), 'export * from "./capability.ts";\nexport * from "./identities.ts";');
+  const guardedIdentities = snapshot.identities.match(/for \(const artifact of \[([\s\S]*?)\] as const\)/)?.[1]
+    .match(/"([^"]+)"/g)?.map((value) => JSON.parse(value));
+  assert.deepEqual(guardedIdentities, ["TelemetryBucketId", "AudienceProjectionId", "TelemetryEventId"]);
+  assert.match(snapshot.identities, /assertGenerationAuthorized\(artifact\)/);
+  assert.match(snapshot.capability, /assertGenerationAuthorized\("TelemetryCapabilityStatus"\)/);
+  assert.deepEqual(JSON.parse(snapshot.package).exports, { ".": "./src/index.ts" });
+
+  const gate = execFileSync(
+    "git",
+    ["show", "6851900d:docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md"],
+    { cwd: repositoryRoot, encoding: "utf8" },
+  );
+  const partial = JSON.parse(gate.match(/^PARTIAL_MANIFEST: (\[[^\n]+\])$/m)?.[1] ?? "null");
+  const telemetryModule = new URL("../../packages/telemetry/src/index.ts", import.meta.url).href;
+  const authorizationModule = new URL("../../packages/generation/src/artifact-authorization.ts", import.meta.url).href;
+  const report = JSON.parse(execFileSync(
+    process.execPath,
+    ["--experimental-strip-types", "--input-type=module", "--eval", `
+      import * as telemetry from ${JSON.stringify(telemetryModule)};
+      import { authorizationFor, assertGenerationAuthorized } from ${JSON.stringify(authorizationModule)};
+      const partial = ${JSON.stringify(partial)};
+      process.stdout.write(JSON.stringify({
+        exports: Object.keys(telemetry).sort(),
+        partial: partial.map((artifact) => {
+          let denied = false;
+          try { assertGenerationAuthorized(artifact); } catch { denied = true; }
+          return { artifact, status: authorizationFor(artifact).status, denied, exported: Object.hasOwn(telemetry, artifact) };
+        }),
+      }));
+    `],
+    { cwd: repositoryRoot, encoding: "utf8" },
+  ));
+  assert.deepEqual(report.exports, [
+    "TELEMETRY_CAPABILITY_STATUSES",
+    "createAudienceProjectionId",
+    "createTelemetryBucketId",
+    "createTelemetryEventId",
+    "isTelemetryCapabilityStatus",
+  ]);
+  assert.deepEqual(
+    report.partial,
+    partial.map((artifact) => ({ artifact, status: "IMPLEMENTATION_PARTIAL", denied: true, exported: false })),
+  );
+});
+
 test("records reviewed files, commands, results, and the non-blocking whitespace note", async () => {
   const review = await readFile(reviewPath, "utf8");
   const files = boundedSection(review, "Reviewed files");
+  const commits = boundedSection(review, "Reviewed commits");
   const commands = boundedSection(review, "Commands and results");
   const note = boundedSection(review, "Audit note");
 
-  assert.match(files, /The reviewer directly inspected/);
-  assert.match(files, /`git diff --name-only 7029c40\.\.757d9b0` identified only the changed-file subset/);
+  assert.match(files, /The auditor directly inspected/);
+  assert.match(files, /`git diff --name-only 7a0c1313\.\.6851900d` identified only the changed-file subset/);
   assert.match(files, /unchanged governing sources were inspected separately/);
+  for (const commit of ["4519b00", "801514f", "e54c4b7", "2ec13fa", "ada4f26", "6851900d"]) {
+    assert.match(commits, new RegExp(`\\b${commit}\\b`));
+  }
+  for (const path of [
+    "docs/reviews/TELEMETRY_ARCHITECTURE_REVIEW_GATE_V1.md",
+    "docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md",
+    "packages/generation/src/artifact-authorization.ts",
+    "packages/telemetry/src/capability.ts",
+    "packages/telemetry/src/identities.ts",
+    "packages/telemetry/src/index.ts",
+    "tests/documentation/telemetry-architecture-review-gate.test.mjs",
+    "tests/documentation/telemetry-implementation-gate.test.mjs",
+    "tests/generation/artifact-authorization.test.ts",
+    "tests/telemetry/capability.test.ts",
+  ]) {
+    assert.match(files, new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  }
   assert.match(files, /`docs\/domain\/EVIDENCE_PIPELINE\.md` — authoritative Evidence materialization pipeline/);
   assert.match(files, /`docs\/superpowers\/specs\/2026-08-01-edge-telemetry-pricing-design\.md` — approved design baseline/);
-  assert.match(commands, /`git diff --name-only 7029c40\.\.757d9b0` — PASS/);
+  assert.match(commands, /`git diff --name-only 7a0c1313\.\.6851900d` — PASS/);
   assert.match(commands, /identified only the changed-file subset/);
   assert.match(commands, /unchanged governing sources were separately inspected/);
   assert.doesNotMatch(commands, /identified the reviewed file set above/);
