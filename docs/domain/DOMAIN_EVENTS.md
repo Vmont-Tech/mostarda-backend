@@ -73,20 +73,25 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `PlaybackQueueUpdated` | Nova fila enviada à TV. |
 | `CampaignDeliveryReported` | Entrega reportada pelo Edge. |
 
-## Telemetry (produtor: Edge)
+## Telemetry
 
-| Evento | Significado |
-| --- | --- |
-| `PresenceUpdated` | Contagem anônima de presença atualizada. |
-| `DwellTimeUpdated` | Permanência média atualizada. |
-| `OccupancyChanged` | Mudança de nível de ocupação. |
-| `HeatMapGenerated` | Novo mapa de calor agregado. |
-| `PeakHourDetected` | Faixa de pico identificada. |
-| `MovementPatternUpdated` | Padrão de fluxo atualizado. |
-| `TelemetryBatchSubmitted` | Lote enviado ao Cloud. |
-| `TelemetryGapDetected` | Lacuna de coleta identificada. |
+| Evento conceitual ou concreto | Produtor autoritativo | Significado |
+| --- | --- | --- |
+| `TelemetryCaptured` | Edge Runtime collector | Medição local capturada sob versões identificadas de capability, collector e policy. |
+| `TelemetryBucketClosed` | Edge Runtime | Bucket civil imutável de um minuto fechado com sequência e integridade. |
+| `TelemetryBucketAccepted` | Telemetry Context | Bucket validado e anexado ao Telemetry Ledger como observação aceita. |
+| `TelemetryBucketRejected` | Telemetry Context | Bucket rejeitado por causa catalogada e não aceito no Ledger. |
+| `AudienceProjectionProduced` | Telemetry Context | Hipótese operacional versionada produzida de observações aceitas. |
+| `AudienceProjectionExpired` | Telemetry Context | Projeção ultrapassou sua validade e não pode mais ser consumida como atual. |
+| `AudienceProjectionInvalidated` | Telemetry Context | Fonte ou policy invalidou o uso da projeção sem apagar o histórico. |
+| `TelemetryCapabilityChanged` | Edge Runtime | Condição ou versão observada de collector/capability mudou. |
+| `TelemetryIncidentReported` | Família conceitual, não instanciável | Família de incident reporting; tipos concretos abaixo eliminam ambiguidade. |
+| `EdgeTelemetryIncidentReported` | Edge Runtime | Incidente de coleta, armazenamento ou transporte local. |
+| `TelemetryValidationIncidentReported` | Telemetry Context | Incidente de validação, integridade, schema ou ordering. |
 
-## Evidence (produtor: Edge → Cloud)
+Each concrete event type has one authoritative producer. Se Edge e Telemetry reportarem incidentes distintos, nomes e schemas concretos permanecem distintos; a família `TelemetryIncidentReported` nunca autoriza producer ambíguo.
+
+## Evidence (produtor: Evidence Ledger no Cloud; fatos de playback produzidos no Edge)
 
 | Evento | Significado |
 | --- | --- |
@@ -103,6 +108,8 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `EvidenceDisputeResolved` | Disputa encerrada. |
 | `EvidenceReversed` | Evento compensatório (append-only). |
 | `LedgerSnapshotAnchored` | Snapshot do Ledger ancorado publicamente. |
+
+Edge/Playback produz `PlaybackEvent` e `PlaybackSignature`. Evidence Ledger alone materializes EvidenceRecord; Telemetry e AudienceProjection nunca produzem Evidence.
 
 ## Pricing (produtor: Pricing Engine)
 

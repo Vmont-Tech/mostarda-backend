@@ -21,7 +21,9 @@
 | --- | --- | --- | --- |
 | Playback (execução da exibição) | **Edge** | Cloud, Analytics | Cloud nunca "toca" a tela. |
 | Fila local de Slots (execução) | **Edge** | Cloud | A *alocação* do Slot é do Cloud. |
-| Telemetria | **Edge** | Cloud, Pricing Engine, AI, Analytics | Nunca vira prova fiscal. |
+| Telemetry capture e buckets fechados | **Edge** | Telemetry Context | Edge publica fatos assinados; não aceita observações nem produz projeções. |
+| Accepted telemetry observations / Telemetry Ledger | **Telemetry Context** | Pricing Engine, AI, Analytics, operações | Ledger append-only; somente Telemetry aceita ou rejeita buckets. |
+| AudienceProjection | **Telemetry Context** | Pricing Engine, AI, Analytics, Marketplace | Projeção interna, versionada e reconstruível de Telemetry; não cria Audience Bounded Context. |
 | Saúde do dispositivo | **Edge** | Cloud, Notifications | |
 | Heartbeat | **Edge** | Cloud | Liveness derivado é do Cloud. |
 | Assinatura do Playback Event | **Edge** | Cloud | Chave privada nunca sai do dispositivo. |
@@ -62,3 +64,4 @@
 1. Se dois contextos precisam do mesmo dado, um é dono e o outro mantém **cópia de leitura** derivada de evento — explicitamente marcada como derivada.
 2. Nenhum contexto altera dado de outro; solicita por comando/evento ao dono.
 3. Dado derivado nunca é usado como prova; prova é sempre a Evidence do Ledger com hash ancorado no Quantum.
+4. Telemetry e AudienceProjection nunca materializam Evidence; Evidence Ledger é o único owner que cria `EvidenceRecord` a partir de `PlaybackEvent` e `PlaybackSignature`.

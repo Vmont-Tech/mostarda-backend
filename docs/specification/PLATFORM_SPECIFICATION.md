@@ -106,7 +106,7 @@ Ausência ou inelegibilidade de um recebedor NÃO redistribui sua parcela às de
 | Financial Platform | Payment Ledger, CampaignBudget, Partner Ledger/Wallet, Withdrawal e políticas | Pricing, Evidence, split e operação Edge |
 | TV Network | TV/Device lifecycle, Edge operacional, capability, health, update e Fleet | Campaign, anúncio, preço, Financial, Evidence e Settlement |
 | Edge Runtime | Execução local autorizada, filas, Player/Canvas e fatos de playback | Regras comerciais, preço, split, prova Cloud e pagamento |
-| Telemetry | Sinais anônimos de ambiente e dispositivo | Evidence fiscal, preço final e decisão de playback |
+| Telemetry | Accepted observations imutáveis, Telemetry Ledger append-only e AudienceProjection interna | Evidence, preço final e decisão de playback |
 | Quantum Integration | Canonical package/hash, anchor e consulta pública NFC/QR | Campaign, anunciante, pessoa, preço e Edge |
 | Hardware Continuity | Subscription, benefício, manutenção, TV temporária, troca permanente, inventário circular e proveniência | Health bruto, culpa, Campaign, Evidence e split |
 | AI Orchestration | Agentes, recomendações, explicações e Grão | Mutação direta de outros contextos e decisões financeiras finais |
@@ -118,6 +118,8 @@ Ausência ou inelegibilidade de um recebedor NÃO redistribui sua parcela às de
 | Configuration Service | Distribuição de parâmetros e versões aprovadas | Criar regra de negócio, owner ou default implícito |
 
 Contextos NÃO DEVEM ler ou alterar armazenamento de outro contexto. Colaboração ocorre por Commands ao owner, Events ou contratos públicos conceituais. Integrações externas DEVEM passar por anti-corruption boundary.
+
+Telemetry Context possui exclusivamente accepted observations, Telemetry Ledger e `AudienceProjection`. A projeção é um internal Telemetry projection e não introduz Audience Bounded Context. Buckets imutáveis de um minuto são normalmente enviados em batches de cinco minutos e alimentam uma janela móvel de quinze minutos. Somente novos `PricingQuote` podem consumir uma projeção válida; decisões já aplicadas não mudam. Telemetry e Audience nunca criam Evidence: Evidence Ledger alone materializes EvidenceRecord de `PlaybackEvent` e `PlaybackSignature`.
 
 ### Por que estes limites existem
 
@@ -273,7 +275,7 @@ CanonicalEvidencePackage é independente de PDF, JSON, CBOR, Protobuf ou outro t
 
 Quantum é camada de prova institucional e consulta pública. NUNCA é rail financeiro.
 
-QR pertence ao Cloud e contém somente token opaco; NUNCA contém destino final ou URL de anunciante. O Cloud resolve o token no instante da consulta. NFC/QR seguem: usuário → Quantum/consulta pública → Mostarda Link Resolver → referência ativa no instante → histórico permanente permitido. Edge apenas renderiza QR e não resolve NFC.
+QR pertence ao Cloud e contém somente token opaco; NUNCA contém destino final ou URL de anunciante. O Cloud resolve o token no instante da consulta. QR and NFC bypass Edge: usuário → Quantum/consulta pública → Mostarda Link Resolver → referência ativa no instante → histórico permanente permitido. Edge only renders QR e não resolve NFC nem tags.
 
 ## 10. Settlement e direitos financeiros
 

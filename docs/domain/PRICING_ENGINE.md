@@ -81,6 +81,8 @@ Pricing Engine NÃO:
 
 Pricing pode receber snapshots autorizados de inventário, Venue, demanda, ocupação e telemetria. Receber um snapshot não transfere ownership: Pricing NÃO corrige nem completa estado pertencente ao contexto produtor.
 
+Quando Telemetry for insumo, Pricing consome somente `AudienceProjection` válida, versionada e produzida pelo Telemetry Context sobre rolling fifteen-minute window. Only new PricingQuotes may consume essa projeção. Ela nunca altera quote `APPLIED`, `InventoryHold`, Slot reservado/vendido, cobrança, Evidence ou Settlement. Ausência, baixa cobertura ou confiança insuficiente remove o fator ao invés de inventar audiência; dado não confiável nunca aumenta preço.
+
 ## 4. Linguagem do domínio
 
 | Termo | Definição normativa |
@@ -477,4 +479,4 @@ O preço candidato deve estar dentro da tolerância versionada e nunca pode exce
 
 ## 20. Bootstrap e recalibração de TVs parceiras
 
-Dados declarados no onboarding geram somente preço-base provisório normalizado por coorte e confiança limitada. Depois da ativação, a dinâmica automática usa oferta, demanda e ocupação. Telemetria, QR, tags e histórico justificam somente reavaliação formal versionada; nunca alteram Quote aplicado. Mini PC oficial aumenta confiança, não preço por si só.
+Dados declarados no onboarding geram somente preço-base provisório normalizado por coorte e confiança limitada. Depois da ativação, a dinâmica automática usa oferta, demanda e ocupação. Histórico auditado pode justificar recalibração estrutural formal, prospectiva e versionada. Telemetria corrente pode influenciar somente um novo Quote pela `AudienceProjection` válida; QR, tags e leituras individuais não recalculam preço. Nenhum desses sinais altera Quote aplicado. Mini PC oficial aumenta confiança, não preço por si só.
