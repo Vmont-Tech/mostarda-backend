@@ -37,6 +37,64 @@ test("artifact absent from the matrix is denied by default", () => {
   });
 });
 
+test("only the exact mechanically certified telemetry artifacts are authorized", () => {
+  const artifacts = [
+    "TelemetryBucketId",
+    "AudienceProjectionId",
+    "TelemetryEventId",
+    "TelemetryCapabilityStatus",
+    "TelemetrySchemaVersion",
+    "CollectorVersion",
+    "CapabilityVersion",
+    "CollectionPolicyVersion",
+    "AudienceProjectionVersion",
+    "AudienceProjectionPolicyVersion",
+    "TelemetryBucket",
+    "TelemetryBucketAccepted",
+    "TelemetryBucketRejected",
+    "AudienceProjection",
+    "AudienceProjectionApplier",
+    "AudienceProjectionProduced",
+    "AudienceProjectionExpired",
+    "AudienceProjectionInvalidated",
+  ];
+
+  for (const artifact of artifacts) {
+    assert.deepEqual(authorizationFor(artifact), {
+      artifact,
+      status: "IMPLEMENTATION_READY",
+      source: "TELEMETRY_IMPLEMENTATION_GATE_V1.md",
+    });
+    assert.doesNotThrow(() => assertGenerationAuthorized(artifact));
+  }
+});
+
+test("telemetry infrastructure and uncertified events remain denied", () => {
+  for (const artifact of [
+    "TelemetryAdapter",
+    "TelemetryIngestionService",
+    "TelemetryRepository",
+    "TelemetryTopic",
+    "TelemetryBroker",
+    "TelemetryCaptured",
+  ]) {
+    assert.equal(
+      authorizationFor(artifact).status,
+      "IMPLEMENTATION_BLOCKED_ARCHITECTURE",
+    );
+  }
+});
+
+test("a READY telemetry artifact cannot authorize an absent dependency by association", () => {
+  assert.doesNotThrow(() => assertGenerationAuthorized("TelemetryBucket"));
+  assert.throws(
+    () => assertGenerationAuthorized("TelemetryRepository"),
+    (error) =>
+      error instanceof ArtifactGenerationBlocked &&
+      error.status === "IMPLEMENTATION_BLOCKED_ARCHITECTURE",
+  );
+});
+
 test("READY label cannot bypass a blocked mandatory dependency", () => {
   assert.deepEqual(authorizationFor("ResponsibilityDecision"), {
     artifact: "ResponsibilityDecision",

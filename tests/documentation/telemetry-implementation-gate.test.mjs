@@ -20,7 +20,51 @@ const docs = {
   aggregates: new URL("../../docs/domain/AGGREGATES.md", import.meta.url),
   contexts: new URL("../../docs/domain/BOUNDED_CONTEXTS.md", import.meta.url),
   assets: new URL("../../docs/domain/ASSETS.md", import.meta.url),
+  implementationGate: new URL(
+    "../../docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md",
+    import.meta.url,
+  ),
 };
+
+test("Telemetry implementation gate mechanically closes every READY artifact", async () => {
+  const gate = await read("implementationGate");
+  const requiredHeadings = [
+    "Unique owner",
+    "Conceptual schema v1",
+    "Error codes",
+    "Lifecycle and terminality",
+    "Replay and rebuild",
+    "Producer",
+    "Compatibility and version evolution",
+    "Dependencies",
+    "Required tests",
+  ];
+  for (const heading of requiredHeadings) {
+    assert.match(gate, new RegExp(heading, "i"));
+  }
+  assert.doesNotMatch(gate, /\b(?:TBD|TODO|placeholder)\b/i);
+  assert.match(gate, /TelemetryBucket[\s\S]*IMPLEMENTATION_READY/);
+  assert.match(gate, /AudienceProjection[\s\S]*IMPLEMENTATION_READY/);
+  assert.match(gate, /TelemetryBucketAccepted[\s\S]*IMPLEMENTATION_READY/);
+  assert.match(gate, /TelemetryBucketRejected[\s\S]*IMPLEMENTATION_READY/);
+  assert.match(gate, /AudienceProjectionApplier[\s\S]*IMPLEMENTATION_READY/);
+});
+
+test("Telemetry gate explicitly excludes infrastructure and uncertified contracts", async () => {
+  const gate = await read("implementationGate");
+  for (const excluded of [
+    "adapters",
+    "ingestion services",
+    "API",
+    "repositories",
+    "topics",
+    "brokers",
+  ]) {
+    assert.match(gate, new RegExp(`not authorized[^\\n]*${excluded}`, "i"));
+  }
+  assert.match(gate, /TelemetryCaptured[^\n]*IMPLEMENTATION_PARTIAL/);
+  assert.match(gate, /TelemetryBucketClosed[^\n]*IMPLEMENTATION_PARTIAL/);
+});
 
 const read = (name) => readFile(docs[name], "utf8");
 

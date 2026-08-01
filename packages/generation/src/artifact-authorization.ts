@@ -31,6 +31,36 @@ const registry = new Map<string, ArtifactAuthorization>(
   ]),
 );
 
+for (const artifact of [
+  "TelemetryBucketId",
+  "AudienceProjectionId",
+  "TelemetryEventId",
+  "TelemetryCapabilityStatus",
+  "TelemetrySchemaVersion",
+  "CollectorVersion",
+  "CapabilityVersion",
+  "CollectionPolicyVersion",
+  "AudienceProjectionVersion",
+  "AudienceProjectionPolicyVersion",
+  "TelemetryBucket",
+  "TelemetryBucketAccepted",
+  "TelemetryBucketRejected",
+  "AudienceProjection",
+  "AudienceProjectionApplier",
+  "AudienceProjectionProduced",
+  "AudienceProjectionExpired",
+  "AudienceProjectionInvalidated",
+]) {
+  registry.set(
+    artifact,
+    Object.freeze({
+      artifact,
+      status: "IMPLEMENTATION_READY",
+      source: "TELEMETRY_IMPLEMENTATION_GATE_V1.md",
+    }),
+  );
+}
+
 registry.set(
   "GovernanceCase",
   Object.freeze({
