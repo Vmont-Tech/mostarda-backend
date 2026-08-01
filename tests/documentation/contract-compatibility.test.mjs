@@ -9,6 +9,9 @@ const paths = {
   tbs: new URL("../../docs/specification/TECHNICAL_BEHAVIORAL_SPECIFICATION.md", import.meta.url),
   telemetry: new URL("../../docs/domain/TELEMETRY.md", import.meta.url),
   ownership: new URL("../../docs/domain/OWNERSHIP.md", import.meta.url),
+  aggregates: new URL("../../docs/domain/AGGREGATES.md", import.meta.url),
+  commands: new URL("../../docs/execution/COMMANDS.md", import.meta.url),
+  events: new URL("../../docs/domain/DOMAIN_EVENTS.md", import.meta.url),
 };
 
 const read = (name) => readFile(paths[name], "utf8");
@@ -31,12 +34,27 @@ const assertInOrder = (document, values) => {
 };
 
 const contradictions = [
-  /^(?![^\n]*(?:not|never|cannot|prohibit))[^\n]*producer (?:decides|determines|owns) (?:consumer )?compatibility/im,
-  /^(?![^\n]*(?:no|not|never|prohibit))[^\n]*(?:a )?global (?:Mostarda )?compatibility matrix/im,
-  /^(?![^\n]*(?:not|never|cannot|prohibit))[^\n]*Configuration Service (?:authors|owns|decides|determines) compatibility/im,
-  /^(?![^\n]*(?:no|not|never|prohibit))[^\n]*(?:scope (?:fallback|inheritance)|fallback (?:to )?(?:a )?(?:global|default) scope)/im,
-  /^(?![^\n]*(?:not|never|prohibit))[^\n]*fifth (?:compatibility |matrix )?state[^\n]*COMPATIBILITY_NOT_EVALUATED/im,
+  /\bproducer(?: contract| context| system| component| artifact owner)?\s+(?:declares|controls|decides|determines|owns)[^.\n]*(?:consumer )?compatibility/i,
+  /\bproducer(?: contract| context| system| component| artifact owner)?\s+(?:declares|controls|owns)[^.\n]*compatibility[^.\n]*(?:declaration|decision|support)/i,
+  /Configuration Service[^.\n]*(?:publishes|authors|owns|decides|determines|changes)[^.\n]*(?:compatibility )?(?:entry|entries|decision|matrix)/i,
+  /(?:global|platform-wide|Mostarda-wide)[^.\n]*compatibility (?:authority|matrix)/i,
+  /(?:implicit )?(?:fallback|inheritance|composition)[^.\n]*(?:scope|matrix)|(?:scope|matrix)[^.\n]*(?:implicit )?(?:fallback|inheritance|composition)/i,
+  /fifth (?:compatibility |matrix )?state[^.\n]*COMPATIBILITY_NOT_EVALUATED/i,
 ];
+
+const isExplicitlyNegated = (sentence) =>
+  /\b(?:no|not|never|cannot|does not|do not|prohibited|prohibits|without)\b/i.test(sentence);
+
+const assertNoAffirmativeContradictions = (document) => {
+  for (const sentence of document.split(/(?<=[.!?])\s+|[;\r\n]+/)) {
+    for (const contradiction of contradictions) {
+      const match = contradiction.exec(sentence);
+      if (match && !isExplicitlyNegated(sentence)) {
+        assert.fail(`affirmative compatibility contradiction: ${sentence.trim()}`);
+      }
+    }
+  }
+};
 
 test("domain compatibility authority defines consumer-local vocabulary and closed decisions", async () => {
   const document = await read("compatibility");
@@ -46,6 +64,7 @@ test("domain compatibility authority defines consumer-local vocabulary and close
   assert.match(ownership, /Configuration Service distributes[^.]*only/);
   assert.match(ownership, /`CompatibilityScopeId`/);
   assert.match(ownership, /no scope inheritance[^.]*no (?:global or )?default fallback/i);
+  assert.match(ownership, /two textual representations[^.]*cannot identify the same scope[^.]*same scope contract/i);
 
   const identity = boundedSection(document, "Producer-owned version identity");
   assert.match(identity, /opaque identity/);
@@ -68,8 +87,10 @@ test("domain compatibility authority defines consumer-local vocabulary and close
 
   const lifecycle = boundedSection(document, "Lifecycle, time and audit");
   assert.match(lifecycle, /immutable matrix revisions/i);
+  assert.match(lifecycle, /Changing any entry, scope, effective interval or compatibility state requires a new immutable revision/i);
   assert.match(lifecycle, /non-overlapping effective intervals/i);
   assert.match(lifecycle, /activation is atomic/i);
+  assert.match(lifecycle, /(?:Superseding|Retiring)[^.]*never deletes historical content/i);
   assert.match(lifecycle, /Real-time[^.]*current effective revision/i);
   assert.match(lifecycle, /replay[^.]*explicitly identified historical revision/i);
   assert.match(lifecycle, /same operation identity/i);
@@ -86,6 +107,10 @@ test("TBS independently defines deterministic observable evaluation behavior", a
   assert.match(section, /replay[^.]*explicitly identified historical revision/i);
   assert.match(section, /retry[^.]*same operation identity/i);
   assert.match(section, /explicit `ResultKind`/);
+  assert.match(section, /`DEPRECATED`[^.]*identical functional result[^.]*operational[^.]*observability/i);
+  assert.match(section, /`EXPERIMENTAL`[^.]*explicit authorization/i);
+  assert.match(section, /output[^.]*marked experimental/i);
+  assert.match(section, /cannot replace official (?:results|output)[^.]*consumer-specific normative authority/i);
 });
 
 test("platform, ownership, telemetry, and decision registry independently preserve authority boundaries", async () => {
@@ -110,11 +135,21 @@ test("platform, ownership, telemetry, and decision registry independently preser
 });
 
 test("authoritative documents reject compatibility ownership contradictions", async () => {
-  const documents = await Promise.all(Object.keys(paths).map(read));
-  for (const document of documents) {
-    for (const contradiction of contradictions) assert.doesNotMatch(document, contradiction);
-  }
+  const authorityNames = ["compatibility", "decisions", "platform", "tbs", "telemetry", "ownership"];
+  const documents = await Promise.all(authorityNames.map(read));
+  for (const document of documents) assertNoAffirmativeContradictions(document);
   const combined = documents.join("\n");
   assert.doesNotMatch(combined, /Compatibility Bounded Context/i);
-  assert.doesNotMatch(combined, /Compatibility(?:Matrix|Evaluation)(?:Created|Updated|Published)|EvaluateCompatibilityCommand/);
+});
+
+test("compatibility authority positively prohibits and catalogs contain no new implementation artifacts", async () => {
+  const compatibility = await read("compatibility");
+  assert.match(compatibility, /creates no Bounded Context, aggregate, command or event/i);
+
+  const catalogs = await Promise.all([read("aggregates"), read("commands"), read("events")]);
+  for (const catalog of catalogs) {
+    assert.doesNotMatch(catalog, /`(?:Contract)?Compatibility[A-Za-z]*(?:Aggregate|Command|Event)`/);
+    assert.doesNotMatch(catalog, /`(?:Create|Update|Publish|Evaluate|Resolve)[A-Za-z]*Compatibility[A-Za-z]*`/);
+    assert.doesNotMatch(catalog, /\|[^\n]*(?:CompatibilityMatrix|CompatibilityEvaluation)[^\n]*\|/i);
+  }
 });

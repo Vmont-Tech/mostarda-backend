@@ -16,6 +16,8 @@ Configuration Service distributes, caches, retains and serves immutable revision
 
 Before discovery, the consumer resolves exactly one opaque canonical `CompatibilityScopeId` under its versioned scope contract. One operation uses one scope. Matrices from multiple scopes are never composed; there is no scope inheritance and no global or default fallback. The scope meaning remains stable throughout an effective period; changing it requires a new scope-contract revision and matrix revision.
 
+Two textual representations cannot identify the same scope within the same scope contract.
+
 ## Entry identity and decisions
 
 The complete six-field entry key is, in order:
@@ -48,9 +50,10 @@ An unavailable evaluation never becomes an `UNSUPPORTED` decision. A produced `U
 
 ## Lifecycle, time and audit
 
-Consumers publish immutable matrix revisions with non-overlapping effective intervals for each `ConsumerId + CompatibilityScopeId`. Exactly one revision is effective at an instant. Activation is atomic: before its effective instant the predecessor applies, and at or after that instant the successor applies. Percentage rollout within one scope is prohibited; experiments use a distinct scope. Supersession never deletes historical content.
+Consumers publish immutable matrix revisions with non-overlapping effective intervals for each `ConsumerId + CompatibilityScopeId`. Exactly one revision is effective at an instant. Activation is atomic: before its effective instant the predecessor applies, and at or after that instant the successor applies. Percentage rollout within one scope is prohibited; experiments use a distinct scope.
+
+Changing any entry, scope, effective interval or compatibility state requires a new immutable revision. Retiring or superseding a revision never deletes historical content.
 
 Real-time evaluation uses the current effective revision for the resolved scope and evaluation instant. Auditable replay uses an explicitly identified historical revision; current compatibility cannot substitute for an unrecoverable historical revision.
 
 Every attempt appends an audit record with operation and consumer identities, scope and scope-contract revision, the complete artifact key, matrix revision, evaluation instant, correlation and causation identities, and an explicit `ResultKind`. A produced decision records state and reason; a non-evaluation records exactly one cause; experimental use records its authorization. Retry is allowed only with the same operation identity and never overwrites the earlier attempt or mutates the producer artifact.
-

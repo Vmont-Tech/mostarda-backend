@@ -387,3 +387,6 @@ A TBS não escolhe linguagem, framework, classes, exceptions, Result type físic
 
 **TBS-COMP-008:** Every append-only audit record carries an explicit `ResultKind`: `DECISION_PRODUCED` with state and reason, or `COMPATIBILITY_NOT_EVALUATED` with exactly one cause. It also records operation, consumer, scope and scope-contract revision, complete artifact key, matrix revision, evaluation instant, correlation and causation, and experimental authorization when applicable.
 
+**TBS-COMP-009:** `DEPRECATED` produces an identical functional result to `SUPPORTED` and adds operational replacement observability only; it never changes business behavior.
+
+**TBS-COMP-010:** `EXPERIMENTAL` processing requires explicit authorization, and its output is marked experimental. It cannot replace official results without consumer-specific normative authority.
