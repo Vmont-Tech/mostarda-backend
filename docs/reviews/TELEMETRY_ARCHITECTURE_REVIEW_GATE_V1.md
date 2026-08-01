@@ -89,7 +89,7 @@ The registry and implementation gate contain the same READY and PARTIAL names. T
 Evidence type: `structured command record`
 Claim boundary: `recorded result; not cryptographic proof of historical output`
 
-- `git diff --name-only 7029c40..757d9b0` — PASS; identified the reviewed file set above.
+- `git diff --name-only 7029c40..757d9b0` — PASS; identified only the changed-file subset; unchanged governing sources were separately inspected.
 - Direct bounded inspection with `git diff 7029c40..757d9b0 -- <path>` and `rg -n <invariant> <reviewed-paths>` — PASS for all five criteria.
 - Repository-native TypeScript import of `packages/generation/src/artifact-authorization.ts` — PASS: exported READY 14 and PARTIAL 19 exactly match the manifests; `authorizationFor` and `assertGenerationAuthorized` were exercised for every entry.
 - Named denial exercise — PASS: service, API, repository, topic, broker, adapter, ingestion, persistence, transport, and deployment artifact names resolve to `IMPLEMENTATION_BLOCKED_ARCHITECTURE` and throw when generation is asserted.

@@ -253,6 +253,9 @@ test("records reviewed files, commands, results, and the non-blocking whitespace
   assert.match(files, /`docs\/domain\/EVIDENCE_PIPELINE\.md` — authoritative Evidence materialization pipeline/);
   assert.match(files, /`docs\/superpowers\/specs\/2026-08-01-edge-telemetry-pricing-design\.md` — approved design baseline/);
   assert.match(commands, /`git diff --name-only 7029c40\.\.757d9b0` — PASS/);
+  assert.match(commands, /identified only the changed-file subset/);
+  assert.match(commands, /unchanged governing sources were separately inspected/);
+  assert.doesNotMatch(commands, /identified the reviewed file set above/);
   assert.match(commands, /supporting evidence, not a substitute for direct inspection/i);
   assert.match(commands, /`npm run test:docs` — PASS/);
   assert.match(commands, /`npm run test:architecture` — PASS/);
