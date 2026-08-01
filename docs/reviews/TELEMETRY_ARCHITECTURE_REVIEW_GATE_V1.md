@@ -63,7 +63,7 @@ The registry and implementation gate contain the same READY and PARTIAL names. T
 
 ## Reviewed files
 
-The reviewer directly inspected the changed architecture, domain, gate, authorization, and supporting-test files, plus the unchanged authoritative design and Evidence pipeline sources needed to validate the cross-context claims:
+`git diff --name-only 7029c40..757d9b0` identified only the changed-file subset. The reviewer directly inspected those changed architecture, domain, gate, authorization, and supporting-test files; unchanged governing sources were inspected separately to validate the cross-context claims:
 
 - `docs/domain/AGGREGATES.md`
 - `docs/domain/ASSETS.md`

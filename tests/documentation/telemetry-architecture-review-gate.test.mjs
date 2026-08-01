@@ -103,9 +103,18 @@ test("provides bounded reviewer evidence for every invariant", async () => {
 
 test("authoritative sources directly preserve all five architecture invariants", async () => {
   const sources = Object.fromEntries(
-    await Promise.all(
-      Object.entries(sourcePaths).map(async ([name, path]) => [name, await readFile(path, "utf8")]),
-    ),
+    Object.entries(sourcePaths).map(([name, path]) => {
+      const relativePath = path.pathname
+        .slice(repositoryRoot.pathname.length)
+        .replace(/^\//, "");
+      return [
+        name,
+        execFileSync("git", ["show", `757d9b0:${decodeURIComponent(relativePath)}`], {
+          cwd: repositoryRoot,
+          encoding: "utf8",
+        }),
+      ];
+    }),
   );
 
   assert.match(lineContaining(sources.design, "does not introduce an Audience Bounded Context"), /internal, versioned and rebuildable Telemetry read artifact/);
@@ -239,6 +248,8 @@ test("records reviewed files, commands, results, and the non-blocking whitespace
   const note = boundedSection(review, "Audit note");
 
   assert.match(files, /The reviewer directly inspected/);
+  assert.match(files, /`git diff --name-only 7029c40\.\.757d9b0` identified only the changed-file subset/);
+  assert.match(files, /unchanged governing sources were inspected separately/);
   assert.match(files, /`docs\/domain\/EVIDENCE_PIPELINE\.md` — authoritative Evidence materialization pipeline/);
   assert.match(files, /`docs\/superpowers\/specs\/2026-08-01-edge-telemetry-pricing-design\.md` — approved design baseline/);
   assert.match(commands, /`git diff --name-only 7029c40\.\.757d9b0` — PASS/);

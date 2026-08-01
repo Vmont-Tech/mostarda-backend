@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+import * as artifactAuthorizationModule from "../../packages/generation/src/artifact-authorization.ts";
+
 import {
   ArtifactGenerationBlocked,
   assertGenerationAuthorized,
@@ -105,6 +107,58 @@ test("telemetry infrastructure remains absent and denied by default", () => {
       source: "CGS-A-1 deny-by-default",
     });
   }
+});
+
+test("registry enumeration exhaustively exposes telemetry gate provenance without mutation leaks", () => {
+  assert.equal(
+    typeof artifactAuthorizationModule.registeredArtifactAuthorizations,
+    "function",
+  );
+  const enumerate = artifactAuthorizationModule.registeredArtifactAuthorizations as
+    | undefined
+    | (() => readonly Readonly<{
+        artifact: string;
+        status: string;
+        source: string;
+      }>[]);
+  assert.ok(enumerate);
+
+  const entries = enumerate();
+  const telemetryEntries = entries.filter(
+    (entry) => entry.source === "TELEMETRY_IMPLEMENTATION_GATE_V1.md",
+  );
+  const expected = [
+    ...telemetryAuthorizedArtifacts.map((artifact) => ({
+      artifact,
+      status: "IMPLEMENTATION_READY",
+      source: "TELEMETRY_IMPLEMENTATION_GATE_V1.md",
+    })),
+    ...telemetryPartialArtifacts.map((artifact) => ({
+      artifact,
+      status: "IMPLEMENTATION_PARTIAL",
+      source: "TELEMETRY_IMPLEMENTATION_GATE_V1.md",
+    })),
+  ];
+
+  assert.deepEqual(telemetryEntries, expected);
+  assert.deepEqual(
+    telemetryEntries.filter((entry) => entry.status === "IMPLEMENTATION_READY").map(({ artifact }) => artifact),
+    [...telemetryAuthorizedArtifacts],
+  );
+  assert.equal(Object.isFrozen(entries), true);
+  assert.equal(entries.every(Object.isFrozen), true);
+
+  const first = entries[0];
+  assert.ok(first);
+  assert.throws(() => {
+    (entries as unknown as Array<typeof first>).push(first);
+  }, TypeError);
+  assert.throws(() => {
+    (first as { status: string }).status = "IMPLEMENTATION_READY";
+  }, TypeError);
+  assert.notStrictEqual(enumerate(), entries);
+  assert.notStrictEqual(enumerate()[0], first);
+  assert.deepEqual(authorizationFor(first.artifact), first);
 });
 
 test("READY telemetry composites do not authorize their excluded mechanisms", () => {

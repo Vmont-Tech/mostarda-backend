@@ -136,6 +136,18 @@ export function authorizationFor(artifact: string): ArtifactAuthorization {
   );
 }
 
+export function registeredArtifactAuthorizations(): readonly ArtifactAuthorization[] {
+  return Object.freeze(
+    [...registry.values()].map((authorization) =>
+      Object.freeze({
+        artifact: authorization.artifact,
+        status: authorization.status,
+        source: authorization.source,
+      }),
+    ),
+  );
+}
+
 export function assertGenerationAuthorized(artifact: string): void {
   const authorization = authorizationFor(artifact);
   if (authorization.status !== "IMPLEMENTATION_READY") {
