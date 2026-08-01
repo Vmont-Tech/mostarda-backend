@@ -24,12 +24,13 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `PlaybackQueueExhausted` | Fila local sem Slots disponíveis. |
 | `FrameDropDetected` | Degradação de frames durante uma sessão de reprodução. |
 
-## TV Capability (produtor: Edge / Cloud)
+## TV Capability (produtor: TV Network)
 
 | Evento | Significado |
 | --- | --- |
-| `CapabilityDeclared` / `CapabilityActivated` | Capability instalada foi declarada ou ativada. |
-| `CapabilityDegraded` / `CapabilityRecovered` | Capability perdeu ou recuperou condição operacional. |
+| `CapabilityDeclared` / `CapabilityValidated` / `CapabilityRejected` | Capability foi declarada e sua validação autoritativa foi aceita ou rejeitada. |
+| `CapabilityActivated` / `CapabilityDegraded` / `CapabilitySuspended` | Capability foi ativada, degradada ou suspensa pelo owner. |
+| `CapabilityRecovered` / `CapabilityRetired` | Capability recuperou condição autoritativa ou foi retirada. |
 | `FacetInstalled` / `FacetSwapped` | Facet instalada ou substituída sob contrato versionado. |
 | `CapabilityPolicyApplied` | Política da Capability aplicada. |
 
@@ -84,14 +85,13 @@ Catálogo oficial de eventos de domínio, organizado por **Capability** / contex
 | `AudienceProjectionProduced` | Telemetry Context | Hipótese operacional versionada produzida de observações aceitas. |
 | `AudienceProjectionExpired` | Telemetry Context | Projeção ultrapassou sua validade e não pode mais ser consumida como atual. |
 | `AudienceProjectionInvalidated` | Telemetry Context | Fonte ou policy invalidou o uso da projeção sem apagar o histórico. |
-| `TelemetryCapabilityChanged` | Família conceitual, não instanciável | Mudança de capability; tipos concretos abaixo distinguem a fonte. |
+| `TelemetryCapabilityChanged` | Família conceitual, não instanciável | Observação Edge usa `EdgeTelemetryCapabilityChanged`; transições do TV capability owner reutilizam `CapabilityDeclared`, `CapabilityValidated`, `CapabilityRejected`, `CapabilityActivated`, `CapabilityDegraded`, `CapabilitySuspended`, `CapabilityRecovered` e `CapabilityRetired`. |
 | `EdgeTelemetryCapabilityChanged` | Edge Runtime | Condição ou versão de collector/capability observada localmente mudou. |
-| `TvCapabilityChanged` | TV Network | TV capability owner alterou o suporte ou estado autoritativo da capability. |
 | `TelemetryIncidentReported` | Família conceitual, não instanciável | Família de incident reporting; tipos concretos abaixo eliminam ambiguidade. |
 | `EdgeTelemetryIncidentReported` | Edge Runtime | Incidente de coleta, armazenamento ou transporte local. |
 | `TelemetryValidationIncidentReported` | Telemetry Context | Incidente de validação, integridade, schema ou ordering. |
 
-Each concrete event type has one authoritative producer. `TelemetryCapabilityChanged` e `TelemetryIncidentReported` são somente famílias conceituais. Mudanças do Edge e do TV capability owner usam nomes e schemas concretos distintos, assim como incidentes do Edge e da validação Telemetry; nenhuma família autoriza producer ambíguo.
+Each concrete event type has one authoritative producer. `TelemetryCapabilityChanged` e `TelemetryIncidentReported` são somente famílias conceituais. Observação do Edge possui nome próprio; o TV capability owner reutiliza seus eventos de lifecycle existentes, sem evento paralelo. Incidentes do Edge e da validação Telemetry também mantêm nomes e schemas distintos; nenhuma família autoriza producer ambíguo.
 
 ## Evidence (produtor: Evidence Ledger no Cloud; fatos de playback produzidos no Edge)
 

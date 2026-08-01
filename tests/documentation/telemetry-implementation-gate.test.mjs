@@ -82,11 +82,18 @@ test("accepted telemetry never changes an existing commercial commitment", async
 });
 
 test("optional Wi-Fi and camera collectors report degradation without stopping playback", async () => {
-  const corpus = `${await read("telemetry")}\n${await read("edge")}`;
+  const telemetry = await read("telemetry");
+  const edge = await read("edge");
+  const corpus = `${telemetry}\n${edge}`;
 
   assert.match(corpus, /Wi-Fi.*camera.*absence or failure.*explicitly reported/is);
   assert.match(corpus, /playback continues/i);
-  assert.match(corpus, /`UNAVAILABLE`.*`DISABLED`.*`DEGRADED`.*`FAILED`/is);
+  for (const document of [telemetry, edge]) {
+    assert.match(
+      document,
+      /`AVAILABLE`.*`UNAVAILABLE`.*`DISABLED`.*`DEGRADED`.*`FAILED`/is,
+    );
+  }
 });
 
 test("minute buckets, batching, projection window, and QR or NFC routing are explicit", async () => {
@@ -128,7 +135,22 @@ test("the nine telemetry event families have unambiguous producers", async () =>
   assert.match(events, /EdgeTelemetryIncidentReported/is);
   assert.match(events, /TelemetryValidationIncidentReported/is);
   assert.match(events, /EdgeTelemetryCapabilityChanged.*Edge Runtime/is);
-  assert.match(events, /TvCapabilityChanged.*TV Network/is);
+  assert.doesNotMatch(events, /\bTvCapabilityChanged\b/);
+  for (const event of [
+    "CapabilityDeclared",
+    "CapabilityValidated",
+    "CapabilityRejected",
+    "CapabilityActivated",
+    "CapabilityDegraded",
+    "CapabilitySuspended",
+    "CapabilityRecovered",
+    "CapabilityRetired",
+  ]) {
+    assert.match(
+      events,
+      new RegExp(`TelemetryCapabilityChanged[^\\n]*${event}`, "is"),
+    );
+  }
   assert.doesNotMatch(
     events,
     /`TelemetryIncidentReported`[^\n]*(?:Edge Runtime\s*(?:\/|or|e)\s*Telemetry Context|Edge\s*(?:\/|or|e)\s*Telemetry)/i,

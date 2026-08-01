@@ -15,7 +15,7 @@ Ele:
 
 Ele não contém regras de Campaign, anúncio, Pricing, Financeiro, Evidence ou Settlement. Player e Canvas são conhecidos apenas como processos, versões e dependências operacionais; seu conteúdo interno permanece fora de TV Network.
 
-Edge coleta sinais locais autorizados e fecha cada one-minute bucket as immutable observation. Em conectividade normal, envia os buckets normalmente em five-minute batches sem apagar as cinco fronteiras de minuto. Wi-Fi and camera absence or failure is explicitly reported como `UNAVAILABLE`, `DISABLED`, `DEGRADED` ou `FAILED`; playback continues sem fabricar valores. Telemetry Context, e não Edge, valida, aceita e mantém o Telemetry Ledger e `AudienceProjection`.
+Edge coleta sinais locais autorizados e fecha cada one-minute bucket as immutable observation. Em conectividade normal, envia os buckets normalmente em five-minute batches sem apagar as cinco fronteiras de minuto. Cada collector reporta `AVAILABLE`, `UNAVAILABLE`, `DISABLED`, `DEGRADED` ou `FAILED`. Wi-Fi and camera absence or failure is explicitly reported; playback continues sem fabricar valores. Telemetry Context, e não Edge, valida, aceita e mantém o Telemetry Ledger e `AudienceProjection`.
 
 QR and NFC bypass Edge. Edge only renders QR fornecido pelo Cloud; não recebe, resolve, redireciona nem fabrica interação de QR ou tag. A pessoa interage diretamente com o fluxo público Cloud/Quantum.
 
