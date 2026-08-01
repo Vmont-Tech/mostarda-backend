@@ -73,7 +73,7 @@ Record `DEC-063` with these exact semantics: Telemetry owns immutable accepted o
 
 - [ ] **Step 4: Run documentation and architecture checks**
 
-Run: `npm run test:docs && npm run test:architecture && git diff --check`  
+Run: `npm run test:docs && npm run test:architecture && git diff --check`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
