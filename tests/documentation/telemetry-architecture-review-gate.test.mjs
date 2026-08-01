@@ -38,6 +38,19 @@ const lineContaining = (document, needle) => {
   return line;
 };
 
+const gitShow = (path) => execFileSync("git", ["show", `6851900d:${path}`], {
+  cwd: repositoryRoot,
+  encoding: "utf8",
+});
+
+const exportedStringArray = (source, name) => {
+  const body = source.match(
+    new RegExp(`export const ${name} = Object\\.freeze\\(\\[([\\s\\S]*?)\\] as const\\);`),
+  )?.[1];
+  assert.ok(body, `missing reviewed export array: ${name}`);
+  return [...body.matchAll(/"([^"]+)"/g)].map((match) => match[1]);
+};
+
 test("records the new approval while preserving the prior invalidated verdict as history", async () => {
   const review = await readFile(reviewPath, "utf8");
   const verdict = boundedSection(review, "Current verdict");
@@ -150,10 +163,9 @@ test("authoritative sources directly preserve all five architecture invariants",
 });
 
 test("records exact manifests and denies infrastructure authorization", async () => {
-  const [review, gate] = await Promise.all([
-    readFile(reviewPath, "utf8"),
-    readFile(implementationGatePath, "utf8"),
-  ]);
+  const review = await readFile(reviewPath, "utf8");
+  const gate = gitShow("docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md");
+  const registrySource = gitShow("packages/generation/src/artifact-authorization.ts");
   const authorization = boundedSection(review, "Authorization audit");
   const ready = JSON.parse(gate.match(/^READY_MANIFEST: (\[[^\n]+\])$/m)?.[1] ?? "null");
   const partial = JSON.parse(gate.match(/^PARTIAL_MANIFEST: (\[[^\n]+\])$/m)?.[1] ?? "null");
@@ -168,6 +180,16 @@ test("records exact manifests and denies infrastructure authorization", async ()
   assert.deepEqual(
     [...gate.matchAll(/^\| `([^`]+)` \| `IMPLEMENTATION_PARTIAL` \|/gm)].map((match) => match[1]),
     partial,
+  );
+  assert.deepEqual(exportedStringArray(registrySource, "telemetryAuthorizedArtifacts"), ready);
+  assert.deepEqual(exportedStringArray(registrySource, "telemetryPartialArtifacts"), partial);
+  assert.match(
+    registrySource,
+    /for \(const artifact of telemetryAuthorizedArtifacts\) \{[\s\S]*?status: "IMPLEMENTATION_READY"[\s\S]*?source: "TELEMETRY_IMPLEMENTATION_GATE_V1\.md"/,
+  );
+  assert.match(
+    registrySource,
+    /for \(const artifact of telemetryPartialArtifacts\) \{[\s\S]*?status: "IMPLEMENTATION_PARTIAL"[\s\S]*?source: "TELEMETRY_IMPLEMENTATION_GATE_V1\.md"/,
   );
 
   const denied = [
@@ -268,7 +290,7 @@ test("reviewed telemetry package exposes exactly the four READY contracts", () =
       ["package", "packages/telemetry/package.json"],
     ].map(([name, path]) => [
       name,
-      execFileSync("git", ["show", `6851900d:${path}`], { cwd: repositoryRoot, encoding: "utf8" }),
+      gitShow(path),
     ]),
   );
   assert.equal(snapshot.index.trim(), 'export * from "./capability.ts";\nexport * from "./identities.ts";');
@@ -278,12 +300,21 @@ test("reviewed telemetry package exposes exactly the four READY contracts", () =
   assert.match(snapshot.identities, /assertGenerationAuthorized\(artifact\)/);
   assert.match(snapshot.capability, /assertGenerationAuthorized\("TelemetryCapabilityStatus"\)/);
   assert.deepEqual(JSON.parse(snapshot.package).exports, { ".": "./src/index.ts" });
+  for (const demoted of [
+    "TelemetrySchemaVersion",
+    "CollectorVersion",
+    "CapabilityVersion",
+    "CollectionPolicyVersion",
+    "AudienceProjectionVersion",
+    "AudienceProjectionPolicyVersion",
+  ]) {
+    assert.doesNotMatch(
+      `${snapshot.index}\n${snapshot.identities}\n${snapshot.capability}`,
+      new RegExp(`\\b${demoted}\\b`),
+    );
+  }
 
-  const gate = execFileSync(
-    "git",
-    ["show", "6851900d:docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md"],
-    { cwd: repositoryRoot, encoding: "utf8" },
-  );
+  const gate = gitShow("docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md");
   const partial = JSON.parse(gate.match(/^PARTIAL_MANIFEST: (\[[^\n]+\])$/m)?.[1] ?? "null");
   const telemetryModule = new URL("../../packages/telemetry/src/index.ts", import.meta.url).href;
   const authorizationModule = new URL("../../packages/generation/src/artifact-authorization.ts", import.meta.url).href;
@@ -331,6 +362,12 @@ test("records reviewed files, commands, results, and the non-blocking whitespace
     assert.match(commits, new RegExp(`\\b${commit}\\b`));
   }
   for (const path of [
+    "docs/domain/AGGREGATES.md",
+    "docs/domain/ASSETS.md",
+    "docs/domain/CAPABILITIES.md",
+    "docs/specification/DECISION_REGISTRY.md",
+    "docs/superpowers/plans/2026-08-01-telemetry-vertical-slice.md",
+    "docs/tv-network/EDGE_RUNTIME.md",
     "docs/reviews/TELEMETRY_ARCHITECTURE_REVIEW_GATE_V1.md",
     "docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md",
     "packages/generation/src/artifact-authorization.ts",
@@ -344,9 +381,17 @@ test("records reviewed files, commands, results, and the non-blocking whitespace
   ]) {
     assert.match(files, new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
+  assert.match(files, /AGGREGATES\.md` — aggregate ownership synchronization/);
+  assert.match(files, /ASSETS\.md` — durable asset ownership synchronization/);
+  assert.match(files, /CAPABILITIES\.md` — capability catalog synchronization/);
+  assert.match(files, /DECISION_REGISTRY\.md` — DEC-063 authority record/);
+  assert.match(files, /EDGE_RUNTIME\.md` — Edge producer and degradation boundary/);
+  assert.match(files, /telemetry-vertical-slice\.md` — delivery plan and gate sequencing/);
   assert.match(files, /`docs\/domain\/EVIDENCE_PIPELINE\.md` — authoritative Evidence materialization pipeline/);
   assert.match(files, /`docs\/superpowers\/specs\/2026-08-01-edge-telemetry-pricing-design\.md` — approved design baseline/);
   assert.match(commands, /`git diff --name-only 7a0c1313\.\.6851900d` — PASS/);
+  assert.match(commands, /snapshot text parsing/i);
+  assert.match(commands, /current-worktree runtime import[^\n]*additional regression evidence/i);
   assert.match(commands, /identified only the changed-file subset/);
   assert.match(commands, /unchanged governing sources were separately inspected/);
   assert.doesNotMatch(commands, /identified the reviewed file set above/);

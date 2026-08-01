@@ -99,14 +99,20 @@ Changed-file subset:
 
 Separately inspected governing sources:
 
+- `docs/domain/AGGREGATES.md` — aggregate ownership synchronization
+- `docs/domain/ASSETS.md` — durable asset ownership synchronization
 - `docs/domain/BOUNDED_CONTEXTS.md`
+- `docs/domain/CAPABILITIES.md` — capability catalog synchronization
 - `docs/domain/DOMAIN_EVENTS.md`
 - `docs/domain/EVIDENCE_PIPELINE.md` — authoritative Evidence materialization pipeline
 - `docs/domain/OWNERSHIP.md`
 - `docs/domain/PRICING_ENGINE.md`
 - `docs/domain/TELEMETRY.md`
+- `docs/specification/DECISION_REGISTRY.md` — DEC-063 authority record
 - `docs/specification/PLATFORM_SPECIFICATION.md`
+- `docs/superpowers/plans/2026-08-01-telemetry-vertical-slice.md` — delivery plan and gate sequencing
 - `docs/superpowers/specs/2026-08-01-edge-telemetry-pricing-design.md` — approved design baseline
+- `docs/tv-network/EDGE_RUNTIME.md` — Edge producer and degradation boundary
 
 ## Commands and results
 
@@ -116,8 +122,9 @@ Claim boundary: `recorded result; not cryptographic proof of historical output`
 - `git log --format="%H %s" 7a0c1313..6851900d` — PASS; enumerated the six reviewed commits.
 - `git diff --name-only 7a0c1313..6851900d` — PASS; identified only the changed-file subset; unchanged governing sources were separately inspected.
 - `git show 6851900d:<path>` with bounded invariant assertions — PASS for all governing sources and reviewed package/gate files.
-- Manifest/matrix/registry comparison — PASS: exact READY 4, PARTIAL 29, disjoint, and no additional Telemetry-gate registry entry.
-- Package surface inspection and runtime import — PASS: only the four READY contracts have implementation/export surface; all 29 PARTIAL artifacts are absent and generation-denied.
+- Snapshot text parsing of `git show 6851900d:docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md` and `git show 6851900d:packages/generation/src/artifact-authorization.ts` — PASS: manifests, matrix rows, exported registry arrays, status-registration loops, and gate provenance agree at exact READY 4 / PARTIAL 29.
+- Snapshot source inspection of `packages/telemetry/src/{index,identities,capability}.ts` and `packages/telemetry/package.json` at `6851900d` — PASS: only the four READY artifacts have package implementation/export surface; the six demoted version contracts are absent.
+- Current-worktree runtime import and authorization exercise — additional regression evidence only: exact public runtime exports, all 29 PARTIAL artifacts generation-denied and unexported, and representative unknown infrastructure names denied by default.
 - Representative service, API, repository, topic, broker, adapter, ingestion, persistence, transport, and deployment names — PASS: deny-by-default, with no infrastructure authorization.
 - `node --experimental-strip-types --test "tests/generation/*.test.ts"` — PASS.
 - `node --experimental-strip-types --test "tests/telemetry/*.test.ts"` — PASS.
