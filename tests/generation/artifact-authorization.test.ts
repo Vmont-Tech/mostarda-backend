@@ -113,7 +113,7 @@ test("telemetry infrastructure remains absent and denied by default", () => {
   }
 });
 
-test("underspecified versions and their composite dependents remain PARTIAL", () => {
+test("opaque version identities are READY while composite dependents remain PARTIAL", () => {
   for (const artifact of [
     "TelemetrySchemaVersion",
     "CollectorVersion",
@@ -121,14 +121,19 @@ test("underspecified versions and their composite dependents remain PARTIAL", ()
     "CollectionPolicyVersion",
     "AudienceProjectionVersion",
     "AudienceProjectionPolicyVersion",
+  ]) {
+    const authorization = authorizationFor(artifact);
+    assert.equal(authorization.status, "IMPLEMENTATION_READY");
+    assert.equal(authorization.source, "TELEMETRY_IMPLEMENTATION_GATE_V1.md");
+    assert.doesNotThrow(() => assertGenerationAuthorized(artifact));
+  }
+  for (const artifact of [
     "TelemetryBucket",
     "TelemetryBucketAccepted",
     "TelemetryBucketRejected",
     "AudienceProjection",
   ]) {
-    const authorization = authorizationFor(artifact);
-    assert.equal(authorization.status, "IMPLEMENTATION_PARTIAL");
-    assert.equal(authorization.source, "TELEMETRY_IMPLEMENTATION_GATE_V1.md");
+    assert.equal(authorizationFor(artifact).status, "IMPLEMENTATION_PARTIAL");
     assert.throws(() => assertGenerationAuthorized(artifact), ArtifactGenerationBlocked);
   }
 });

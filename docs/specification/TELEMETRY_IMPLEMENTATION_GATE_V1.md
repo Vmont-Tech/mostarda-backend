@@ -4,8 +4,8 @@
 **Normative domain source:** `docs/domain/TELEMETRY.md` (`DEC-063`)  
 **Scope:** value contracts, the immutable minute bucket, acceptance/rejection events, and the immutable audience projection record
 
-READY_MANIFEST: ["TelemetryBucketId","AudienceProjectionId","TelemetryEventId","TelemetryCapabilityStatus"]
-PARTIAL_MANIFEST: ["TelemetrySchemaVersion","CollectorVersion","CapabilityVersion","CollectionPolicyVersion","AudienceProjectionVersion","AudienceProjectionPolicyVersion","TelemetryBucket","TelemetryBucketAccepted","TelemetryBucketRejected","AudienceProjection","TelemetryCaptured","TelemetryBucketClosed","EdgeTelemetryCapabilityChanged","EdgeTelemetryIncidentReported","TelemetryValidationIncidentReported","TelemetryCapabilityChanged","TelemetryIncidentReported","CapabilityDeclared","CapabilityValidated","CapabilityRejected","CapabilityActivated","CapabilityDegraded","CapabilitySuspended","CapabilityRecovered","CapabilityRetired","AudienceProjectionApplier","AudienceProjectionProduced","AudienceProjectionExpired","AudienceProjectionInvalidated"]
+READY_MANIFEST: ["TelemetryBucketId","AudienceProjectionId","TelemetryEventId","TelemetryCapabilityStatus","TelemetrySchemaVersion","CollectorVersion","CapabilityVersion","CollectionPolicyVersion","AudienceProjectionVersion","AudienceProjectionPolicyVersion"]
+PARTIAL_MANIFEST: ["TelemetryBucket","TelemetryBucketAccepted","TelemetryBucketRejected","AudienceProjection","TelemetryCaptured","TelemetryBucketClosed","EdgeTelemetryCapabilityChanged","EdgeTelemetryIncidentReported","TelemetryValidationIncidentReported","TelemetryCapabilityChanged","TelemetryIncidentReported","CapabilityDeclared","CapabilityValidated","CapabilityRejected","CapabilityActivated","CapabilityDegraded","CapabilitySuspended","CapabilityRecovered","CapabilityRetired","AudienceProjectionApplier","AudienceProjectionProduced","AudienceProjectionExpired","AudienceProjectionInvalidated"]
 
 This gate certifies only the names marked `IMPLEMENTATION_READY` below. The following are not authorized: adapters; not authorized: ingestion services; not authorized: API; not authorized: repositories; not authorized: topics; not authorized: brokers. Persistence mappings, transport envelopes, and deployment resources are likewise excluded. An artifact absent from the READY list remains denied by CGS-A-1. Public event families not concretized here remain non-READY.
 
@@ -17,16 +17,16 @@ This gate certifies only the names marked `IMPLEMENTATION_READY` below. The foll
 | `AudienceProjectionId` | `IMPLEMENTATION_READY` | Telemetry Context | none; value type | UTF-8 string validation |
 | `TelemetryEventId` | `IMPLEMENTATION_READY` | Telemetry Context | none; value type | UTF-8 string validation |
 | `TelemetryCapabilityStatus` | `IMPLEMENTATION_READY` | Telemetry Context contract; Edge observes the value | Edge Runtime collector | none |
-| `TelemetrySchemaVersion` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | none; value type | supported version set/compatibility lookup absent |
-| `CollectorVersion` | `IMPLEMENTATION_PARTIAL` | Edge Runtime | Edge Runtime collector | supported version set/compatibility lookup absent |
-| `CapabilityVersion` | `IMPLEMENTATION_PARTIAL` | TV Network capability owner | TV Network capability owner | supported version set/compatibility lookup absent |
-| `CollectionPolicyVersion` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | none; value type | supported version set/compatibility lookup absent |
-| `AudienceProjectionVersion` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | none; value type | supported version set/compatibility lookup absent |
-| `AudienceProjectionPolicyVersion` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | none; value type | supported version set/compatibility lookup absent |
-| `TelemetryBucket` | `IMPLEMENTATION_PARTIAL` | Telemetry Context owns the acquisition contract; Edge Runtime produces instances | Edge Runtime | blocked by PARTIAL version dependencies |
+| `TelemetrySchemaVersion` | `IMPLEMENTATION_READY` | Telemetry Context | Telemetry Context schema producer | none; identity only; compatibility excluded |
+| `CollectorVersion` | `IMPLEMENTATION_READY` | Edge Runtime | Edge Runtime collector producer | none; identity only; compatibility excluded |
+| `CapabilityVersion` | `IMPLEMENTATION_READY` | TV Network capability owner | TV Network capability owner | none; identity only; compatibility excluded |
+| `CollectionPolicyVersion` | `IMPLEMENTATION_READY` | Telemetry Context collection-policy owner | Telemetry Context policy producer | none; identity only; compatibility excluded |
+| `AudienceProjectionVersion` | `IMPLEMENTATION_READY` | Telemetry Context | Telemetry Context projection producer | none; identity only; compatibility excluded |
+| `AudienceProjectionPolicyVersion` | `IMPLEMENTATION_READY` | Telemetry Context | Telemetry Context projection-policy producer | none; identity only; compatibility excluded |
+| `TelemetryBucket` | `IMPLEMENTATION_PARTIAL` | Telemetry Context owns the acquisition contract; Edge Runtime produces instances | Edge Runtime | complete construction error contract remains absent |
 | `TelemetryBucketAccepted` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | Telemetry Context validator, after ledger append | blocked by PARTIAL `TelemetryBucket` dependency |
-| `TelemetryBucketRejected` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | Telemetry Context validator, without accepted-observation append | blocked by PARTIAL `TelemetrySchemaVersion` dependency |
-| `AudienceProjection` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | projection builder is outside this gate | blocked by PARTIAL version dependencies |
+| `TelemetryBucketRejected` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | Telemetry Context validator, without accepted-observation append | complete rejection compatibility evaluation contract remains absent |
+| `AudienceProjection` | `IMPLEMENTATION_PARTIAL` | Telemetry Context | projection builder is outside this gate | projection builder and complete compatibility evaluation contract remain absent |
 | `TelemetryCaptured` | `IMPLEMENTATION_PARTIAL` | Edge Runtime | Edge Runtime | complete v1 payload/error schema absent |
 | `TelemetryBucketClosed` | `IMPLEMENTATION_PARTIAL` | Telemetry acquisition contract | Edge Runtime | complete v1 payload/error schema absent |
 | `EdgeTelemetryCapabilityChanged` | `IMPLEMENTATION_PARTIAL` | Edge Runtime | Edge Runtime | complete v1 payload/error schema absent |
@@ -299,140 +299,134 @@ None.
 Exhaust all five values, reject all others, and preserve missing-versus-zero semantics.
 
 ## Artifact: TelemetrySchemaVersion
-Status: `IMPLEMENTATION_PARTIAL`
-Reason: supported version set/compatibility lookup absent.
+Status: `IMPLEMENTATION_READY`
 ### Unique owner
 Telemetry Context, as exclusive owner of telemetry acquisition contracts and schemas.
 ### Conceptual schema v1
-Required non-empty opaque UTF-8 string branded `TelemetrySchemaVersion`.
+Opaque exact `VersionValue` branded `TelemetrySchemaVersion`; its producer-defined `VersionSyntax` and canonical representation are authoritative.
 ### Error codes
-`EMPTY_OPAQUE_VALUE`, `UNSUPPORTED_TELEMETRY_SCHEMA_VERSION`.
+Only `INVALID_VERSION_IDENTITY_REPRESENTATION`; construction never reports unsupported-version errors.
 ### Lifecycle and terminality
-Immutable; a meaning or shape change publishes a successor.
+Immutable identity with no normalization, coercion, or ordering; a meaning or shape change publishes a distinct value.
 ### Replay and rebuild
-Historical buckets retain the original value and are never reinterpreted.
+Replay preserves the exact `VersionValue` bytes and never reinterprets them.
 ### Producer
-Telemetry Context publishes supported values; Edge Runtime records the selected value.
+Telemetry Context defines `VersionSyntax`, canonical representation, and publishes the identity; Edge Runtime records that exact value.
 ### Compatibility and version evolution
-Only declared compatible values are accepted; upcast preserves the original envelope.
+Compatibility evaluation is excluded from identity construction and is consumer-owned under `CONTRACT_COMPATIBILITY`; no compatibility, normalization, coercion, or ordering is inferred.
 ### Dependencies
-UTF-8 validation only.
+Producer-defined `VersionSyntax` identity validation only; compatibility evaluation is not a dependency.
 ### Required tests
-Brand separation, empty and unsupported rejection, round-trip, and historical preservation.
+Brand separation, invalid identity representation rejection, exact canonical round-trip/replay, and absence of compatibility inference or unsupported-version construction errors.
 
 ## Artifact: CollectorVersion
-Status: `IMPLEMENTATION_PARTIAL`
-Reason: supported version set/compatibility lookup absent.
+Status: `IMPLEMENTATION_READY`
 ### Unique owner
 Edge Runtime, owner of the collector implementation and algorithm that produced a measurement.
 ### Conceptual schema v1
-Required non-empty opaque UTF-8 string branded `CollectorVersion`.
+Opaque exact `VersionValue` branded `CollectorVersion`; its producer-defined `VersionSyntax` and canonical representation are authoritative.
 ### Error codes
-`EMPTY_OPAQUE_VALUE`, `UNSUPPORTED_COLLECTOR_VERSION`.
+Only `INVALID_VERSION_IDENTITY_REPRESENTATION`; construction never reports unsupported-version errors.
 ### Lifecycle and terminality
-Immutable; algorithm or normalization changes publish a successor.
+Immutable identity with no normalization, coercion, or ordering; algorithm changes publish a distinct value.
 ### Replay and rebuild
-Historical observations retain the original value.
+Replay preserves the exact `VersionValue` bytes.
 ### Producer
-Edge Runtime collector reports its own value.
+Edge Runtime collector producer defines `VersionSyntax` and canonical representation and reports that exact value.
 ### Compatibility and version evolution
-Telemetry accepts only declared compatible values and never silently reinterprets them.
+Compatibility evaluation is excluded from identity construction and is consumer-owned under `CONTRACT_COMPATIBILITY`; no compatibility, normalization, coercion, or ordering is inferred.
 ### Dependencies
-UTF-8 validation only.
+Producer-defined `VersionSyntax` identity validation only; compatibility evaluation is not a dependency.
 ### Required tests
-Brand separation, empty and unsupported rejection, round-trip, and historical preservation.
+Brand separation, invalid identity representation rejection, exact canonical round-trip/replay, and absence of compatibility inference or unsupported-version construction errors.
 
 ## Artifact: CapabilityVersion
-Status: `IMPLEMENTATION_PARTIAL`
-Reason: supported version set/compatibility lookup absent.
+Status: `IMPLEMENTATION_READY`
 ### Unique owner
 TV Network capability owner, whose authoritative capability transitions are listed by `TELEMETRY.md`.
 ### Conceptual schema v1
-Required non-empty opaque UTF-8 string branded `CapabilityVersion`.
+Opaque exact `VersionValue` branded `CapabilityVersion`; its producer-defined `VersionSyntax` and canonical representation are authoritative.
 ### Error codes
-`EMPTY_OPAQUE_VALUE`, `UNSUPPORTED_CAPABILITY_VERSION`.
+Only `INVALID_VERSION_IDENTITY_REPRESENTATION`; construction never reports unsupported-version errors.
 ### Lifecycle and terminality
-Immutable; behavior or support changes publish a successor.
+Immutable identity with no normalization, coercion, or ordering; behavior changes publish a distinct value.
 ### Replay and rebuild
-Historical observations retain the declared source value.
+Replay preserves the exact declared `VersionValue` bytes.
 ### Producer
-TV Network capability owner declares it; Edge Runtime reports the active declared value.
+TV Network capability owner defines `VersionSyntax` and canonical representation and declares it; Edge Runtime reports that exact active value.
 ### Compatibility and version evolution
-Telemetry accepts only declared compatible values and never substitutes a collector version.
+Compatibility evaluation is excluded from identity construction and is consumer-owned under `CONTRACT_COMPATIBILITY`; no compatibility, normalization, coercion, ordering, or collector-version substitution is inferred.
 ### Dependencies
-UTF-8 validation only; capability transition events remain denied.
+Producer-defined `VersionSyntax` identity validation only; capability transition events and compatibility evaluation remain excluded.
 ### Required tests
-Brand separation, empty and unsupported rejection, round-trip, and source-value preservation.
+Brand separation, invalid identity representation rejection, exact canonical round-trip/replay, and absence of compatibility inference or unsupported-version construction errors.
 
 ## Artifact: CollectionPolicyVersion
-Status: `IMPLEMENTATION_PARTIAL`
-Reason: supported version set/compatibility lookup absent.
+Status: `IMPLEMENTATION_READY`
 ### Unique owner
 Telemetry Context, owner of collection authorization, minimization, and validation rules.
 ### Conceptual schema v1
-Required non-empty opaque UTF-8 string branded `CollectionPolicyVersion`.
+Opaque exact `VersionValue` branded `CollectionPolicyVersion`; its producer-defined `VersionSyntax` and canonical representation are authoritative.
 ### Error codes
-`EMPTY_OPAQUE_VALUE`, `UNSUPPORTED_POLICY_VERSION`.
+Only `INVALID_VERSION_IDENTITY_REPRESENTATION`; construction never reports unsupported-version errors.
 ### Lifecycle and terminality
-Immutable; policy changes publish a successor.
+Immutable identity with no normalization, coercion, or ordering; policy changes publish a distinct value.
 ### Replay and rebuild
-Historical observations retain the active value and are not reinterpreted.
+Replay preserves the exact active `VersionValue` bytes and never reinterprets them.
 ### Producer
-Telemetry Context publishes it; Edge Runtime records the selected policy.
+Telemetry Context collection-policy owner defines `VersionSyntax` and canonical representation and publishes it; Edge Runtime records that exact value.
 ### Compatibility and version evolution
-Only declared compatible values are accepted.
+Compatibility evaluation is excluded from identity construction and is consumer-owned under `CONTRACT_COMPATIBILITY`; no compatibility, normalization, coercion, or ordering is inferred.
 ### Dependencies
-UTF-8 validation only.
+Producer-defined `VersionSyntax` identity validation only; compatibility evaluation is not a dependency.
 ### Required tests
-Brand separation, empty and unsupported rejection, round-trip, and historical preservation.
+Brand separation, invalid identity representation rejection, exact canonical round-trip/replay, and absence of compatibility inference or unsupported-version construction errors.
 
 ## Artifact: AudienceProjectionVersion
-Status: `IMPLEMENTATION_PARTIAL`
-Reason: supported version set/compatibility lookup absent.
+Status: `IMPLEMENTATION_READY`
 ### Unique owner
 Telemetry Context, exclusive owner of `AudienceProjection`.
 ### Conceptual schema v1
-Required non-empty opaque UTF-8 string branded `AudienceProjectionVersion`.
+Opaque exact `VersionValue` branded `AudienceProjectionVersion`; its producer-defined `VersionSyntax` and canonical representation are authoritative.
 ### Error codes
-`EMPTY_OPAQUE_VALUE`, `UNSUPPORTED_AUDIENCE_PROJECTION_VERSION`.
+Only `INVALID_VERSION_IDENTITY_REPRESENTATION`; construction never reports unsupported-version errors.
 ### Lifecycle and terminality
-Immutable; projection shape or derivation-contract changes publish a successor.
+Immutable identity with no normalization, coercion, or ordering; shape changes publish a distinct value.
 ### Replay and rebuild
-Rebuilt records identify the version used and never reinterpret predecessors.
+Replay and rebuild preserve the exact `VersionValue` bytes and never reinterpret predecessors.
 ### Producer
-Telemetry Context projection builder records it; the builder remains outside authorization.
+Telemetry Context defines `VersionSyntax` and canonical representation; its projection producer records that exact value, while the builder remains outside authorization.
 ### Compatibility and version evolution
-Only declared compatible values are read; it cannot substitute for policy version.
+Compatibility evaluation is excluded from identity construction and is consumer-owned under `CONTRACT_COMPATIBILITY`; no compatibility, normalization, coercion, ordering, or policy-version substitution is inferred.
 ### Dependencies
-UTF-8 validation only.
+Producer-defined `VersionSyntax` identity validation only; compatibility evaluation and projection builder are excluded.
 ### Required tests
-Brand separation, empty and unsupported rejection, round-trip, and rebuild preservation.
+Brand separation, invalid identity representation rejection, exact canonical round-trip/replay, and absence of compatibility inference or unsupported-version construction errors.
 
 ## Artifact: AudienceProjectionPolicyVersion
-Status: `IMPLEMENTATION_PARTIAL`
-Reason: supported version set/compatibility lookup absent.
+Status: `IMPLEMENTATION_READY`
 ### Unique owner
 Telemetry Context, owner of projection confidence, coverage, validity, and derivation semantics.
 ### Conceptual schema v1
-Required non-empty opaque UTF-8 string branded `AudienceProjectionPolicyVersion`.
+Opaque exact `VersionValue` branded `AudienceProjectionPolicyVersion`; its producer-defined `VersionSyntax` and canonical representation are authoritative.
 ### Error codes
-`EMPTY_OPAQUE_VALUE`, `UNSUPPORTED_POLICY_VERSION`.
+Only `INVALID_VERSION_IDENTITY_REPRESENTATION`; construction never reports unsupported-version errors.
 ### Lifecycle and terminality
-Immutable; semantic changes publish a successor.
+Immutable identity with no normalization, coercion, or ordering; semantic changes publish a distinct value.
 ### Replay and rebuild
-Rebuild records the selected policy and never reinterprets historical confidence.
+Replay and rebuild preserve the exact selected `VersionValue` bytes and never reinterpret historical confidence.
 ### Producer
-Telemetry Context publishes it and its projection builder records it.
+Telemetry Context defines `VersionSyntax` and canonical representation and publishes it; its projection producer records that exact value.
 ### Compatibility and version evolution
-Only declared compatible values are read; it remains distinct from projection schema version.
+Compatibility evaluation is excluded from identity construction and is consumer-owned under `CONTRACT_COMPATIBILITY`; no compatibility, normalization, coercion, ordering, or projection-version substitution is inferred.
 ### Dependencies
-UTF-8 validation only.
+Producer-defined `VersionSyntax` identity validation only; compatibility evaluation is not a dependency.
 ### Required tests
-Brand separation, empty and unsupported rejection, round-trip, and confidence preservation.
+Brand separation, invalid identity representation rejection, exact canonical round-trip/replay, and absence of compatibility inference or unsupported-version construction errors.
 
 ## Artifact: TelemetryBucket
 Status: `IMPLEMENTATION_PARTIAL`
-Reason: transitively blocked by PARTIAL version contracts; no dependency may be promoted by association.
+Reason: complete construction error contract and consumer compatibility evaluation are not certified; version identity readiness does not promote the composite by association.
 ### Unique owner
 Telemetry Context owns the acquisition contract and validation boundary.
 ### Conceptual schema v1
@@ -448,7 +442,7 @@ Edge Runtime is sole producer; Telemetry Context validates it.
 ### Compatibility and version evolution
 Schema selection uses only `TelemetrySchemaVersion`; unsupported versions are rejected without partial interpretation.
 ### Dependencies
-Transitively blocked by PARTIAL `TelemetrySchemaVersion`, `CollectorVersion`, `CapabilityVersion`, and `CollectionPolicyVersion`. Independently certified identities/status and opaque external references do not bypass any PARTIAL version dependency; no infrastructure artifact is authorized.
+Blocked by the absent complete construction error contract and consumer-owned compatibility evaluation for the recorded version identities. No infrastructure artifact is authorized.
 ### Required tests
 Every field invariant/error, closure, hash-purpose separation, retry idempotency/conflict, version retention, and missing-versus-zero.
 
@@ -470,13 +464,13 @@ Telemetry Context validator, after successful append.
 ### Compatibility and version evolution
 `eventSchemaVersion` selects shape; unknown versions fail and original envelopes are preserved.
 ### Dependencies
-Transitively blocked by PARTIAL `TelemetryBucket`, which carries its own PARTIAL version dependencies. `TelemetryEventId` does not bypass that block; repository/topic mechanisms remain denied.
+Blocked by PARTIAL `TelemetryBucket`, whose independent construction and compatibility blockers remain. `TelemetryEventId` does not bypass that block; repository/topic mechanisms remain denied.
 ### Required tests
 Envelope fields, producer, time order, append-before-event, duplicate/conflict, unsupported version, and provenance retention.
 
 ## Artifact: TelemetryBucketRejected
 Status: `IMPLEMENTATION_PARTIAL`
-Reason: transitively blocked by PARTIAL `TelemetrySchemaVersion`; no dependency may be promoted by association.
+Reason: complete rejection compatibility evaluation contract is not certified; version identity readiness does not promote the event by association.
 ### Unique owner
 Telemetry Context.
 ### Conceptual schema v1
@@ -492,13 +486,13 @@ Telemetry Context validator.
 ### Compatibility and version evolution
 Unknown event versions or reason codes fail rather than map to a generic reason.
 ### Dependencies
-Transitively blocked by PARTIAL `TelemetrySchemaVersion`. Independently certified identity contracts do not bypass that block; API/broker mechanisms remain denied.
+Blocked by the absent complete rejection compatibility evaluation contract. Independently certified identity contracts do not authorize evaluation behavior; API/broker mechanisms remain denied.
 ### Required tests
 Every reason, envelope fields, producer, absence of append, duplicate/conflict, and unsupported version/reason.
 
 ## Artifact: AudienceProjection
 Status: `IMPLEMENTATION_PARTIAL`
-Reason: transitively blocked by PARTIAL version contracts; no dependency may be promoted by association.
+Reason: projection builder and complete compatibility evaluation contract remain uncertified; version identity readiness does not promote the record by association.
 ### Unique owner
 Telemetry Context.
 ### Conceptual schema v1
@@ -514,15 +508,15 @@ Telemetry Context; the projection builder algorithm/scheduling remains outside a
 ### Compatibility and version evolution
 Projection schema and policy versions remain independent; unsupported versions fail and historical provenance is retained.
 ### Dependencies
-Transitively blocked by PARTIAL `TelemetrySchemaVersion`, `CollectorVersion`, `CapabilityVersion`, `CollectionPolicyVersion`, `AudienceProjectionVersion`, and `AudienceProjectionPolicyVersion`. Independently certified identities/status and accepted bucket identities do not bypass those blocks; applier, lifecycle events, storage, and consumers remain denied.
+Blocked by the uncertified projection builder and complete compatibility evaluation contract. Certified version identities, status, and accepted bucket identities do not authorize those behaviors; applier, lifecycle events, storage, and consumers remain denied.
 ### Required tests
 All fields, interval/uniqueness/provenance rules, confidence/coverage/validity, deterministic reconstruction, and ledger non-mutation.
 
 ## Non-READY PARTIAL lifecycle and event artifacts
 
-The six version artifacts `TelemetrySchemaVersion`, `CollectorVersion`, `CapabilityVersion`, `CollectionPolicyVersion`, `AudienceProjectionVersion`, and `AudienceProjectionPolicyVersion` are PARTIAL for the exact reason: supported version set/compatibility lookup absent. The gate defines no allowlist or default and therefore cannot implement its unsupported-version errors or compatibility tests.
+The six version identity artifacts `TelemetrySchemaVersion`, `CollectorVersion`, `CapabilityVersion`, `CollectionPolicyVersion`, `AudienceProjectionVersion`, and `AudienceProjectionPolicyVersion` are READY solely as opaque exact identities. Their constructors validate only producer-defined identity representation. Compatibility evaluation, supported-version policy, lookup, defaults, ordering, coercion, and normalization are separate consumer-owned contracts and are not authorized here.
 
-The dependency closure is mechanical: `TelemetryBucket` depends on the first four PARTIAL version artifacts; `TelemetryBucketAccepted` depends on PARTIAL `TelemetryBucket`; `TelemetryBucketRejected` depends on PARTIAL `TelemetrySchemaVersion`; and `AudienceProjection` depends on all six PARTIAL version artifacts. These four composite records are consequently PARTIAL and denied rather than promoted by association.
+The dependency closure was re-evaluated independently. `TelemetryBucket` still lacks a complete construction error and compatibility-evaluation contract; `TelemetryBucketAccepted` depends on that PARTIAL bucket; `TelemetryBucketRejected` lacks its complete rejection compatibility-evaluation contract; and `AudienceProjection` still lacks its projection builder and complete compatibility-evaluation contract. These four composites remain PARTIAL and denied rather than promoted by association.
 
 Every artifact in `PARTIAL_MANIFEST` is `IMPLEMENTATION_PARTIAL` and remains denied. Projection lifecycle artifacts lack replay metadata, complete event schemas, and complete transition/error behavior; no transition table, stream fold, or duplicate-event behavior is certified. The other PARTIAL contracts lack a complete telemetry-specific v1 payload/error schema or are conceptual families rather than concrete event artifacts.
 

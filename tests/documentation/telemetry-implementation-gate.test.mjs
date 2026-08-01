@@ -79,13 +79,13 @@ test("Telemetry gate explicitly excludes infrastructure and uncertified contract
   assert.match(gate, /TelemetryBucketClosed[^\n]*IMPLEMENTATION_PARTIAL/);
 });
 
-test("PARTIAL composites name every transitive blocker without stale READY dependency claims", async () => {
+test("PARTIAL composites retain independent blockers after version identity recertification", async () => {
   const gate = await read("implementationGate");
   const blockers = new Map([
-    ["TelemetryBucket", ["TelemetrySchemaVersion", "CollectorVersion", "CapabilityVersion", "CollectionPolicyVersion"]],
+    ["TelemetryBucket", ["complete construction error contract"]],
     ["TelemetryBucketAccepted", ["TelemetryBucket"]],
-    ["TelemetryBucketRejected", ["TelemetrySchemaVersion"]],
-    ["AudienceProjection", ["TelemetrySchemaVersion", "CollectorVersion", "CapabilityVersion", "CollectionPolicyVersion", "AudienceProjectionVersion", "AudienceProjectionPolicyVersion"]],
+    ["TelemetryBucketRejected", ["complete rejection compatibility evaluation contract"]],
+    ["AudienceProjection", ["projection builder", "complete compatibility evaluation contract"]],
   ]);
 
   for (const [artifact, dependencies] of blockers) {
@@ -95,10 +95,36 @@ test("PARTIAL composites name every transitive blocker without stale READY depen
     const dependenciesEnd = gate.indexOf("\n### Required tests", dependenciesStart);
     const section = gate.slice(dependenciesStart, dependenciesEnd);
     assert.doesNotMatch(section, /\bREADY\b/, `${artifact} has stale READY dependency claim`);
-    assert.match(section, /transitively blocked/i);
+    assert.match(section, /blocked/i);
     for (const dependency of dependencies) {
       assert.match(section, new RegExp(`\\b${dependency}\\b`), `${artifact} must name ${dependency}`);
     }
+  }
+});
+
+test("six READY version identities exclude compatibility evaluation", async () => {
+  const gate = await read("implementationGate");
+  const versions = [
+    "TelemetrySchemaVersion",
+    "CollectorVersion",
+    "CapabilityVersion",
+    "CollectionPolicyVersion",
+    "AudienceProjectionVersion",
+    "AudienceProjectionPolicyVersion",
+  ];
+  for (const artifact of versions) {
+    const start = gate.indexOf(`## Artifact: ${artifact}\n`);
+    assert.notEqual(start, -1);
+    const end = gate.indexOf("\n## Artifact:", start + 1);
+    const section = gate.slice(start, end === -1 ? gate.length : end);
+    assert.match(section, /Status: `IMPLEMENTATION_READY`/);
+    assert.match(section, /VersionValue/);
+    assert.match(section, /producer-defined `VersionSyntax` and canonical representation/i);
+    assert.match(section, /invalid identity representation/i);
+    assert.doesNotMatch(section, /`UNSUPPORTED_[A-Z_]+`/);
+    assert.match(section, /no normalization, coercion, or ordering/i);
+    assert.match(section, /preserves? the exact/i);
+    assert.match(section, /compatibility evaluation is excluded.*consumer-owned/is);
   }
 });
 

@@ -1,17 +1,15 @@
 # Telemetry Architecture Review Gate V1
 
-This record contains the current manual Architecture Review Gate and preserves the earlier invalidated review as history. The current verdict is based on direct auditor inspection; automated tests are supporting evidence only.
+This record preserves prior manual Architecture Review Gate evidence. The authorization set changed after that review, so no current approval exists; Task C3 must perform and commit a new manual review.
 
 ## Current verdict
 
-Status: APPROVED
-NO_NEW_BOUNDED_CONTEXT: PASS
-AUDIENCE_PROJECTION_OWNED_BY_TELEMETRY: PASS
-EVIDENCE_LEDGER_ONLY_MATERIALIZER: PASS
-PRICING_READ_ONLY_CONSUMER: PASS
-AUTHORIZED_ARTIFACTS_MATCH_GATE: PASS
+Status: INVALIDATED_BY_AUTHORIZATION_CHANGE
+Required next gate: Task C3 manual Architecture Review Gate
+Prior reviewed authorization: READY 4 / PARTIAL 29
+Current unreviewed authorization: READY 10 / PARTIAL 23
 
-This approval applies only to the reviewed scope and the exact four READY artifacts. It changes no domain decision and grants no authority to any PARTIAL or infrastructure artifact.
+The prior approval applies only to reviewed head `6851900d` and its exact four READY artifacts. It grants no approval to the changed authorization set, any PARTIAL artifact, or infrastructure. The new six identity authorizations must not be treated as architecture-approved until Task C3 completes.
 
 ## Reviewed scope
 

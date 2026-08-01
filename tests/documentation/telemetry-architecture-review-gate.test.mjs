@@ -51,22 +51,21 @@ const exportedStringArray = (source, name) => {
   return [...body.matchAll(/"([^"]+)"/g)].map((match) => match[1]);
 };
 
-test("records the new approval while preserving the prior invalidated verdict as history", async () => {
+test("invalidates the prior approval after authorization changes and requires Task C3", async () => {
   const review = await readFile(reviewPath, "utf8");
   const verdict = boundedSection(review, "Current verdict");
 
   for (const required of [
-    "Status: APPROVED",
-    "NO_NEW_BOUNDED_CONTEXT: PASS",
-    "AUDIENCE_PROJECTION_OWNED_BY_TELEMETRY: PASS",
-    "EVIDENCE_LEDGER_ONLY_MATERIALIZER: PASS",
-    "PRICING_READ_ONLY_CONSUMER: PASS",
-    "AUTHORIZED_ARTIFACTS_MATCH_GATE: PASS",
+    "Status: INVALIDATED_BY_AUTHORIZATION_CHANGE",
+    "Required next gate: Task C3 manual Architecture Review Gate",
+    "Prior reviewed authorization: READY 4 / PARTIAL 29",
+    "Current unreviewed authorization: READY 10 / PARTIAL 23",
   ]) {
     assert.ok(verdict.split(/\r?\n/).includes(required), `missing verdict: ${required}`);
   }
 
-  assert.doesNotMatch(verdict, /INVALIDATED|BLOCKED_PENDING/);
+  assert.doesNotMatch(verdict, /^Status: APPROVED$/m);
+  assert.match(verdict, /must not be treated as architecture-approved until Task C3 completes/i);
   const history = boundedSection(review, "Historical invalidated approval");
   assert.match(history, /^Historical status: INVALIDATED_BY_AUTHORIZATION_CHANGE$/m);
   assert.match(history, /^Historical reviewed head: `757d9b0`$/m);
@@ -169,6 +168,9 @@ test("records exact manifests and denies infrastructure authorization", async ()
   const authorization = boundedSection(review, "Authorization audit");
   const ready = JSON.parse(gate.match(/^READY_MANIFEST: (\[[^\n]+\])$/m)?.[1] ?? "null");
   const partial = JSON.parse(gate.match(/^PARTIAL_MANIFEST: (\[[^\n]+\])$/m)?.[1] ?? "null");
+  const currentGate = await readFile(implementationGatePath, "utf8");
+  const currentReady = JSON.parse(currentGate.match(/^READY_MANIFEST: (\[[^\n]+\])$/m)?.[1] ?? "null");
+  const currentPartial = JSON.parse(currentGate.match(/^PARTIAL_MANIFEST: (\[[^\n]+\])$/m)?.[1] ?? "null");
 
   assert.equal(ready.length, 4);
   assert.equal(partial.length, 29);
@@ -216,7 +218,7 @@ test("records exact manifests and denies infrastructure authorization", async ()
       authorizationFor,
       assertGenerationAuthorized,
     } from ${JSON.stringify(authorizationModule)};
-    const names = ${JSON.stringify({ ready, partial, denied })};
+    const names = ${JSON.stringify({ ready: currentReady, partial: currentPartial, denied })};
     const exercise = (artifact) => {
       const authorization = authorizationFor(artifact);
       try {
@@ -243,16 +245,16 @@ test("records exact manifests and denies infrastructure authorization", async ()
     ),
   );
 
-  assert.deepEqual(report.exportedReady, ready);
-  assert.deepEqual(report.exportedPartial, partial);
-  assert.deepEqual(report.telemetryRegistry.map(({ artifact }) => artifact), [...ready, ...partial]);
+  assert.deepEqual(report.exportedReady, currentReady);
+  assert.deepEqual(report.exportedPartial, currentPartial);
+  assert.deepEqual(report.telemetryRegistry.map(({ artifact }) => artifact), [...currentReady, ...currentPartial]);
   assert.deepEqual(
     report.readyResults,
-    ready.map((artifact) => ({ artifact, status: "IMPLEMENTATION_READY", allowed: true })),
+    currentReady.map((artifact) => ({ artifact, status: "IMPLEMENTATION_READY", allowed: true })),
   );
   assert.deepEqual(
     report.partialResults,
-    partial.map((artifact) => ({
+    currentPartial.map((artifact) => ({
       artifact,
       status: "IMPLEMENTATION_PARTIAL",
       allowed: false,
@@ -281,7 +283,7 @@ test("records exact manifests and denies infrastructure authorization", async ()
   );
 });
 
-test("reviewed telemetry package exposes exactly the four READY contracts", () => {
+test("reviewed telemetry package exposes exactly the four implemented contracts", async () => {
   const snapshot = Object.fromEntries(
     [
       ["index", "packages/telemetry/src/index.ts"],
@@ -314,7 +316,7 @@ test("reviewed telemetry package exposes exactly the four READY contracts", () =
     );
   }
 
-  const gate = gitShow("docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md");
+  const gate = await readFile(implementationGatePath, "utf8");
   const partial = JSON.parse(gate.match(/^PARTIAL_MANIFEST: (\[[^\n]+\])$/m)?.[1] ?? "null");
   const telemetryModule = new URL("../../packages/telemetry/src/index.ts", import.meta.url).href;
   const authorizationModule = new URL("../../packages/generation/src/artifact-authorization.ts", import.meta.url).href;
