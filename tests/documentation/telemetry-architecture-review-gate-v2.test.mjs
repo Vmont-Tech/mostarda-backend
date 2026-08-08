@@ -160,7 +160,7 @@ const interpretTelemetryRegistry = (source) => {
     const object = unwrapFrozenObject(call.arguments[1]);
     registrations.push({
       array,
-      offset: statement.end,
+      call,
       status: stringProperty(object, "status"),
       provenance: stringProperty(object, "source"),
     });
@@ -181,45 +181,36 @@ const interpretTelemetryRegistry = (source) => {
     }
   }
 
-  const lastTelemetryLoopEnd = registrations.at(-1).offset;
   const telemetryNames = new Set(results.keys());
-  const inspectPotentialWrite = (node) => {
+  const certifiedCalls = new Set(registrations.map(({ call }) => call));
+  const inspectRegistryReference = (node) => {
     if (ts.isIdentifier(node) && node.text === "registry") {
       const parent = node.parent;
+      if (ts.isVariableDeclaration(parent) && parent.name === node) {
+        assert.ok(
+          parent.initializer &&
+            ts.isNewExpression(parent.initializer) &&
+            parent.initializer.expression.getText(sourceFile) === "Map",
+          "registry may be declared exactly once as the authoritative Map",
+        );
+        return;
+      }
       const directMethod =
         ts.isPropertyAccessExpression(parent) && parent.expression === node;
       const indexedMethod =
         ts.isElementAccessExpression(parent) && parent.expression === node;
-      assert.ok(directMethod || indexedMethod, "registry escapes through alias, argument, return or spread");
+      assert.ok(directMethod || indexedMethod, "registry escapes through alias, argument, return, closure or spread");
+      assert.ok(!indexedMethod, "indexed registry access can alias or mutate the registry");
       if (directMethod) {
         assert.ok(
           ["get", "values", "set", "delete", "clear"].includes(parent.name.text),
           `unrecognized registry access: ${parent.name.text}`,
         );
+        assert.ok(
+          ts.isCallExpression(parent.parent) && parent.parent.expression === parent,
+          `registry.${parent.name.text} escapes as a method alias`,
+        );
       }
-    }
-    if (ts.isVariableDeclaration(node) && node.initializer) {
-      const initializer = node.initializer.getText(sourceFile);
-      if (
-        initializer === "registry" ||
-        /^registry(?:\.(?:set|delete|clear)|\[(?:"|')(?:set|delete|clear)(?:"|')\])/.test(initializer)
-      ) {
-        assert.fail("registry mutation alias after Telemetry loops");
-      }
-    }
-    if (
-      ts.isBinaryExpression(node) &&
-      node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
-      node.operatorToken.kind <= ts.SyntaxKind.LastAssignment &&
-      node.left.getText(sourceFile).includes("registry")
-    ) {
-      assert.fail("registry assignment after Telemetry loops");
-    }
-    if (
-      (ts.isSpreadAssignment(node) || ts.isSpreadElement(node)) &&
-      node.expression.getText(sourceFile) === "registry"
-    ) {
-      assert.fail("registry spread alias after Telemetry loops");
     }
     if (ts.isCallExpression(node)) {
       const callee = node.expression;
@@ -227,33 +218,29 @@ const interpretTelemetryRegistry = (source) => {
         ts.isPropertyAccessExpression(callee) && callee.expression.getText(sourceFile) === "registry";
       const indexed =
         ts.isElementAccessExpression(callee) && callee.expression.getText(sourceFile) === "registry";
-      if (direct || indexed) {
-        const method = direct
-          ? callee.name.text
-          : ts.isStringLiteral(callee.argumentExpression)
-            ? callee.argumentExpression.text
-            : undefined;
-        if (indexed && method === undefined) assert.fail("dynamic indexed registry method after Telemetry loops");
-        if (["set", "delete", "clear"].includes(method)) {
-          assert.equal(method, "set", `forbidden registry.${method} after Telemetry loops`);
-          assert.ok(ts.isStringLiteral(node.arguments[0]), "dynamic registry key after Telemetry loops");
-          assert.ok(!telemetryNames.has(node.arguments[0].text), `later registry override: ${node.arguments[0].text}`);
+      if (indexed) assert.fail("indexed registry call can alias or mutate the registry");
+      if (direct) {
+        const method = callee.name.text;
+        if (method === "set") {
+          if (certifiedCalls.has(node)) {
+            // The exact call shape was already certified while parsing the two loops.
+          } else {
+            assert.ok(ts.isStringLiteral(node.arguments[0]), "dynamic registry write outside certified loops");
+            assert.ok(
+              !telemetryNames.has(node.arguments[0].text),
+              `non-certified Telemetry registry write: ${node.arguments[0].text}`,
+            );
+          }
+        } else if (["delete", "clear"].includes(method)) {
+          assert.fail(`registry.${method} is prohibited outside certified loops`);
+        } else {
+          assert.ok(["get", "values"].includes(method), `unrecognized registry call: ${method}`);
         }
       }
-      if (
-        ts.isPropertyAccessExpression(callee) &&
-        ["Object", "Reflect"].includes(callee.expression.getText(sourceFile)) &&
-        ["assign", "set", "defineProperty", "defineProperties"].includes(callee.name.text) &&
-        node.arguments.some((argument) => argument.getText(sourceFile) === "registry")
-      ) {
-        assert.fail("indirect registry mutation after Telemetry loops");
-      }
     }
-    ts.forEachChild(node, inspectPotentialWrite);
+    ts.forEachChild(node, inspectRegistryReference);
   };
-  for (const statement of sourceFile.statements) {
-    if (statement.pos >= lastTelemetryLoopEnd) inspectPotentialWrite(statement);
-  }
+  inspectRegistryReference(sourceFile);
 
   const fallback = source.match(
     /registry\.get\(artifact\) \?\?[\s\S]*?status: "([^"]+)"[\s\S]*?source: "([^"]+)"/,
@@ -526,6 +513,29 @@ test("proves exact READY and PARTIAL authorization from the reviewed snapshot", 
     () => interpretTelemetryRegistry(duplicateWriteMutation),
     /must contain exactly one statement/,
   );
+  const betweenLoopsOverride = registry.replace(
+    "for (const artifact of telemetryPartialArtifacts) {",
+    `registry.set("TelemetryBucketId", Object.freeze({ artifact: "TelemetryBucketId", status: "IMPLEMENTATION_READY", source: "MUTATION" }));
+
+for (const artifact of telemetryPartialArtifacts) {`,
+  );
+  assert.throws(
+    () => interpretTelemetryRegistry(betweenLoopsOverride),
+    /non-certified Telemetry registry write: TelemetryBucketId/,
+  );
+  const aliasMutation = registry
+    .replace(
+      "for (const artifact of telemetryAuthorizedArtifacts) {",
+      "const registryAlias = registry;\n\nfor (const artifact of telemetryAuthorizedArtifacts) {",
+    )
+    .replace(
+      "registry.set(\n  \"GovernanceCase\"",
+      "registryAlias.set(\"TelemetryBucketId\", Object.freeze({ artifact: \"TelemetryBucketId\", status: \"IMPLEMENTATION_READY\", source: \"MUTATION\" }));\n\nregistry.set(\n  \"GovernanceCase\"",
+    );
+  assert.throws(
+    () => interpretTelemetryRegistry(aliasMutation),
+    /registry escapes through alias/,
+  );
 });
 
 test("proves the pre-C4 package contains four materialized artifacts only", () => {
@@ -644,4 +654,7 @@ test("records PASS evidence and denies every bypass outside the reviewed boundar
   assert.match(review, /TypeScript compiler AST/i);
   assert.match(review, /second PARTIAL-loop registry\.set.*fails/is);
   assert.match(review, /no export syntax remains unconsumed/i);
+  assert.match(review, /literal override between the loops.*fails/is);
+  assert.match(review, /alias created before the loops.*alias\.set.*fails/is);
+  assert.match(review, /entire immutable registry file/i);
 });
