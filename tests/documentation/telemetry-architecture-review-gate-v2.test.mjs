@@ -333,6 +333,109 @@ const moduleExports = (path, sources, cache = new Map()) => {
   return exports;
 };
 
+const bindingNames = (name) => {
+  if (ts.isIdentifier(name)) return [name.text];
+  return name.elements.flatMap((element) =>
+    ts.isOmittedExpression(element) ? [] : bindingNames(element.name),
+  );
+};
+
+const modifierNames = (node) =>
+  (node.modifiers ?? []).map((modifier) => ts.tokenToString(modifier.kind) ?? ts.SyntaxKind[modifier.kind]);
+
+const topLevelInventory = (path, source) => {
+  const sourceFile = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  return sourceFile.statements.flatMap((statement) => {
+    if (ts.isImportDeclaration(statement)) {
+      const clause = statement.importClause;
+      const names = [];
+      if (clause?.name) names.push(clause.name.text);
+      if (clause?.namedBindings) {
+        if (ts.isNamespaceImport(clause.namedBindings)) names.push(clause.namedBindings.name.text);
+        else names.push(...clause.namedBindings.elements.map((element) => element.name.text));
+      }
+      return [`import:${statement.moduleSpecifier.text}:${names.join(",")}`];
+    }
+    if (ts.isImportEqualsDeclaration(statement)) {
+      return [`import-equals:${statement.name.text}:${statement.moduleReference.getText(sourceFile)}`];
+    }
+    if (ts.isVariableStatement(statement)) {
+      const declarationKind = statement.declarationList.flags & ts.NodeFlags.Const
+        ? "const"
+        : statement.declarationList.flags & ts.NodeFlags.Let
+          ? "let"
+          : "var";
+      return statement.declarationList.declarations.flatMap((declaration) =>
+        bindingNames(declaration.name).map((name) => `${declarationKind}:${name}:${modifierNames(statement).join(",")}`),
+      );
+    }
+    if (ts.isForOfStatement(statement) || ts.isForInStatement(statement)) {
+      assert.ok(ts.isVariableDeclarationList(statement.initializer), `non-declarative top-level loop in ${path}`);
+      return statement.initializer.declarations.flatMap((declaration) =>
+        bindingNames(declaration.name).map((name) => `${ts.isForOfStatement(statement) ? "for-of" : "for-in"}:${name}`),
+      );
+    }
+    if (
+      ts.isTypeAliasDeclaration(statement) || ts.isInterfaceDeclaration(statement) ||
+      ts.isClassDeclaration(statement) || ts.isFunctionDeclaration(statement) ||
+      ts.isEnumDeclaration(statement) || ts.isModuleDeclaration(statement)
+    ) {
+      const kind = ts.isTypeAliasDeclaration(statement) ? "type" :
+        ts.isInterfaceDeclaration(statement) ? "interface" :
+          ts.isClassDeclaration(statement) ? "class" :
+            ts.isFunctionDeclaration(statement) ? "function" :
+              ts.isEnumDeclaration(statement) ? "enum" : "module";
+      const name = statement.name && ts.isIdentifier(statement.name) ? statement.name.text : "<anonymous>";
+      return [`${kind}:${name}:${modifierNames(statement).join(",")}`];
+    }
+    if (ts.isExportDeclaration(statement)) {
+      const clause = statement.exportClause
+        ? statement.exportClause.getText(sourceFile)
+        : "*";
+      const target = statement.moduleSpecifier?.text ?? "<local>";
+      return [`export:${clause}:${target}`];
+    }
+    if (ts.isExportAssignment(statement)) {
+      return [`export-assignment:${statement.isExportEquals ? "equals" : "default"}`];
+    }
+    if (ts.isExpressionStatement(statement)) {
+      return [`expression:${statement.expression.getText(sourceFile)}`];
+    }
+    assert.fail(`unconsumed top-level statement in ${path}: ${statement.getText(sourceFile)}`);
+  });
+};
+
+const expectedTopLevelInventory = Object.freeze({
+  "packages/telemetry/src/capability.ts": Object.freeze([
+    "import:../../generation/src/index.ts:assertGenerationAuthorized",
+    'expression:assertGenerationAuthorized("TelemetryCapabilityStatus")',
+    "const:TELEMETRY_CAPABILITY_STATUSES:export",
+    "type:TelemetryCapabilityStatus:export",
+    "function:isTelemetryCapabilityStatus:export",
+  ]),
+  "packages/telemetry/src/identities.ts": Object.freeze([
+    "import:../../generation/src/index.ts:assertGenerationAuthorized",
+    "import:../../kernel/src/index.ts:createOpaqueId,OpaqueId",
+    "type:TelemetryBucketId:export",
+    "type:AudienceProjectionId:export",
+    "type:TelemetryEventId:export",
+    "for-of:artifact",
+    "function:createTelemetryBucketId:export",
+    "function:createAudienceProjectionId:export",
+    "function:createTelemetryEventId:export",
+  ]),
+  "packages/telemetry/src/index.ts": Object.freeze([
+    "export:*:./capability.ts",
+    "export:*:./identities.ts",
+  ]),
+});
+
+const assertExactTopLevelInventory = (sources) => {
+  for (const [path, expected] of Object.entries(expectedTopLevelInventory)) {
+    assert.deepEqual(topLevelInventory(path, sources[path]), expected, path);
+  }
+};
+
 test("records the immutable C3 approval and preserves V1 separately", async () => {
   const review = await readFile(reviewPath, "utf8");
   assert.match(review, /^Status: APPROVED$/m);
@@ -552,6 +655,22 @@ test("proves the pre-C4 package contains four materialized artifacts only", () =
   const capability = sources["packages/telemetry/src/capability.ts"];
   const packageSource = Object.values(sources).join("\n");
 
+  assertExactTopLevelInventory(sources);
+  assert.throws(
+    () => assertExactTopLevelInventory({
+      ...sources,
+      "packages/telemetry/src/capability.ts": `${capability}\nclass TelemetryBucket {}\n`,
+    }),
+    /packages\/telemetry\/src\/capability\.ts/,
+  );
+  assert.throws(
+    () => assertExactTopLevelInventory({
+      ...sources,
+      "packages/telemetry/src/identities.ts": `${identities}\nconst CompatibilityEvaluator = () => undefined;\n`,
+    }),
+    /packages\/telemetry\/src\/identities\.ts/,
+  );
+
   const publicDeclarations = [...moduleExports("packages/telemetry/src/index.ts", sources).entries()]
     .sort(([left], [right]) => left.localeCompare(right));
   assert.deepEqual(publicDeclarations, [
@@ -657,4 +776,8 @@ test("records PASS evidence and denies every bypass outside the reviewed boundar
   assert.match(review, /literal override between the loops.*fails/is);
   assert.match(review, /alias created before the loops.*alias\.set.*fails/is);
   assert.match(review, /entire immutable registry file/i);
+  assert.match(review, /exact top-level AST inventory/i);
+  assert.match(review, /unexported class `TelemetryBucket`.*fails/is);
+  assert.match(review, /unexported `CompatibilityEvaluator`.*fails/is);
+  assert.match(review, /public export allowlist remains separate/i);
 });
