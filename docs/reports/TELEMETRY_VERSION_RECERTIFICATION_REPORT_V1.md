@@ -7,6 +7,7 @@ READY_COUNT: 10
 PARTIAL_COUNT: 23
 MATERIALIZED_READY_COUNT: 10
 ABSENT_PARTIAL_COUNT: 23
+IMMUTABLE_PACKAGE_AST_AUDIT: PASS
 VERSION_CONSTRUCTOR_COMPATIBILITY_EVALUATION: ABSENT
 TELEMETRY_BUCKET_STATUS: IMPLEMENTATION_PARTIAL
 ORIGINAL_TASK_4_ELIGIBILITY: DENIED
@@ -27,7 +28,8 @@ The sources compared were:
 - `docs/specification/TELEMETRY_IMPLEMENTATION_GATE_V1.md`;
 - `docs/reviews/TELEMETRY_ARCHITECTURE_REVIEW_GATE_V2.md`;
 - `packages/generation/src/artifact-authorization.ts`;
-- `packages/telemetry/src/index.ts` and every exported local source;
+- the complete `packages/telemetry` tree returned by `git ls-tree` at the audited head;
+- every TypeScript source loaded individually with `git show` from that head;
 - `tests/generation/artifact-authorization.test.ts`;
 - `tests/telemetry/versions.test.ts`;
 - the documentation and architecture enforcement suites.
@@ -49,7 +51,7 @@ Every READY artifact is materialized. The six version artifacts are opaque ident
 | `AudienceProjectionVersion` | MATERIALIZED | READY manifest, C3 approval and C4 constructor |
 | `AudienceProjectionPolicyVersion` | MATERIALIZED | READY manifest, C3 approval and C4 constructor |
 
-The package surface contains the corresponding types and construction/query helpers. Helpers are not additional domain artifacts and do not widen the READY artifact set.
+The package surface contains the corresponding types and construction/query helpers. Helpers are not additional domain artifacts and do not widen the READY artifact set. An exact TypeScript AST inventory covers every top-level declaration, exported or unexported, in every immutable source file. A separate exact public-export allowlist covers the entry point and all recursive local re-exports.
 
 ## 4. PARTIAL absence matrix
 
@@ -81,7 +83,7 @@ Every artifact in the exact PARTIAL manifest remains absent from the Telemetry p
 | `AudienceProjectionExpired` | ABSENT | IMPLEMENTATION_PARTIAL |
 | `AudienceProjectionInvalidated` | ABSENT | IMPLEMENTATION_PARTIAL |
 
-No service, API, repository, adapter, topic, broker, storage mapping, compatibility matrix or compatibility evaluator was materialized.
+No service, API, repository, adapter, topic, broker, storage mapping, compatibility matrix, evaluator, decision, evaluation result or evaluation cause was materialized. Mutation fixtures prove that both an unexported `TelemetryBucket` and an unexported `CompatibilityEvaluator` invalidate the exact AST inventory.
 
 ## 5. Version-constructor behavioral boundary
 
@@ -127,7 +129,7 @@ Verification was executed from the Telemetry worktree before this report was wri
 | `npm run typecheck` | PASS |
 | `git diff --check` | PASS |
 
-The C4-specific tests mechanically prove the exact ten-artifact runtime surface, exact READY authorization, absence and denial of all 23 PARTIAL artifacts, exact/case-sensitive `OPAQUE_TOKEN_V1` behavior, deterministic invalid-representation errors, brand separation and absence of compatibility mechanisms.
+The C4-specific tests mechanically prove the exact ten-artifact runtime surface, exact READY authorization, exact/case-sensitive `OPAQUE_TOKEN_V1` behavior, deterministic invalid-representation errors and brand separation. The C5 report test independently audits the immutable implementation head: it enumerates the complete package tree, loads every TypeScript source with `git show`, checks the exact top-level AST inventory and public export allowlist, proves all 23 PARTIAL artifacts absent, prohibits service/API/repository/adapter/infrastructure and compatibility materialization, and exercises the two negative mutation fixtures.
 
 ## 8. Verdict
 
