@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -12,19 +13,23 @@ import {
   type TelemetryEventId,
 } from "../../packages/telemetry/src/index.ts";
 import * as telemetry from "../../packages/telemetry/src/index.ts";
-import { telemetryAuthorizedArtifacts } from "../../packages/generation/src/index.ts";
+import {
+  authorizationFor,
+  telemetryAuthorizedArtifacts,
+  telemetryPartialArtifacts,
+} from "../../packages/generation/src/index.ts";
 
-// @ts-expect-error PARTIAL version types must not be public telemetry contracts.
+// @ts-expect-error Generation-authorized version types are materialized only in C4.
 type ForbiddenTelemetrySchemaVersion = import("../../packages/telemetry/src/index.ts").TelemetrySchemaVersion;
-// @ts-expect-error PARTIAL version types must not be public telemetry contracts.
+// @ts-expect-error Generation-authorized version types are materialized only in C4.
 type ForbiddenCollectorVersion = import("../../packages/telemetry/src/index.ts").CollectorVersion;
-// @ts-expect-error PARTIAL version types must not be public telemetry contracts.
+// @ts-expect-error Generation-authorized version types are materialized only in C4.
 type ForbiddenCapabilityVersion = import("../../packages/telemetry/src/index.ts").CapabilityVersion;
-// @ts-expect-error PARTIAL version types must not be public telemetry contracts.
+// @ts-expect-error Generation-authorized version types are materialized only in C4.
 type ForbiddenCollectionPolicyVersion = import("../../packages/telemetry/src/index.ts").CollectionPolicyVersion;
-// @ts-expect-error PARTIAL version types must not be public telemetry contracts.
+// @ts-expect-error Generation-authorized version types are materialized only in C4.
 type ForbiddenAudienceProjectionVersion = import("../../packages/telemetry/src/index.ts").AudienceProjectionVersion;
-// @ts-expect-error PARTIAL version types must not be public telemetry contracts.
+// @ts-expect-error Generation-authorized version types are materialized only in C4.
 type ForbiddenAudienceProjectionPolicyVersion = import("../../packages/telemetry/src/index.ts").AudienceProjectionPolicyVersion;
 // @ts-expect-error Source-context-owned identities must not be telemetry exports.
 type ForbiddenTVId = import("../../packages/telemetry/src/index.ts").TVId;
@@ -94,14 +99,22 @@ test("telemetry capability status exposes exactly the five certified values", ()
   assert.equal(isTelemetryCapabilityStatus("available"), false);
 });
 
-test("telemetry exposes only the four generation-authorized contracts", () => {
+test("telemetry generation authorization contains exactly the ten certified artifacts", () => {
   assert.deepEqual(telemetryAuthorizedArtifacts, [
     "TelemetryBucketId",
     "AudienceProjectionId",
     "TelemetryEventId",
     "TelemetryCapabilityStatus",
+    "TelemetrySchemaVersion",
+    "CollectorVersion",
+    "CapabilityVersion",
+    "CollectionPolicyVersion",
+    "AudienceProjectionVersion",
+    "AudienceProjectionPolicyVersion",
   ]);
+});
 
+test("pre-C4 telemetry materializes only the original four authorized artifacts", () => {
   assert.deepEqual(Object.keys(telemetry).sort(), [
     "TELEMETRY_CAPABILITY_STATUSES",
     "createAudienceProjectionId",
@@ -109,4 +122,15 @@ test("telemetry exposes only the four generation-authorized contracts", () => {
     "createTelemetryEventId",
     "isTelemetryCapabilityStatus",
   ]);
+
+  assert.equal(existsSync("packages/telemetry/src/versions.ts"), false);
+});
+
+test("all remaining PARTIAL telemetry artifacts stay denied and unexported", () => {
+  assert.equal(telemetryPartialArtifacts.length, 23);
+
+  for (const artifact of telemetryPartialArtifacts) {
+    assert.equal(authorizationFor(artifact).status, "IMPLEMENTATION_PARTIAL");
+    assert.equal(Object.hasOwn(telemetry, artifact), false);
+  }
 });
