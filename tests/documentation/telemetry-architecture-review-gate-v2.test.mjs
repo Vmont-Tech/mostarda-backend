@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import ts from "typescript";
 
 const repositoryRoot = new URL("../../", import.meta.url);
 const reviewPath = new URL(
@@ -107,20 +108,62 @@ const exportedStringArray = (source, name) => {
   return [...body.matchAll(/"([^"]+)"/g)].map((match) => match[1]);
 };
 
+const stringProperty = (object, name) => {
+  const property = object.properties.find(
+    (candidate) => ts.isPropertyAssignment(candidate) && candidate.name.getText() === name,
+  );
+  assert.ok(property && ts.isStringLiteral(property.initializer), `missing string property: ${name}`);
+  return property.initializer.text;
+};
+
+const unwrapFrozenObject = (expression) => {
+  assert.ok(ts.isCallExpression(expression), "registry value must be Object.freeze(object)");
+  assert.ok(
+    ts.isPropertyAccessExpression(expression.expression) &&
+      expression.expression.expression.getText() === "Object" &&
+      expression.expression.name.text === "freeze",
+    "registry value must use Object.freeze",
+  );
+  assert.equal(expression.arguments.length, 1);
+  assert.ok(ts.isObjectLiteralExpression(expression.arguments[0]));
+  return expression.arguments[0];
+};
+
 const interpretTelemetryRegistry = (source) => {
+  const sourceFile = ts.createSourceFile("artifact-authorization.ts", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const arrays = new Map([
     ["telemetryAuthorizedArtifacts", exportedStringArray(source, "telemetryAuthorizedArtifacts")],
     ["telemetryPartialArtifacts", exportedStringArray(source, "telemetryPartialArtifacts")],
   ]);
   const registrations = [];
-  const loopPattern = /for \(const artifact of (telemetry(?:Authorized|Partial)Artifacts)\) \{([\s\S]*?)\n\}/g;
-  for (const match of source.matchAll(loopPattern)) {
-    const status = match[2].match(/status: "([^"]+)"/)?.[1];
-    const provenance = match[2].match(/source: "([^"]+)"/)?.[1];
-    assert.ok(status, `missing status in ${match[1]} registration loop`);
-    assert.ok(provenance, `missing provenance in ${match[1]} registration loop`);
-    assert.match(match[2], /registry\.set\(\s*artifact,/);
-    registrations.push({ array: match[1], offset: match.index, status, provenance });
+  for (const statement of sourceFile.statements) {
+    if (!ts.isForOfStatement(statement) || !ts.isIdentifier(statement.expression)) continue;
+    const array = statement.expression.text;
+    if (!arrays.has(array)) continue;
+    assert.ok(ts.isVariableDeclarationList(statement.initializer));
+    assert.equal(statement.initializer.declarations.length, 1);
+    assert.equal(statement.initializer.declarations[0].name.getText(sourceFile), "artifact");
+    assert.ok(ts.isBlock(statement.statement), `${array} loop must use a block`);
+    assert.equal(statement.statement.statements.length, 1, `${array} loop must contain exactly one statement`);
+    const onlyStatement = statement.statement.statements[0];
+    assert.ok(ts.isExpressionStatement(onlyStatement));
+    assert.ok(ts.isCallExpression(onlyStatement.expression));
+    const call = onlyStatement.expression;
+    assert.ok(
+      ts.isPropertyAccessExpression(call.expression) &&
+        call.expression.expression.getText(sourceFile) === "registry" &&
+        call.expression.name.text === "set",
+      `${array} loop must contain exactly one registry.set`,
+    );
+    assert.equal(call.arguments.length, 2);
+    assert.equal(call.arguments[0].getText(sourceFile), "artifact");
+    const object = unwrapFrozenObject(call.arguments[1]);
+    registrations.push({
+      array,
+      offset: statement.end,
+      status: stringProperty(object, "status"),
+      provenance: stringProperty(object, "source"),
+    });
   }
   assert.deepEqual(
     registrations.map(({ array }) => array),
@@ -139,11 +182,77 @@ const interpretTelemetryRegistry = (source) => {
   }
 
   const lastTelemetryLoopEnd = registrations.at(-1).offset;
-  const laterLiteralOverrides = [
-    ...source.slice(lastTelemetryLoopEnd).matchAll(/registry\.set\(\s*"([^"]+)"/g),
-  ].map((match) => match[1]);
-  for (const artifact of results.keys()) {
-    assert.ok(!laterLiteralOverrides.includes(artifact), `later registry override: ${artifact}`);
+  const telemetryNames = new Set(results.keys());
+  const inspectPotentialWrite = (node) => {
+    if (ts.isIdentifier(node) && node.text === "registry") {
+      const parent = node.parent;
+      const directMethod =
+        ts.isPropertyAccessExpression(parent) && parent.expression === node;
+      const indexedMethod =
+        ts.isElementAccessExpression(parent) && parent.expression === node;
+      assert.ok(directMethod || indexedMethod, "registry escapes through alias, argument, return or spread");
+      if (directMethod) {
+        assert.ok(
+          ["get", "values", "set", "delete", "clear"].includes(parent.name.text),
+          `unrecognized registry access: ${parent.name.text}`,
+        );
+      }
+    }
+    if (ts.isVariableDeclaration(node) && node.initializer) {
+      const initializer = node.initializer.getText(sourceFile);
+      if (
+        initializer === "registry" ||
+        /^registry(?:\.(?:set|delete|clear)|\[(?:"|')(?:set|delete|clear)(?:"|')\])/.test(initializer)
+      ) {
+        assert.fail("registry mutation alias after Telemetry loops");
+      }
+    }
+    if (
+      ts.isBinaryExpression(node) &&
+      node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+      node.operatorToken.kind <= ts.SyntaxKind.LastAssignment &&
+      node.left.getText(sourceFile).includes("registry")
+    ) {
+      assert.fail("registry assignment after Telemetry loops");
+    }
+    if (
+      (ts.isSpreadAssignment(node) || ts.isSpreadElement(node)) &&
+      node.expression.getText(sourceFile) === "registry"
+    ) {
+      assert.fail("registry spread alias after Telemetry loops");
+    }
+    if (ts.isCallExpression(node)) {
+      const callee = node.expression;
+      const direct =
+        ts.isPropertyAccessExpression(callee) && callee.expression.getText(sourceFile) === "registry";
+      const indexed =
+        ts.isElementAccessExpression(callee) && callee.expression.getText(sourceFile) === "registry";
+      if (direct || indexed) {
+        const method = direct
+          ? callee.name.text
+          : ts.isStringLiteral(callee.argumentExpression)
+            ? callee.argumentExpression.text
+            : undefined;
+        if (indexed && method === undefined) assert.fail("dynamic indexed registry method after Telemetry loops");
+        if (["set", "delete", "clear"].includes(method)) {
+          assert.equal(method, "set", `forbidden registry.${method} after Telemetry loops`);
+          assert.ok(ts.isStringLiteral(node.arguments[0]), "dynamic registry key after Telemetry loops");
+          assert.ok(!telemetryNames.has(node.arguments[0].text), `later registry override: ${node.arguments[0].text}`);
+        }
+      }
+      if (
+        ts.isPropertyAccessExpression(callee) &&
+        ["Object", "Reflect"].includes(callee.expression.getText(sourceFile)) &&
+        ["assign", "set", "defineProperty", "defineProperties"].includes(callee.name.text) &&
+        node.arguments.some((argument) => argument.getText(sourceFile) === "registry")
+      ) {
+        assert.fail("indirect registry mutation after Telemetry loops");
+      }
+    }
+    ts.forEachChild(node, inspectPotentialWrite);
+  };
+  for (const statement of sourceFile.statements) {
+    if (statement.pos >= lastTelemetryLoopEnd) inspectPotentialWrite(statement);
   }
 
   const fallback = source.match(
@@ -159,9 +268,83 @@ const interpretTelemetryRegistry = (source) => {
   };
 };
 
-const exportedDeclarations = (source) =>
-  [...source.matchAll(/^export\s+(?:declare\s+)?(?:abstract\s+)?(type|interface|class|function|const|let|var|enum)\s+([A-Za-z_$][\w$]*)/gm)]
-    .map(([, kind, name]) => ({ kind, name }));
+const moduleExports = (path, sources, cache = new Map()) => {
+  if (cache.has(path)) return cache.get(path);
+  const source = sources[path];
+  assert.ok(source, `unresolved module: ${path}`);
+  const sourceFile = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const exports = new Map();
+  cache.set(path, exports);
+  const consumed = new Set();
+  const hasModifier = (node, kind) => node.modifiers?.some((modifier) => modifier.kind === kind);
+  const add = (name, kind) => {
+    assert.ok(!exports.has(name), `duplicate public export ${name} in ${path}`);
+    exports.set(name, kind);
+  };
+  const targetPath = (specifier) => {
+    assert.ok(specifier.startsWith("./"), `external re-export is prohibited: ${specifier}`);
+    return `${path.slice(0, path.lastIndexOf("/") + 1)}${specifier.slice(2)}`;
+  };
+
+  for (const statement of sourceFile.statements) {
+    if (ts.isExportAssignment(statement)) assert.fail(`export assignment is prohibited in ${path}`);
+    if (ts.isExportDeclaration(statement)) {
+      consumed.add(statement.pos);
+      const target = statement.moduleSpecifier
+        ? moduleExports(targetPath(statement.moduleSpecifier.text), sources, cache)
+        : undefined;
+      if (!statement.exportClause) {
+        assert.ok(target, `unresolved export star in ${path}`);
+        for (const [name, kind] of target) add(name, kind);
+      } else if (ts.isNamedExports(statement.exportClause)) {
+        for (const element of statement.exportClause.elements) {
+          const sourceName = element.propertyName?.text ?? element.name.text;
+          const kind = target?.get(sourceName);
+          assert.ok(kind || !target, `unresolved named re-export ${sourceName} in ${path}`);
+          add(element.name.text, kind ?? "named");
+        }
+      } else {
+        assert.fail(`namespace re-export is prohibited in ${path}`);
+      }
+      continue;
+    }
+    if (!hasModifier(statement, ts.SyntaxKind.ExportKeyword)) continue;
+    consumed.add(statement.pos);
+    assert.ok(!hasModifier(statement, ts.SyntaxKind.DefaultKeyword), `default export is prohibited in ${path}`);
+    if (ts.isVariableStatement(statement)) {
+      for (const declaration of statement.declarationList.declarations) {
+        assert.ok(ts.isIdentifier(declaration.name), `destructured export is prohibited in ${path}`);
+        add(declaration.name.text, "const");
+      }
+    } else if (
+      ts.isTypeAliasDeclaration(statement) || ts.isInterfaceDeclaration(statement) ||
+      ts.isClassDeclaration(statement) || ts.isFunctionDeclaration(statement) ||
+      ts.isEnumDeclaration(statement) || ts.isModuleDeclaration(statement)
+    ) {
+      assert.ok(statement.name && ts.isIdentifier(statement.name), `anonymous export is prohibited in ${path}`);
+      const kind = ts.isTypeAliasDeclaration(statement) ? "type" :
+        ts.isInterfaceDeclaration(statement) ? "interface" :
+          ts.isClassDeclaration(statement) ? "class" :
+            ts.isFunctionDeclaration(statement) ? "function" :
+              ts.isEnumDeclaration(statement) ? "enum" : "namespace";
+      add(statement.name.text, kind);
+    } else {
+      assert.fail(`unconsumed export statement in ${path}: ${statement.getText(sourceFile)}`);
+    }
+  }
+
+  const findUnconsumed = (node) => {
+    if (
+      (ts.isExportDeclaration(node) || ts.isExportAssignment(node) || hasModifier(node, ts.SyntaxKind.ExportKeyword)) &&
+      !consumed.has(node.pos)
+    ) {
+      assert.fail(`unconsumed export syntax in ${path}: ${node.getText(sourceFile)}`);
+    }
+    ts.forEachChild(node, findUnconsumed);
+  };
+  findUnconsumed(sourceFile);
+  return exports;
+};
 
 test("records the immutable C3 approval and preserves V1 separately", async () => {
   const review = await readFile(reviewPath, "utf8");
@@ -334,6 +517,15 @@ test("proves exact READY and PARTIAL authorization from the reviewed snapshot", 
       [...interpreted.results.entries()],
     ),
   );
+  const duplicateWriteMutation = registry.replace(
+    "for (const artifact of telemetryPartialArtifacts) {",
+    `for (const artifact of telemetryPartialArtifacts) {
+  registry.set(artifact, Object.freeze({ artifact, status: "IMPLEMENTATION_READY", source: "MUTATION" }));`,
+  );
+  assert.throws(
+    () => interpretTelemetryRegistry(duplicateWriteMutation),
+    /must contain exactly one statement/,
+  );
 });
 
 test("proves the pre-C4 package contains four materialized artifacts only", () => {
@@ -350,21 +542,19 @@ test("proves the pre-C4 package contains four materialized artifacts only", () =
   const capability = sources["packages/telemetry/src/capability.ts"];
   const packageSource = Object.values(sources).join("\n");
 
-  const publicDeclarations = packageTree
-    .filter((path) => path.endsWith(".ts") && !path.endsWith("/index.ts"))
-    .flatMap((path) => exportedDeclarations(sources[path]))
-    .sort((left, right) => left.name.localeCompare(right.name));
+  const publicDeclarations = [...moduleExports("packages/telemetry/src/index.ts", sources).entries()]
+    .sort(([left], [right]) => left.localeCompare(right));
   assert.deepEqual(publicDeclarations, [
-    { kind: "type", name: "AudienceProjectionId" },
-    { kind: "const", name: "TELEMETRY_CAPABILITY_STATUSES" },
-    { kind: "type", name: "TelemetryBucketId" },
-    { kind: "type", name: "TelemetryCapabilityStatus" },
-    { kind: "type", name: "TelemetryEventId" },
-    { kind: "function", name: "createAudienceProjectionId" },
-    { kind: "function", name: "createTelemetryBucketId" },
-    { kind: "function", name: "createTelemetryEventId" },
-    { kind: "function", name: "isTelemetryCapabilityStatus" },
-  ].sort((left, right) => left.name.localeCompare(right.name)));
+    ["AudienceProjectionId", "type"],
+    ["TELEMETRY_CAPABILITY_STATUSES", "const"],
+    ["TelemetryBucketId", "type"],
+    ["TelemetryCapabilityStatus", "type"],
+    ["TelemetryEventId", "type"],
+    ["createAudienceProjectionId", "function"],
+    ["createTelemetryBucketId", "function"],
+    ["createTelemetryEventId", "function"],
+    ["isTelemetryCapabilityStatus", "function"],
+  ].sort(([left], [right]) => left.localeCompare(right)));
 
   assert.deepEqual(
     [...identities.matchAll(/export type (TelemetryBucketId|AudienceProjectionId|TelemetryEventId) =/g)].map((match) => match[1]),
@@ -448,7 +638,10 @@ test("records PASS evidence and denies every bypass outside the reviewed boundar
   assert.match(review, /each of the 23 PARTIAL entries was mechanically interpreted/i);
   assert.match(review, /EDGE_RUNTIME\.md.*CAPABILITY_MANAGEMENT\.md/is);
   assert.match(review, /positive and negative contradiction checks/i);
-  assert.match(review, /generic exported declaration/i);
+  assert.match(review, /exact public declaration allowlist/i);
   assert.match(review, /mutation fixture.*PARTIAL.*READY/is);
   assert.match(review, /historical V1.*git show.*INVALIDATED/is);
+  assert.match(review, /TypeScript compiler AST/i);
+  assert.match(review, /second PARTIAL-loop registry\.set.*fails/is);
+  assert.match(review, /no export syntax remains unconsumed/i);
 });
