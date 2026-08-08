@@ -283,7 +283,7 @@ test("records exact manifests and denies infrastructure authorization", async ()
   );
 });
 
-test("reviewed telemetry package exposes exactly the four implemented contracts", async () => {
+test("reviewed V1 snapshot preserves four contracts while current C4 exposes ten", async () => {
   const snapshot = Object.fromEntries(
     [
       ["index", "packages/telemetry/src/index.ts"],
@@ -340,8 +340,14 @@ test("reviewed telemetry package exposes exactly the four implemented contracts"
   assert.deepEqual(report.exports, [
     "TELEMETRY_CAPABILITY_STATUSES",
     "createAudienceProjectionId",
+    "createAudienceProjectionPolicyVersion",
+    "createAudienceProjectionVersion",
+    "createCapabilityVersion",
+    "createCollectionPolicyVersion",
+    "createCollectorVersion",
     "createTelemetryBucketId",
     "createTelemetryEventId",
+    "createTelemetrySchemaVersion",
     "isTelemetryCapabilityStatus",
   ]);
   assert.deepEqual(

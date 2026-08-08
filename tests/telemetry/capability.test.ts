@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -19,18 +18,6 @@ import {
   telemetryPartialArtifacts,
 } from "../../packages/generation/src/index.ts";
 
-// @ts-expect-error Generation-authorized version types are materialized only in C4.
-type ForbiddenTelemetrySchemaVersion = import("../../packages/telemetry/src/index.ts").TelemetrySchemaVersion;
-// @ts-expect-error Generation-authorized version types are materialized only in C4.
-type ForbiddenCollectorVersion = import("../../packages/telemetry/src/index.ts").CollectorVersion;
-// @ts-expect-error Generation-authorized version types are materialized only in C4.
-type ForbiddenCapabilityVersion = import("../../packages/telemetry/src/index.ts").CapabilityVersion;
-// @ts-expect-error Generation-authorized version types are materialized only in C4.
-type ForbiddenCollectionPolicyVersion = import("../../packages/telemetry/src/index.ts").CollectionPolicyVersion;
-// @ts-expect-error Generation-authorized version types are materialized only in C4.
-type ForbiddenAudienceProjectionVersion = import("../../packages/telemetry/src/index.ts").AudienceProjectionVersion;
-// @ts-expect-error Generation-authorized version types are materialized only in C4.
-type ForbiddenAudienceProjectionPolicyVersion = import("../../packages/telemetry/src/index.ts").AudienceProjectionPolicyVersion;
 // @ts-expect-error Source-context-owned identities must not be telemetry exports.
 type ForbiddenTVId = import("../../packages/telemetry/src/index.ts").TVId;
 // @ts-expect-error Source-context-owned identities must not be telemetry exports.
@@ -114,16 +101,20 @@ test("telemetry generation authorization contains exactly the ten certified arti
   ]);
 });
 
-test("pre-C4 telemetry materializes only the original four authorized artifacts", () => {
+test("C4 telemetry runtime surface materializes the ten authorized artifacts only", () => {
   assert.deepEqual(Object.keys(telemetry).sort(), [
     "TELEMETRY_CAPABILITY_STATUSES",
+    "createAudienceProjectionPolicyVersion",
+    "createAudienceProjectionVersion",
     "createAudienceProjectionId",
+    "createCapabilityVersion",
+    "createCollectionPolicyVersion",
+    "createCollectorVersion",
     "createTelemetryBucketId",
     "createTelemetryEventId",
+    "createTelemetrySchemaVersion",
     "isTelemetryCapabilityStatus",
-  ]);
-
-  assert.equal(existsSync("packages/telemetry/src/versions.ts"), false);
+  ].sort());
 });
 
 test("all remaining PARTIAL telemetry artifacts stay denied and unexported", () => {
