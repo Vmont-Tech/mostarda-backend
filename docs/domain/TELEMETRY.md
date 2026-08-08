@@ -46,6 +46,8 @@ The following versions are independent; they must never be collapsed into a gene
 - `AudienceProjectionPolicyVersion`: confiança, cobertura, validade e semântica de derivação; owner Telemetry declara `VersionSyntax = OPAQUE_TOKEN_V1`;
 - `PricingPolicyVersion`: uso autorizado da projeção no cálculo de preço.
 
+As declarações `OPAQUE_TOKEN_V1` acima referenciam `CONTRACT_COMPATIBILITY.md`, contrato canonical `DEC-065`, sem repetir ou ampliar sua gramática e semântica de representação.
+
 Mudança de significado observável, input aceito, output, derivação, interpretação de confiança ou compatibilidade publica uma versão sucessora e nunca reinterpreta o histórico. Upcast autorizado ocorre no owner receptor e preserva o envelope imutável original.
 
 ## Compatibility boundary

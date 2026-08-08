@@ -120,20 +120,18 @@ test("six READY version identities exclude compatibility evaluation", async () =
     assert.match(section, /Status: `IMPLEMENTATION_READY`/);
     assert.match(section, /VersionValue/);
     assert.match(section, /`VersionSyntax = OPAQUE_TOKEN_V1`/);
-    assert.ok(section.includes(String.raw`[A-Za-z0-9][A-Za-z0-9._:+-]*`));
+    assert.match(section, /`CONTRACT_COMPATIBILITY\.md`[^.]*canonical `DEC-065`/i);
+    assert.doesNotMatch(section, /\^?\[A-Za-z0-9\]\[A-Za-z0-9\._:\+\-\]\*\$?/);
     assert.match(section, /invalid identity representation/i);
     assert.doesNotMatch(section, /`UNSUPPORTED_(?:TELEMETRY_SCHEMA_VERSION|COLLECTOR_VERSION|CAPABILITY_VERSION|AUDIENCE_PROJECTION_VERSION|POLICY_VERSION)`/);
-    assert.match(section, /no normalization, coercion, or ordering/i);
     assert.match(section, /preserves? the exact/i);
     assert.match(section, /compatibility evaluation is excluded.*consumer-owned/is);
-    assert.match(section, /binary exact case-sensitive/i);
-    assert.match(section, /`v2`[^.]*`V2`[^.]*different/i);
-    assert.match(section, /transport maximum length[^.]*not[^.]*lexical version semantics/i);
   }
 
   const shared = gate.slice(gate.indexOf("## 2."), gate.indexOf("## 3."));
   assert.match(shared, /`OPAQUE_TOKEN_V1`/);
-  assert.ok(shared.includes(String.raw`[A-Za-z0-9][A-Za-z0-9._:+-]*`));
+  assert.match(shared, /`CONTRACT_COMPATIBILITY\.md`[^.]*canonical `DEC-065`/i);
+  assert.doesNotMatch(shared, /\^?\[A-Za-z0-9\]\[A-Za-z0-9\._:\+\-\]\*\$?/);
 
   for (const section of [shared, ...versions.map((artifact) => {
     const start = gate.indexOf(`## Artifact: ${artifact}\n`);
@@ -142,7 +140,6 @@ test("six READY version identities exclude compatibility evaluation", async () =
   })]) {
     assert.doesNotMatch(section, /constructor[^.\n]*(?:supported|allowlist|latest|SemVer)/i);
     assert.doesNotMatch(section, /`UNSUPPORTED_(?:TELEMETRY_SCHEMA_VERSION|COLLECTOR_VERSION|CAPABILITY_VERSION|AUDIENCE_PROJECTION_VERSION|POLICY_VERSION)`/);
-    assert.match(section, /no [^.\n]*case folding/i);
     assert.doesNotMatch(section, /UTF-8 validation only/i);
   }
 });

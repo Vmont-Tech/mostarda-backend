@@ -4,7 +4,20 @@ This document defines the domain ownership and vocabulary for consumer-owned con
 
 ## Producer-owned version identity
 
-`VersionValue` is an opaque identity. `OPAQUE_TOKEN_V1` is the shared initial representation contract: its lexical grammar is exactly `[A-Za-z0-9][A-Za-z0-9._:+-]*`. Comparison is binary exact case-sensitive, so `v2` and `V2` are different identities. There is no normalization or coercion and no semantics, ordering, equivalence, lifecycle or strategy. Construction returns `INVALID_VERSION_IDENTITY_REPRESENTATION` if and only if the lexical grammar fails; it performs no existence, latest, compatibility, or SemVer check. Syntax may evolve only through a new producer contract revision, and history preserves the exact prior value. A transport maximum length is deferred and is not lexical version semantics.
+`VersionValue` is an opaque identity. `OPAQUE_TOKEN_V1` is the canonical shared initial representation contract: its whole-value lexical grammar is exactly `^[A-Za-z0-9][A-Za-z0-9._:+-]*$`. The entire `VersionValue` must match; prefixes, suffixes, spaces, CR, LF and empty input are rejected. Comparison is binary exact case-sensitive, so `v2` and `V2` are different identities. There is no normalization or coercion and no semantics, ordering, equivalence, lifecycle or strategy. Construction returns `INVALID_VERSION_IDENTITY_REPRESENTATION` if and only if the whole-value lexical grammar fails; it performs no existence, latest, compatibility, or SemVer check. Syntax may evolve only through a new producer contract revision, and history preserves the exact prior value. A transport maximum length is deferred and is not lexical version semantics.
+
+| Fixture | Result |
+| --- | --- |
+| `v2` | valid |
+| `V2` | valid |
+| `POL-REV-17` | valid |
+| `2026.08.01` | valid |
+| `550e8400-e29b-41d4-a716-446655440000` | valid |
+| `1.4.0-beta+17` | valid |
+| `␠v2␠` | invalid |
+| `@v2` | invalid |
+| `v2\\n` | invalid |
+| `empty` | invalid |
 
 The producer of each `VersionKind` defines `VersionSyntax` and one canonical representation. The platform preserves the exact canonical value supplied by that producer.
 No normalization, coercion, ordering or implicit semantic interpretation is permitted.

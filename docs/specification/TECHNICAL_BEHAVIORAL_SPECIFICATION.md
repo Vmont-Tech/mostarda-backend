@@ -367,7 +367,7 @@ Uma implementação somente declara conformidade quando:
 
 ## 19. Contract compatibility evaluation
 
-`OPAQUE_TOKEN_V1` is the initial version-identity representation contract from `DEC-065`, with lexical grammar exactly `[A-Za-z0-9][A-Za-z0-9._:+-]*`. Comparison is binary exact case-sensitive: `v2` and `V2` are different identities. There is no normalization or coercion and no semantics, ordering, equivalence, lifecycle or strategy. Identity construction returns `INVALID_VERSION_IDENTITY_REPRESENTATION` if and only if the lexical grammar fails; it performs no existence, latest, compatibility, or SemVer check. Syntax may change only under a new producer contract revision while exact history is preserved. A transport maximum length is deferred and is not lexical version semantics.
+`OPAQUE_TOKEN_V1` is governed by canonical `DEC-065` in `CONTRACT_COMPATIBILITY.md`. This behavioral specification references that whole-value representation contract without restating or extending its lexical, comparison, error or evolution rules.
 
 **TBS-COMP-001:** An operation resolves exactly one `CompatibilityScopeId` before matrix discovery. Scope inheritance, global/default fallback and composition are prohibited.
 

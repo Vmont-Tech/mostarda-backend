@@ -17,7 +17,7 @@ Ele não contém regras de Campaign, anúncio, Pricing, Financeiro, Evidence ou 
 
 Edge coleta sinais locais autorizados e fecha cada one-minute bucket as immutable observation. Em conectividade normal, envia os buckets normalmente em five-minute batches sem apagar as cinco fronteiras de minuto. Cada collector reporta `AVAILABLE`, `UNAVAILABLE`, `DISABLED`, `DEGRADED` ou `FAILED`. Wi-Fi and camera absence or failure is explicitly reported; playback continues sem fabricar valores. Telemetry Context, e não Edge, valida, aceita e mantém o Telemetry Ledger e `AudienceProjection`.
 
-Para `CollectorVersion`, o owner Edge Runtime declara inicialmente `VersionSyntax = OPAQUE_TOKEN_V1` conforme `DEC-065`.
+Para `CollectorVersion`, o owner Edge Runtime declara inicialmente `VersionSyntax = OPAQUE_TOKEN_V1` e referencia `CONTRACT_COMPATIBILITY.md`, contrato canonical `DEC-065`, sem repetição local.
 
 QR and NFC bypass Edge. Edge only renders QR fornecido pelo Cloud; não recebe, resolve, redireciona nem fabrica interação de QR ou tag. A pessoa interage diretamente com o fluxo público Cloud/Quantum.
 

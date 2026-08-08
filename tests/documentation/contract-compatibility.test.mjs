@@ -16,7 +16,7 @@ const paths = {
   events: new URL("../../docs/domain/DOMAIN_EVENTS.md", import.meta.url),
 };
 
-const opaqueTokenPattern = String.raw`[A-Za-z0-9][A-Za-z0-9._:+-]*`;
+const opaqueTokenPattern = String.raw`^[A-Za-z0-9][A-Za-z0-9._:+-]*$`;
 
 const read = (name) => readFile(paths[name], "utf8");
 
@@ -141,17 +141,37 @@ test("DEC-065 defines OPAQUE_TOKEN_V1 as representation without version semantic
   const [compatibility, platform, tbs, decisions] = await Promise.all([
     read("compatibility"), read("platform"), read("tbs"), read("decisions"),
   ]);
-  for (const document of [compatibility, platform, tbs]) {
-    assert.match(document, /`OPAQUE_TOKEN_V1`/);
-    assert.ok(document.includes(opaqueTokenPattern));
-    assert.match(document, /binary exact case-sensitive/i);
-    assert.match(document, /`v2`[^.]*`V2`[^.]*different/i);
-    assert.match(document, /`INVALID_VERSION_IDENTITY_REPRESENTATION`[^.]*if and only if[^.]*lexical grammar fails/i);
-    assert.match(document, /no (?:existence, latest, compatibility, or SemVer|existence\/latest\/compatibility\/SemVer) check/i);
-    assert.match(document, /no normalization or coercion/i);
-    assert.match(document, /transport maximum length[^.]*not[^.]*lexical version semantics/i);
+  assert.match(compatibility, /`OPAQUE_TOKEN_V1`/);
+  assert.ok(compatibility.includes(opaqueTokenPattern));
+  assert.match(compatibility, /entire `VersionValue` must match/i);
+  assert.match(compatibility, /binary exact case-sensitive/i);
+  assert.match(compatibility, /`v2`[^.]*`V2`[^.]*different/i);
+  assert.match(compatibility, /`INVALID_VERSION_IDENTITY_REPRESENTATION`[^.]*if and only if[^.]*whole-value lexical grammar fails/i);
+  assert.match(compatibility, /no (?:existence, latest, compatibility, or SemVer|existence\/latest\/compatibility\/SemVer) check/i);
+  assert.match(compatibility, /no normalization or coercion/i);
+  assert.match(compatibility, /transport maximum length[^.]*not[^.]*lexical version semantics/i);
+
+  for (const document of [platform, tbs]) {
+    assert.match(document, /`DEC-065`/);
+    assert.match(document, /`CONTRACT_COMPATIBILITY\.md`/);
+    assert.doesNotMatch(document, /\^\[A-Za-z0-9\]/);
   }
   assert.match(decisions, /^\| `DEC-065` \|[^\n]*OPAQUE_TOKEN_V1[^\n]*ACCEPTED \|$/m);
+});
+
+test("OPAQUE_TOKEN_V1 examples prove anchored whole-value matching", async () => {
+  const compatibility = await read("compatibility");
+  const syntax = new RegExp(opaqueTokenPattern);
+  const valid = ["v2", "V2", "POL-REV-17", "2026.08.01", "550e8400-e29b-41d4-a716-446655440000", "1.4.0-beta+17"];
+  const invalid = [" v2 ", "@v2", "v2\n", ""];
+  for (const value of valid) {
+    assert.equal(syntax.test(value), true, `expected valid fixture: ${JSON.stringify(value)}`);
+    assert.ok(compatibility.includes(`| \`${value}\` | valid |`));
+  }
+  for (const [value, label] of [[" v2 ", "␠v2␠"], ["@v2", "@v2"], ["v2\n", "v2\\\\n"], ["", "empty"]]) {
+    assert.equal(syntax.test(value), false, `expected invalid fixture: ${JSON.stringify(value)}`);
+    assert.ok(compatibility.includes(`| \`${label}\` | invalid |`));
+  }
 });
 
 test("each version producer declares OPAQUE_TOKEN_V1 for its owned identities", async () => {
@@ -166,6 +186,10 @@ test("each version producer declares OPAQUE_TOKEN_V1 for its owned identities", 
   ]) assert.match(telemetry, new RegExp(`\\b${artifact}\\b[^\\n]*VersionSyntax[^\\n]*OPAQUE_TOKEN_V1`));
   assert.match(edge, /\bCollectorVersion\b[^\n]*VersionSyntax[^\n]*OPAQUE_TOKEN_V1/);
   assert.match(capabilities, /\bCapabilityVersion\b[^\n]*VersionSyntax[^\n]*OPAQUE_TOKEN_V1/);
+  for (const document of [telemetry, edge, capabilities]) {
+    assert.match(document, /`CONTRACT_COMPATIBILITY\.md`[^.]*canonical `DEC-065`/i);
+    assert.doesNotMatch(document, /\^\[A-Za-z0-9\]/);
+  }
 });
 
 test("TBS independently defines deterministic observable evaluation behavior", async () => {

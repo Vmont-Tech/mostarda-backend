@@ -1,6 +1,6 @@
 # Capability Management
 
-Para `CapabilityVersion`, o TV Network capability owner declara inicialmente `VersionSyntax = OPAQUE_TOKEN_V1` conforme `DEC-065`.
+Para `CapabilityVersion`, o TV Network capability owner declara inicialmente `VersionSyntax = OPAQUE_TOKEN_V1` e referencia `CONTRACT_COMPATIBILITY.md`, contrato canonical `DEC-065`, sem repetição local.
 
 ## Modelo
 

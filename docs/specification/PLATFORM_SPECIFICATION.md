@@ -125,7 +125,7 @@ Contextos NÃO DEVEM ler ou alterar armazenamento de outro contexto. Colaboraç�
 
 ## SPEC-COMP-001 — Consumer-owned contract compatibility (`DEC-064`)
 
-`DEC-065` refines version identity representation. `OPAQUE_TOKEN_V1` has exactly the lexical grammar `[A-Za-z0-9][A-Za-z0-9._:+-]*`. Comparison is binary exact case-sensitive, so `v2` and `V2` are different identities. There is no normalization or coercion and no semantics, ordering, equivalence, lifecycle or strategy. Construction returns `INVALID_VERSION_IDENTITY_REPRESENTATION` if and only if the lexical grammar fails and performs no existence, latest, compatibility, or SemVer check. Syntax changes require a new producer contract revision and preserve history. A transport maximum length is deferred and is not lexical version semantics.
+`DEC-065` refines version identity representation. The canonical `OPAQUE_TOKEN_V1` definition and all of its lexical, comparison, error and evolution rules are exclusively in `CONTRACT_COMPATIBILITY.md`; this specification does not restate or alter them.
 
 Producer contracts own opaque canonical version identities and their syntax, but make no claim about a consumer's ability to process them. Each consumer exclusively owns its scoped immutable compatibility declarations and may decide differently from every other consumer without changing the producer artifact. Configuration Service distributes only immutable consumer-authored matrix revisions and has no authoring, inference or selection authority.
 
