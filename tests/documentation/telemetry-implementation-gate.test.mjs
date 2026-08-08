@@ -144,7 +144,8 @@ test("six READY version identities exclude compatibility evaluation", async () =
   }
 });
 
-const read = (name) => readFile(docs[name], "utf8");
+const read = async (name) =>
+  (await readFile(docs[name], "utf8")).replace(/\r\n/g, "\n");
 
 test("DEC-063 certifies the complete Telemetry authority boundary", async () => {
   const [registry, platform] = await Promise.all([
