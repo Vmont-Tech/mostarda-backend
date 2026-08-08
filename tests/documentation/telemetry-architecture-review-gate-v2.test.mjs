@@ -9,6 +9,7 @@ const reviewPath = new URL(
   import.meta.url,
 );
 const reviewedHead = "40c23312a777e9cf48562bb8750042e9d922cb82";
+const reviewedParent = "574ae63ab8a1aa777296749be6c454e381aeadb1";
 const reviewedBase = "48f12fd1c2f3fc1578e3fd9dbe7d051490251476";
 
 const ready = Object.freeze([
@@ -72,6 +73,15 @@ const gitShow = (path) =>
     encoding: "utf8",
   });
 
+const gitTree = (path) =>
+  execFileSync("git", ["ls-tree", "-r", "--name-only", reviewedHead, "--", path], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+  })
+    .trim()
+    .split(/\r?\n/)
+    .filter(Boolean);
+
 const section = (document, heading) => {
   const marker = `## ${heading}`;
   const start = document.indexOf(marker);
@@ -101,11 +111,16 @@ test("records the immutable C3 approval and preserves V1 separately", async () =
   const review = await readFile(reviewPath, "utf8");
   assert.match(review, /^Status: APPROVED$/m);
   assert.match(review, new RegExp(`^Reviewed head: \`${reviewedHead}\`$`, "m"));
+  assert.match(review, new RegExp(`^Reviewed parent: \`${reviewedParent}\`$`, "m"));
   assert.match(review, new RegExp(`^Reviewed range: \`${reviewedBase}\\.\\.${reviewedHead}\`$`, "m"));
   assert.match(review, /TELEMETRY_ARCHITECTURE_REVIEW_GATE_V1\.md.*historical/i);
 
   execFileSync("git", ["cat-file", "-e", `${reviewedHead}^{commit}`], { cwd: repositoryRoot });
   execFileSync("git", ["cat-file", "-e", `${reviewedBase}^{commit}`], { cwd: repositoryRoot });
+  assert.equal(
+    execFileSync("git", ["rev-parse", `${reviewedHead}^`], { cwd: repositoryRoot, encoding: "utf8" }).trim(),
+    reviewedParent,
+  );
   execFileSync("git", ["merge-base", "--is-ancestor", reviewedBase, reviewedHead], {
     cwd: repositoryRoot,
   });
@@ -147,6 +162,43 @@ test("validates strategic invariants from immutable reviewed sources", () => {
   assert.match(compatibility, /lexical grammar.*not.*semantics/is);
   assert.match(compatibility, /INVALID_VERSION_IDENTITY_REPRESENTATION/);
   assert.match(compatibility, /no normalization|shall not normalize/i);
+
+  assert.match(compatibility, /There is no global compatibility matrix/i);
+  assert.doesNotMatch(compatibility, /global compatibility matrix (?:is|shall be) (?:owned|authoritative|effective)/i);
+  assert.doesNotMatch(contexts, /^\|\s*(?:Audience|Compatibility)(?:\s+[^|]*)?\s*\|/mi);
+  assert.doesNotMatch(telemetry, /Telemetry (?:owns|evaluates|decides) (?:a |the )?(?:consumer )?CompatibilityMatrix/i);
+  assert.doesNotMatch(ownership, /\|\s*CompatibilityMatrix\s*\|\s*\*\*Telemetry/i);
+  assert.doesNotMatch(
+    compatibility,
+    /Configuration Service (?:authors|owns|decides|infers|selects) (?:consumer )?compatibility/i,
+  );
+});
+
+test("proves each of the six producer-owned version syntax declarations", () => {
+  const telemetry = gitShow("docs/domain/TELEMETRY.md");
+  const edgeRuntime = gitShow("docs/tv-network/EDGE_RUNTIME.md");
+  const capabilityManagement = gitShow("docs/tv-network/CAPABILITY_MANAGEMENT.md");
+
+  for (const artifact of [
+    "TelemetrySchemaVersion",
+    "CollectionPolicyVersion",
+    "AudienceProjectionVersion",
+    "AudienceProjectionPolicyVersion",
+  ]) {
+    assert.match(
+      lineContaining(telemetry, `\`${artifact}\``),
+      /VersionSyntax = OPAQUE_TOKEN_V1/,
+      `${artifact} must declare its syntax in the immutable Telemetry authority`,
+    );
+  }
+  assert.match(
+    lineContaining(edgeRuntime, "`CollectorVersion`"),
+    /owner Edge Runtime.*VersionSyntax = OPAQUE_TOKEN_V1/i,
+  );
+  assert.match(
+    lineContaining(capabilityManagement, "`CapabilityVersion`"),
+    /TV Network capability owner.*VersionSyntax = OPAQUE_TOKEN_V1/i,
+  );
 });
 
 test("proves exact READY and PARTIAL authorization from the reviewed snapshot", () => {
@@ -172,14 +224,38 @@ test("proves exact READY and PARTIAL authorization from the reviewed snapshot", 
   assert.deepEqual(exportedStringArray(registry, "telemetryPartialArtifacts"), partial);
   assert.match(registry, /status: "IMPLEMENTATION_READY"[\s\S]*?source: "TELEMETRY_IMPLEMENTATION_GATE_V1\.md"/);
   assert.match(registry, /status: "IMPLEMENTATION_PARTIAL"[\s\S]*?source: "TELEMETRY_IMPLEMENTATION_GATE_V1\.md"/);
+
+  const interpretedAuthorizationFor = (artifact) => {
+    if (exportedStringArray(registry, "telemetryAuthorizedArtifacts").includes(artifact)) {
+      return "IMPLEMENTATION_READY";
+    }
+    if (exportedStringArray(registry, "telemetryPartialArtifacts").includes(artifact)) {
+      return "IMPLEMENTATION_PARTIAL";
+    }
+    return "IMPLEMENTATION_BLOCKED_ARCHITECTURE";
+  };
+  assert.match(
+    registry,
+    /registry\.get\(artifact\) \?\?[\s\S]*?status: "IMPLEMENTATION_BLOCKED_ARCHITECTURE"[\s\S]*?source: "CGS-A-1 deny-by-default"/,
+  );
+  for (const artifact of partial) {
+    assert.equal(interpretedAuthorizationFor(artifact), "IMPLEMENTATION_PARTIAL", artifact);
+  }
 });
 
 test("proves the pre-C4 package contains four materialized artifacts only", () => {
-  const index = gitShow("packages/telemetry/src/index.ts");
-  const identities = gitShow("packages/telemetry/src/identities.ts");
-  const capability = gitShow("packages/telemetry/src/capability.ts");
-  const packageJson = gitShow("packages/telemetry/package.json");
-  const packageSource = `${index}\n${identities}\n${capability}\n${packageJson}`;
+  const packageTree = gitTree("packages/telemetry");
+  assert.deepEqual(packageTree, [
+    "packages/telemetry/package.json",
+    "packages/telemetry/src/capability.ts",
+    "packages/telemetry/src/identities.ts",
+    "packages/telemetry/src/index.ts",
+  ]);
+  const sources = Object.fromEntries(packageTree.map((path) => [path, gitShow(path)]));
+  const index = sources["packages/telemetry/src/index.ts"];
+  const identities = sources["packages/telemetry/src/identities.ts"];
+  const capability = sources["packages/telemetry/src/capability.ts"];
+  const packageSource = Object.values(sources).join("\n");
 
   assert.deepEqual(
     [...identities.matchAll(/export type (TelemetryBucketId|AudienceProjectionId|TelemetryEventId) =/g)].map((match) => match[1]),
@@ -196,6 +272,40 @@ test("proves the pre-C4 package contains four materialized artifacts only", () =
   }
   for (const artifact of partial) {
     assert.doesNotMatch(packageSource, new RegExp(`export\\s+(?:type|class|function|const|interface)\\s+${artifact}\\b`));
+  }
+});
+
+test("mechanically denies service, API, infrastructure and compatibility bypasses", () => {
+  const packageTree = gitTree("packages/telemetry");
+  const packageSource = packageTree.map(gitShow).join("\n");
+  const registry = gitShow("packages/generation/src/artifact-authorization.ts");
+  const registryReady = exportedStringArray(registry, "telemetryAuthorizedArtifacts");
+  const registryPartial = exportedStringArray(registry, "telemetryPartialArtifacts");
+  const bypasses = [
+    "TelemetryService",
+    "TelemetryAPI",
+    "TelemetryRepository",
+    "TelemetryTopic",
+    "TelemetryStream",
+    "TelemetryBroker",
+    "TelemetryAdapter",
+    "TelemetryInfrastructure",
+    "CompatibilityMatrix",
+    "CompatibilityEvaluator",
+  ];
+
+  assert.match(registry, /status: "IMPLEMENTATION_BLOCKED_ARCHITECTURE"/);
+  for (const artifact of bypasses) {
+    assert.ok(!registryReady.includes(artifact), `${artifact} must not be READY`);
+    assert.ok(!registryPartial.includes(artifact), `${artifact} must remain absent and denied by default`);
+    assert.doesNotMatch(
+      packageSource,
+      new RegExp(`export\\s+(?:type|class|function|const|interface)\\s+${artifact}\\b`),
+      `${artifact} must not exist in the immutable package tree`,
+    );
+  }
+  for (const path of packageTree) {
+    assert.doesNotMatch(path, /(?:service|api|repository|topic|stream|broker|adapter|infrastructure|compatibility)/i);
   }
 });
 
@@ -225,4 +335,8 @@ test("records PASS evidence and denies every bypass outside the reviewed boundar
   assert.match(review, /Every PARTIAL artifact remains denied/i);
   assert.match(review, /No service, API, repository, topic, stream, broker, adapter, infrastructure, CompatibilityMatrix, or compatibility evaluator is authorized/i);
   assert.match(review, /Task C4 may implement only the six authorized version identities/i);
+  assert.match(review, /entire `packages\/telemetry` tree/i);
+  assert.match(review, /each of the 23 PARTIAL entries was mechanically interpreted/i);
+  assert.match(review, /EDGE_RUNTIME\.md.*CAPABILITY_MANAGEMENT\.md/is);
+  assert.match(review, /positive and negative contradiction checks/i);
 });

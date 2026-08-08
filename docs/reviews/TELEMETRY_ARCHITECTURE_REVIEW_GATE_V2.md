@@ -7,6 +7,7 @@ This is the immutable manual Architecture Review Gate required by Task C3. It au
 ## Reviewed snapshot
 
 Reviewed head: `40c23312a777e9cf48562bb8750042e9d922cb82`
+Reviewed parent: `574ae63ab8a1aa777296749be6c454e381aeadb1`
 Reviewed range: `48f12fd1c2f3fc1578e3fd9dbe7d051490251476..40c23312a777e9cf48562bb8750042e9d922cb82`
 
 The audit loaded every governing source, gate, executable registry and Telemetry package source from the reviewed head with `git show 40c23312a777e9cf48562bb8750042e9d922cb82:<path>`. Current working-tree prose was not accepted as proof of the reviewed state.
@@ -28,6 +29,10 @@ The audit loaded every governing source, gate, executable registry and Telemetry
 | Implementation boundary | PASS | The pre-C4 Telemetry package materializes only the three approved identifiers and `TelemetryCapabilityStatus`; the six newly authorized version identities are not yet exported or implemented. |
 | No bypass | PASS | No composite, service, API, repository, topic, stream, broker, adapter, infrastructure resource, `CompatibilityMatrix` or compatibility evaluator is authorized or materialized. |
 | DEC-065 OPAQUE_TOKEN_V1 semantics | PASS | The whole-value ASCII grammar is exactly `[A-Za-z0-9][A-Za-z0-9._:+-]*`; validation is lexical only, comparison is binary exact and case-sensitive, and normalization, coercion, ordering, equivalence and semantic interpretation are prohibited. |
+
+The producer-declaration audit loaded immutable `TELEMETRY.md`, `EDGE_RUNTIME.md` and `CAPABILITY_MANAGEMENT.md`. It independently proved `VersionSyntax = OPAQUE_TOKEN_V1` for `TelemetrySchemaVersion`, `CollectionPolicyVersion`, `AudienceProjectionVersion`, `AudienceProjectionPolicyVersion`, `CollectorVersion` and `CapabilityVersion`; no declaration was inferred from the shared compatibility document.
+
+Positive and negative contradiction checks were both executed against immutable authorities. The audit positively located consumer-local ownership, distribution-only Configuration Service behavior, Telemetry's explicit non-evaluation rule and the absence of an Audience Bounded Context. It also rejected any global matrix authority, Telemetry-owned evaluator or matrix, Audience or Compatibility Bounded Context row, and Configuration Service compatibility authority.
 
 ## Authorization boundary
 
@@ -52,6 +57,8 @@ The exact READY set is:
 The first four are the entire pre-C4 materialized surface. The final six are authorized identity contracts but are not materialized at the reviewed head.
 
 Every PARTIAL artifact remains denied. This includes `TelemetryBucket`, its accepted and rejected events, `AudienceProjection`, all projection lifecycle artifacts, all capability lifecycle events and every conceptual event family listed by `PARTIAL_MANIFEST`.
+
+Each of the 23 PARTIAL entries was mechanically interpreted from the immutable executable registry: the test parses the exact `telemetryPartialArtifacts` array, verifies the registration loop assigns `IMPLEMENTATION_PARTIAL` with gate provenance, and evaluates every name against that deterministic source interpretation. Generic prose and the current checkout are not authorization evidence.
 
 Unknown artifacts are denied as `IMPLEMENTATION_BLOCKED_ARCHITECTURE`. No service, API, repository, topic, stream, broker, adapter, infrastructure, CompatibilityMatrix, or compatibility evaluator is authorized. There is no transitive or association-based promotion.
 
@@ -78,8 +85,12 @@ Evidence type: structured command record. These results support, but do not repl
 - `git show 40c23312a777e9cf48562bb8750042e9d922cb82:<path>` for every cited authority, gate, registry and package source — PASS.
 - Immutable manifest/matrix/registry comparison — PASS: exact READY 10 / PARTIAL 23, disjoint, total 33.
 - Immutable package-surface inspection — PASS: exact pre-C4 materialized 4; exact newly authorized-not-materialized 6; all PARTIAL absent.
+- `git ls-tree -r --name-only 40c23312a777e9cf48562bb8750042e9d922cb82 -- packages/telemetry` followed by `git show` of every returned path — PASS: the entire `packages/telemetry` tree was enumerated rather than a hardcoded source subset.
+- Immutable producer declaration inspection of `TELEMETRY.md`, `EDGE_RUNTIME.md` and `CAPABILITY_MANAGEMENT.md` — PASS for all six authorized version identities.
 - Strategic boundary assertions — PASS for ownership, Evidence, Pricing, Configuration Service, Telemetry compatibility exclusion and absence of new Bounded Contexts.
-- Deny-by-default inspection — PASS for all PARTIAL and representative service/API/repository/topic/stream/broker/adapter/infrastructure/compatibility artifacts.
+- Deterministic executable-registry interpretation — PASS for each of the 23 PARTIAL entries and the deny-by-default fallback.
+- Immutable tree, source and executable-registry inspection — PASS: no service/API/repository/topic/stream/broker/adapter/infrastructure/`CompatibilityMatrix`/evaluator bypass exists.
+- Positive and negative contradiction checks on immutable authorities — PASS: no global matrix, Telemetry evaluator, Audience or Compatibility Bounded Context, or Configuration Service compatibility authority.
 - DEC-065 inspection — PASS for exact grammar, lexical-only validation, case sensitivity and prohibited inference.
 - `npm run test:docs` — PASS.
 - `npm run test:architecture` — PASS.
