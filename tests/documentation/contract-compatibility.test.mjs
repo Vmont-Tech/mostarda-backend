@@ -162,15 +162,21 @@ test("DEC-065 defines OPAQUE_TOKEN_V1 as representation without version semantic
 test("OPAQUE_TOKEN_V1 examples prove anchored whole-value matching", async () => {
   const compatibility = await read("compatibility");
   const syntax = new RegExp(opaqueTokenPattern);
-  const valid = ["v2", "V2", "POL-REV-17", "2026.08.01", "550e8400-e29b-41d4-a716-446655440000", "1.4.0-beta+17"];
-  const invalid = [" v2 ", "@v2", "v2\n", ""];
-  for (const value of valid) {
-    assert.equal(syntax.test(value), true, `expected valid fixture: ${JSON.stringify(value)}`);
-    assert.ok(compatibility.includes(`| \`${value}\` | valid |`));
-  }
-  for (const [value, label] of [[" v2 ", "␠v2␠"], ["@v2", "@v2"], ["v2\n", "v2\\\\n"], ["", "empty"]]) {
-    assert.equal(syntax.test(value), false, `expected invalid fixture: ${JSON.stringify(value)}`);
-    assert.ok(compatibility.includes(`| \`${label}\` | invalid |`));
+  const fixtures = [...compatibility.matchAll(
+    /^\| `((?:"(?:\\.|[^"\\])*")?)` \| JSON string \| (valid|invalid) \|$/gm,
+  )].map((match) => ({ encoded: match[1], value: JSON.parse(match[1]), result: match[2] }));
+
+  assert.equal(fixtures.length, 10);
+  assert.deepEqual(
+    fixtures.filter(({ result }) => result === "valid").map(({ value }) => value),
+    ["v2", "V2", "POL-REV-17", "2026.08.01", "550e8400-e29b-41d4-a716-446655440000", "1.4.0-beta+17"],
+  );
+  assert.deepEqual(
+    fixtures.filter(({ result }) => result === "invalid").map(({ value }) => value),
+    [" v2 ", "@v2", "v2\n", ""],
+  );
+  for (const { encoded, value, result } of fixtures) {
+    assert.equal(syntax.test(value), result === "valid", `documented fixture disagrees: ${encoded}`);
   }
 });
 
