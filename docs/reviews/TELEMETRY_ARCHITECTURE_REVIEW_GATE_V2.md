@@ -14,6 +14,8 @@ The audit loaded every governing source, gate, executable registry and Telemetry
 
 `TELEMETRY_ARCHITECTURE_REVIEW_GATE_V1.md` remains preserved as separate historical evidence. Its invalidated approval is not revived or replaced retroactively by this V2 record.
 
+The historical V1 was itself loaded with `git show` from the reviewed head. Its title exists, its current status is mechanically `INVALIDATED_BY_AUTHORIZATION_CHANGE`, it records the prior READY 4 / PARTIAL 29 boundary and it contains no current `Status: APPROVED` verdict.
+
 ## Architecture audit results
 
 | Invariant | Result | Immutable evidence |
@@ -56,9 +58,13 @@ The exact READY set is:
 
 The first four are the entire pre-C4 materialized surface. The final six are authorized identity contracts but are not materialized at the reviewed head.
 
+Generic exported declaration parsing was applied to every immutable TypeScript source returned for `packages/telemetry`. The exact public declaration allowlist is the four materialized artifact types plus their existing construction/query helpers: `TelemetryBucketId`, `AudienceProjectionId`, `TelemetryEventId`, `TelemetryCapabilityStatus`, `createTelemetryBucketId`, `createAudienceProjectionId`, `createTelemetryEventId`, `TELEMETRY_CAPABILITY_STATUSES` and `isTelemetryCapabilityStatus`. Any additional type, interface, class, function, constant, variable or enum export fails the gate, including an arbitrary declaration added inside an otherwise allowed file.
+
 Every PARTIAL artifact remains denied. This includes `TelemetryBucket`, its accepted and rejected events, `AudienceProjection`, all projection lifecycle artifacts, all capability lifecycle events and every conceptual event family listed by `PARTIAL_MANIFEST`.
 
 Each of the 23 PARTIAL entries was mechanically interpreted from the immutable executable registry: the test parses the exact `telemetryPartialArtifacts` array, verifies the registration loop assigns `IMPLEMENTATION_PARTIAL` with gate provenance, and evaluates every name against that deterministic source interpretation. Generic prose and the current checkout are not authorization evidence.
+
+The interpreter also parses both complete registration loops in source order, their exact statuses and provenance, rejects duplicate registration, detects later literal overrides, and reads the actual `authorizationFor` fallback. It derives all 33 Telemetry results from parsed code. A mutation fixture changes the PARTIAL loop status to READY and proves that the derived authorization comparison fails.
 
 Unknown artifacts are denied as `IMPLEMENTATION_BLOCKED_ARCHITECTURE`. No service, API, repository, topic, stream, broker, adapter, infrastructure, CompatibilityMatrix, or compatibility evaluator is authorized. There is no transitive or association-based promotion.
 
@@ -84,8 +90,12 @@ Evidence type: structured command record. These results support, but do not repl
 - `git merge-base --is-ancestor 48f12fd1c2f3fc1578e3fd9dbe7d051490251476 40c23312a777e9cf48562bb8750042e9d922cb82` — PASS.
 - `git show 40c23312a777e9cf48562bb8750042e9d922cb82:<path>` for every cited authority, gate, registry and package source — PASS.
 - Immutable manifest/matrix/registry comparison — PASS: exact READY 10 / PARTIAL 23, disjoint, total 33.
+- Complete immutable registry interpretation — PASS: exact READY and PARTIAL loops, deterministic source order, exact status/provenance, no duplicate or later Telemetry override, and actual `authorizationFor` fallback.
+- Mutation fixture swapping PARTIAL to READY — PASS: the authorization equality assertion fails, proving that a status escalation cannot pass this gate silently.
 - Immutable package-surface inspection — PASS: exact pre-C4 materialized 4; exact newly authorized-not-materialized 6; all PARTIAL absent.
 - `git ls-tree -r --name-only 40c23312a777e9cf48562bb8750042e9d922cb82 -- packages/telemetry` followed by `git show` of every returned path — PASS: the entire `packages/telemetry` tree was enumerated rather than a hardcoded source subset.
+- Generic exported declaration parsing across every immutable Telemetry TypeScript source — PASS: exact four artifact types and five existing helpers only; no arbitrary declaration can hide in an allowed file.
+- Historical V1 loaded by `git show` — PASS: file exists and its effective state is `INVALIDATED_BY_AUTHORIZATION_CHANGE`, never current `APPROVED`.
 - Immutable producer declaration inspection of `TELEMETRY.md`, `EDGE_RUNTIME.md` and `CAPABILITY_MANAGEMENT.md` — PASS for all six authorized version identities.
 - Strategic boundary assertions — PASS for ownership, Evidence, Pricing, Configuration Service, Telemetry compatibility exclusion and absence of new Bounded Contexts.
 - Deterministic executable-registry interpretation — PASS for each of the 23 PARTIAL entries and the deny-by-default fallback.

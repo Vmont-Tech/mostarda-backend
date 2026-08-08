@@ -107,6 +107,62 @@ const exportedStringArray = (source, name) => {
   return [...body.matchAll(/"([^"]+)"/g)].map((match) => match[1]);
 };
 
+const interpretTelemetryRegistry = (source) => {
+  const arrays = new Map([
+    ["telemetryAuthorizedArtifacts", exportedStringArray(source, "telemetryAuthorizedArtifacts")],
+    ["telemetryPartialArtifacts", exportedStringArray(source, "telemetryPartialArtifacts")],
+  ]);
+  const registrations = [];
+  const loopPattern = /for \(const artifact of (telemetry(?:Authorized|Partial)Artifacts)\) \{([\s\S]*?)\n\}/g;
+  for (const match of source.matchAll(loopPattern)) {
+    const status = match[2].match(/status: "([^"]+)"/)?.[1];
+    const provenance = match[2].match(/source: "([^"]+)"/)?.[1];
+    assert.ok(status, `missing status in ${match[1]} registration loop`);
+    assert.ok(provenance, `missing provenance in ${match[1]} registration loop`);
+    assert.match(match[2], /registry\.set\(\s*artifact,/);
+    registrations.push({ array: match[1], offset: match.index, status, provenance });
+  }
+  assert.deepEqual(
+    registrations.map(({ array }) => array),
+    ["telemetryAuthorizedArtifacts", "telemetryPartialArtifacts"],
+  );
+
+  const results = new Map();
+  for (const registration of registrations) {
+    for (const artifact of arrays.get(registration.array)) {
+      assert.ok(!results.has(artifact), `duplicate telemetry registration: ${artifact}`);
+      results.set(artifact, {
+        status: registration.status,
+        source: registration.provenance,
+      });
+    }
+  }
+
+  const lastTelemetryLoopEnd = registrations.at(-1).offset;
+  const laterLiteralOverrides = [
+    ...source.slice(lastTelemetryLoopEnd).matchAll(/registry\.set\(\s*"([^"]+)"/g),
+  ].map((match) => match[1]);
+  for (const artifact of results.keys()) {
+    assert.ok(!laterLiteralOverrides.includes(artifact), `later registry override: ${artifact}`);
+  }
+
+  const fallback = source.match(
+    /registry\.get\(artifact\) \?\?[\s\S]*?status: "([^"]+)"[\s\S]*?source: "([^"]+)"/,
+  );
+  assert.ok(fallback, "missing authorizationFor deny-by-default fallback");
+  return {
+    arrays,
+    registrations,
+    results,
+    authorizationFor: (artifact) =>
+      results.get(artifact) ?? { status: fallback[1], source: fallback[2] },
+  };
+};
+
+const exportedDeclarations = (source) =>
+  [...source.matchAll(/^export\s+(?:declare\s+)?(?:abstract\s+)?(type|interface|class|function|const|let|var|enum)\s+([A-Za-z_$][\w$]*)/gm)]
+    .map(([, kind, name]) => ({ kind, name }));
+
 test("records the immutable C3 approval and preserves V1 separately", async () => {
   const review = await readFile(reviewPath, "utf8");
   assert.match(review, /^Status: APPROVED$/m);
@@ -124,6 +180,16 @@ test("records the immutable C3 approval and preserves V1 separately", async () =
   execFileSync("git", ["merge-base", "--is-ancestor", reviewedBase, reviewedHead], {
     cwd: repositoryRoot,
   });
+});
+
+test("mechanically preserves the invalidated historical V1 record", () => {
+  const historical = gitShow("docs/reviews/TELEMETRY_ARCHITECTURE_REVIEW_GATE_V1.md");
+  assert.match(historical, /^# Telemetry Architecture Review Gate V1$/m);
+  assert.match(historical, /^Status: INVALIDATED_BY_AUTHORIZATION_CHANGE$/m);
+  assert.match(historical, /^Required next gate: Task C3 manual Architecture Review Gate$/m);
+  assert.match(historical, /^Prior reviewed authorization: READY 4 \/ PARTIAL 29$/m);
+  assert.match(historical, /^Current unreviewed authorization: READY 10 \/ PARTIAL 23$/m);
+  assert.doesNotMatch(historical, /^Status: APPROVED$/m);
 });
 
 test("validates strategic invariants from immutable reviewed sources", () => {
@@ -225,22 +291,49 @@ test("proves exact READY and PARTIAL authorization from the reviewed snapshot", 
   assert.match(registry, /status: "IMPLEMENTATION_READY"[\s\S]*?source: "TELEMETRY_IMPLEMENTATION_GATE_V1\.md"/);
   assert.match(registry, /status: "IMPLEMENTATION_PARTIAL"[\s\S]*?source: "TELEMETRY_IMPLEMENTATION_GATE_V1\.md"/);
 
-  const interpretedAuthorizationFor = (artifact) => {
-    if (exportedStringArray(registry, "telemetryAuthorizedArtifacts").includes(artifact)) {
-      return "IMPLEMENTATION_READY";
-    }
-    if (exportedStringArray(registry, "telemetryPartialArtifacts").includes(artifact)) {
-      return "IMPLEMENTATION_PARTIAL";
-    }
-    return "IMPLEMENTATION_BLOCKED_ARCHITECTURE";
-  };
-  assert.match(
-    registry,
-    /registry\.get\(artifact\) \?\?[\s\S]*?status: "IMPLEMENTATION_BLOCKED_ARCHITECTURE"[\s\S]*?source: "CGS-A-1 deny-by-default"/,
+  const interpreted = interpretTelemetryRegistry(registry);
+  assert.deepEqual(interpreted.arrays.get("telemetryAuthorizedArtifacts"), gateReady);
+  assert.deepEqual(interpreted.arrays.get("telemetryPartialArtifacts"), gatePartial);
+  assert.deepEqual(
+    interpreted.registrations.map(({ array, status, provenance }) => ({ array, status, provenance })),
+    [
+      {
+        array: "telemetryAuthorizedArtifacts",
+        status: "IMPLEMENTATION_READY",
+        provenance: "TELEMETRY_IMPLEMENTATION_GATE_V1.md",
+      },
+      {
+        array: "telemetryPartialArtifacts",
+        status: "IMPLEMENTATION_PARTIAL",
+        provenance: "TELEMETRY_IMPLEMENTATION_GATE_V1.md",
+      },
+    ],
   );
-  for (const artifact of partial) {
-    assert.equal(interpretedAuthorizationFor(artifact), "IMPLEMENTATION_PARTIAL", artifact);
+  for (const artifact of [...gateReady, ...gatePartial]) {
+    const expectedStatus = gateReady.includes(artifact)
+      ? "IMPLEMENTATION_READY"
+      : "IMPLEMENTATION_PARTIAL";
+    assert.deepEqual(interpreted.authorizationFor(artifact), {
+      status: expectedStatus,
+      source: "TELEMETRY_IMPLEMENTATION_GATE_V1.md",
+    });
   }
+  assert.deepEqual(interpreted.authorizationFor("TelemetryUnregisteredArtifact"), {
+    status: "IMPLEMENTATION_BLOCKED_ARCHITECTURE",
+    source: "CGS-A-1 deny-by-default",
+  });
+
+  const mutated = registry.replace(
+    'status: "IMPLEMENTATION_PARTIAL",',
+    'status: "IMPLEMENTATION_READY",',
+  );
+  const mutatedInterpretation = interpretTelemetryRegistry(mutated);
+  assert.throws(() =>
+    assert.deepEqual(
+      [...mutatedInterpretation.results.entries()],
+      [...interpreted.results.entries()],
+    ),
+  );
 });
 
 test("proves the pre-C4 package contains four materialized artifacts only", () => {
@@ -256,6 +349,22 @@ test("proves the pre-C4 package contains four materialized artifacts only", () =
   const identities = sources["packages/telemetry/src/identities.ts"];
   const capability = sources["packages/telemetry/src/capability.ts"];
   const packageSource = Object.values(sources).join("\n");
+
+  const publicDeclarations = packageTree
+    .filter((path) => path.endsWith(".ts") && !path.endsWith("/index.ts"))
+    .flatMap((path) => exportedDeclarations(sources[path]))
+    .sort((left, right) => left.name.localeCompare(right.name));
+  assert.deepEqual(publicDeclarations, [
+    { kind: "type", name: "AudienceProjectionId" },
+    { kind: "const", name: "TELEMETRY_CAPABILITY_STATUSES" },
+    { kind: "type", name: "TelemetryBucketId" },
+    { kind: "type", name: "TelemetryCapabilityStatus" },
+    { kind: "type", name: "TelemetryEventId" },
+    { kind: "function", name: "createAudienceProjectionId" },
+    { kind: "function", name: "createTelemetryBucketId" },
+    { kind: "function", name: "createTelemetryEventId" },
+    { kind: "function", name: "isTelemetryCapabilityStatus" },
+  ].sort((left, right) => left.name.localeCompare(right.name)));
 
   assert.deepEqual(
     [...identities.matchAll(/export type (TelemetryBucketId|AudienceProjectionId|TelemetryEventId) =/g)].map((match) => match[1]),
@@ -339,4 +448,7 @@ test("records PASS evidence and denies every bypass outside the reviewed boundar
   assert.match(review, /each of the 23 PARTIAL entries was mechanically interpreted/i);
   assert.match(review, /EDGE_RUNTIME\.md.*CAPABILITY_MANAGEMENT\.md/is);
   assert.match(review, /positive and negative contradiction checks/i);
+  assert.match(review, /generic exported declaration/i);
+  assert.match(review, /mutation fixture.*PARTIAL.*READY/is);
+  assert.match(review, /historical V1.*git show.*INVALIDATED/is);
 });
