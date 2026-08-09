@@ -60,6 +60,23 @@ Esses elementos são contratos de infraestrutura separados. Hardware específico
 
 O princípio de produto é uma experiência de provisioning abstraída do hardware. Isso não significa que exista um método universal de baixo nível, uma imagem universal ou um APK capaz de regravar qualquer dispositivo.
 
+O produto Mostarda Edge é composto conceitualmente por:
+
+```text
+Edge OS
+Edge Runtime
+Player
+Local Content Store
+Provisioning Agent
+Hardware Discovery
+Telemetry
+OTA
+Recovery
+Security
+```
+
+Essa lista define fronteiras de capacidade do produto; não define processos, linguagens, imagens, engines, formatos ou serviços concretos.
+
 ## 4. O que este ADR decide
 
 As decisões arquiteturais candidatas deste ADR são limitadas às seguintes:
@@ -72,8 +89,14 @@ As decisões arquiteturais candidatas deste ADR são limitadas às seguintes:
 6. o usuário deve consumir uma experiência coerente de provisioning sem precisar escolher SoC, kernel, DTB ou mecanismo de baixo nível;
 7. `Mostarda Edge OS` é o envelope de produto do sistema Edge, separado da base técnica que eventualmente o materialize;
 8. Edge OS, Edge Runtime e Player permanecem camadas distintas;
-9. operação offline, cache local, identidade, telemetria, heartbeat, segurança, update e rollback continuam submetidos aos contratos aceitos e derivados do ADR-002;
-10. nenhum desses elementos pode introduzir lógica de Campaign, Pricing, Financial, Evidence ou Settlement no Edge.
+9. o provisioning deve possuir uma experiência única sobre três classes arquiteturais possíveis: `Full Provisioning`, `Assisted Provisioning` e `External Bootstrap`;
+10. o Player deve operar em modelo local-first, usando um `Local Content Store` explícito para conteúdo previamente validado;
+11. o Edge deve possuir direção de recuperabilidade automatizada quando o `HardwareProfile` suportar essa capacidade;
+12. Android pode atuar como ambiente de bootstrap de determinados adapters, mas não é o sistema operacional de produção do Mostarda Edge;
+13. operação offline, identidade, telemetria, heartbeat, segurança, update e rollback continuam submetidos aos contratos aceitos e derivados do ADR-002;
+14. artefatos de OTA devem ser vinculados ao hardware/profile e validados antes da aplicação por um manifesto de atualização abstrato;
+15. a identidade de instalação deve usar `EdgeInstallationId` e chave de dispositivo, sem usar endereço MAC como identidade primária;
+16. nenhum desses elementos pode introduzir lógica de Campaign, Pricing, Financial, Evidence ou Settlement no Edge.
 
 ## 5. O que este ADR não decide
 
@@ -119,6 +142,22 @@ Player é a camada de reprodução, timeline, decode e renderização. Sua engin
 
 A reprodução offline de conteúdo previamente sincronizado permanece a direção já registrada no ADR-002; os detalhes técnicos continuam sujeitos ao contrato de Player e ao `HardwareProfile` homologado.
 
+O caminho conceitual de execução é:
+
+```text
+Edge Runtime
+      ↓
+Local Content Store
+      ↓
+interface local de conteúdo
+      ↓
+Web/Player Runtime
+      ↓
+decode e renderização do hardware
+```
+
+O navegador não é tratado como repositório autoritativo de mídia e a reprodução não depende de conexão contínua com a Internet. A engine, o mecanismo local e os codecs permanecem decisões das especificações derivadas.
+
 ### 6.4 Installation Adapter
 
 Um `InstallationAdapter` encapsula um mecanismo específico de instalação ou recuperação para um perfil. A existência do conceito não autoriza nenhum adapter concreto, nem permite que um adapter alegue sucesso sem provas de identidade, integridade e recuperação.
@@ -127,9 +166,20 @@ Um `InstallationAdapter` encapsula um mecanismo específico de instalação ou r
 
 `RecoveryProfile` descreve, para um hardware/profile, como uma instalação ou atualização pode ser recuperada. O perfil ainda não define mídia, partições, bootloader, comandos, número de tentativas ou estratégia de fallback.
 
+A direção arquitetural é que um update possa convergir por:
+
+```text
+ACTIVE → UPDATE → VALIDATE → ACTIVATE
+ACTIVE → FAILURE → ROLLBACK → LAST_KNOWN_GOOD
+```
+
+A/B slots, partição de recovery, imagem conhecida ou qualquer mecanismo equivalente são opções técnicas posteriores. Um hardware sem caminho de recuperação comprovável não pode ser promovido como suportado apenas por iniciar o Player.
+
 ## 7. Hardware Discovery e compatibilidade
 
 O target candidato exige que a compatibilidade seja baseada em atributos observáveis e confiáveis, e não apenas no nome comercial. A forma definitiva de coletar, normalizar, assinar, validar e rejeitar um `HardwareFingerprint` permanece aberta.
+
+Nome comercial não constitui identidade de hardware. A identidade operacional deve resultar de características verificáveis do dispositivo e ser associada a `HardwareProfile`, `InstallationProfile`, `EdgeInstallationId` e chave de dispositivo. Os campos exatos, sua fonte e a forma de prova pertencem à especificação de Hardware Discovery.
 
 O catálogo de compatibilidade deve ser versionado quando for especificado, mas este ADR não escolhe seu formato, autoridade de publicação, protocolo de distribuição, critério de promoção ou política para hardware desconhecido.
 
@@ -146,6 +196,16 @@ TVIdentifier ≠ DeviceIdentifier ≠ EdgeInstallationId
 Uma substituição física não reutiliza credencial revogada nem apaga a linha do tempo. O mecanismo concreto de descoberta, associação, emissão, rotação e revogação de credenciais por perfil será especificado posteriormente.
 
 Provisioning coordena TV, Device Registry, Installation, EdgeInstallation, TVCapability e Health Monitoring. Ele não cria um novo Bounded Context de negócio.
+
+As classes de provisioning são uma classificação de experiência, não três implementações obrigatórias:
+
+| Classe | Significado arquitetural |
+| --- | --- |
+| `Full Provisioning` | instalação concluída pelo ambiente existente, sem mídia externa, quando o perfil comprovar essa capacidade |
+| `Assisted Provisioning` | ambiente existente prepara o dispositivo e o usuário executa uma ação controlada de reinício/recuperação |
+| `External Bootstrap` | o perfil exige SD, USB, recovery media ou outro bootstrap físico |
+
+O instalador não deve prometer instalação interna para qualquer dispositivo apenas porque o ambiente atual permite baixar um APK. A classe aplicável é determinada por `HardwareProfile` e `InstallationProfile`.
 
 ## 9. Relação com os 22 gaps
 
@@ -250,7 +310,9 @@ Este ADR permanece `Proposed`. A aceitação futura exige, no mínimo:
 5. atualização da `PLATFORM_SPECIFICATION.md` e `TRACEABILITY.md` somente após a aprovação;
 6. sincronização dos documentos derivados;
 7. atendimento dos gates do [`EDGE_TECHNICAL_ROADMAP.md`](../specification/EDGE_TECHNICAL_ROADMAP.md);
-8. homologação do primeiro `HardwareProfile` antes da autorização de implementação daquele perfil.
+8. especificações derivadas para OS, discovery, compatibility, installer, provisioning, player, local storage, OTA, recovery, telemetry e security;
+9. critérios de validação que demonstrem instalação, identidade, operação local-first, atualização e recuperação seguras;
+10. homologação do primeiro `HardwareProfile` antes da autorização de implementação daquele perfil.
 
 Nenhum código de produção, contrato público ou hardware específico deve tratar este ADR como `Accepted` antes desses gates.
 
@@ -259,6 +321,8 @@ Nenhum código de produção, contrato público ou hardware específico deve tra
 Esta revisão é uma **candidata à aprovação**. Ela não aprova hardware heterogêneo, não escolhe Armbian, não aprova MXQ Pro 4K, não define APK universal, não escolhe Web Engine, não fecha RAM/storage/codec e não atualiza a Specification da Plataforma.
 
 Nenhum código de produção deve assumir esta decisão como `ACCEPTED` antes da conclusão da governança documental e dos gates de aceitação.
+
+A direção arquitetural registrada aqui pode orientar a elaboração das especificações derivadas, mas essa autorização de trabalho não altera o status `Proposed` nem transforma qualquer decisão técnica aberta em escolha implícita.
 
 Até decisão posterior, o estado efetivo é:
 
