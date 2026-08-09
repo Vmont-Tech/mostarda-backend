@@ -1,9 +1,9 @@
 # ADR-010 — Edge Hardware e Provisioning Universal
 
 - **Status:** Proposed
-- **Revisão:** candidata v2
+- **Revisão:** candidata v3
 - **Data:** 2026-08-08
-- **Corte de análise:** `main @ ddad9bf`
+- **Corte de análise:** `main @ 05a0f39`
 - **Supersedes:** `ADR-002 — Arquitetura do Edge`, exclusivamente quanto à premissa de hardware padronizado em Mini PC, propondo a possibilidade futura de hardware físico não padronizado caso esta decisão seja aceita
 - **Related:** `docs/tv-network/EDGE_RUNTIME.md`
 - **Related:** `docs/tv-network/EDGE_PROVISIONING_AND_HARDWARE_PLATFORM.md`
@@ -98,26 +98,47 @@ As decisões arquiteturais candidatas deste ADR são limitadas às seguintes:
 15. a identidade de instalação deve usar `EdgeInstallationId` e chave de dispositivo, sem usar endereço MAC como identidade primária;
 16. nenhum desses elementos pode introduzir lógica de Campaign, Pricing, Financial, Evidence ou Settlement no Edge.
 
+### 4.1 Limites e critérios arquiteturais já fundamentados
+
+Os seguintes limites podem ser registrados neste ADR sem congelar uma implementação concreta:
+
+- `Player Web + conteúdo local` é a direção arquitetural do Player;
+- reprodução offline é requisito obrigatório quando houver conteúdo previamente sincronizado;
+- browser cache não é mecanismo oficial nem fonte autoritativa do offline;
+- `Local Content Store` é requisito arquitetural explícito;
+- OTA e rollback são capacidades obrigatórias da plataforma Edge;
+- A/B é preferencial quando suportado pelo hardware, mas não é requisito universal;
+- Android não é OS de produção; pode ser utilizado como bootstrap por um `InstallationAdapter`;
+- SD/USB ou mídia equivalente são fallback permitido de provisioning;
+- instalação sem mídia externa é objetivo para perfis que comprovem essa capacidade;
+- hardware desconhecido deve ser bloqueado, nunca tratado como compatível por inferência;
+- `Armbian` é a primeira base Linux candidata à homologação dos perfis iniciais, sem se tornar contrato permanente do Edge OS;
+- o primeiro candidato experimental pertence à família S905W/GXL; nenhum modelo comercial, inclusive MXQ Pro 4K 5G, está homologado por este ADR;
+- perfis de produção exigem pelo menos 2 GB de RAM e 16 GB de armazenamento; perfis experimentais podem operar a partir de 1 GB e 8 GB, respectivamente, sob restrição e validação; 4 GB/32 GB constituem o perfil preferencial;
+- a plataforma exige uma cadeia verificável de integridade e confiança para produção, com Secure Boot quando suportado; o mecanismo concreto permanece dependente do hardware.
+
+Esses valores são critérios de elegibilidade arquitetural. Não constituem homologação automática, não substituem a matriz de hardware e somente podem ser promovidos após testes de desempenho, reprodução, atualização, recuperação e operação local-first.
+
 ## 5. O que este ADR não decide
 
-Os itens abaixo permanecem fora do escopo decisório do ADR-010 e continuam `OPEN` até possuírem especificação, evidência e aprovação próprias:
+Os itens abaixo permanecem fora do escopo decisório do ADR-010 e continuam `OPEN` até possuírem especificação, evidência e aprovação próprias. Os limites registrados na seção 4.1 não podem ser relaxados por inferência durante essa especificação:
 
-- Armbian como base definitiva;
 - qualquer distribuição Linux específica;
 - SoC, board, modelo comercial ou catálogo inicial de hardware;
 - método Android → Edge OS;
 - APK universal de instalação ou regravação;
 - bootloader e mecanismo de desbloqueio;
-- Secure Boot por família de hardware;
+- implementação de Secure Boot ou de mecanismo equivalente por família de hardware;
 - mecanismo de assinatura de imagens e cadeia de confiança concreta;
 - engine Web, engine de reprodução ou runtime HTML5 específico;
-- RAM mínima, armazenamento mínimo e limites de codec;
-- desenho definitivo do `Local Content Store`;
+- limites de codec e critérios de capacidade específicos por hardware;
+- desenho definitivo, formato e persistência do `Local Content Store`;
 - mecanismo específico de OTA;
 - mecanismo específico de rollback e recovery;
 - protocolo definitivo de `Hardware Discovery`;
-- critérios de `SUPPORTED`, `EXPERIMENTAL`, incompatível ou não avaliado;
-- primeiro `HardwareProfile`, incluindo MXQ Pro 4K ou qualquer outro dispositivo;
+- evidências para promover perfis a `SUPPORTED` ou `EXPERIMENTAL`, embora hardware desconhecido já seja bloqueado por princípio;
+- primeiro `HardwareProfile` homologado, incluindo a família S905W/GXL ou qualquer outro dispositivo;
+- imagem final do Edge OS, bootloader, partições e ferramenta de build;
 - qualquer parâmetro de timeout, retry, retenção, backoff, janela ou pressão de armazenamento.
 
 Uma implementação não pode preencher esses itens por inferência a partir deste ADR.
@@ -128,7 +149,7 @@ Uma implementação não pode preencher esses itens por inferência a partir des
 
 `Mostarda Edge OS` nomeia a camada de produto que entrega um sistema Edge dedicado. O nome não seleciona uma distribuição, kernel, BSP, bootloader, filesystem ou ferramenta de build.
 
-A base técnica, a imagem e a cadeia de inicialização são decisões posteriores por `HardwareProfile` e `InstallationProfile`.
+A base técnica, a imagem e a cadeia de inicialização são decisões posteriores por `HardwareProfile` e `InstallationProfile`. `Armbian` é apenas a primeira base candidata para homologação, não uma dependência permanente nem o significado de `Mostarda Edge OS`.
 
 ### 6.2 Edge Runtime
 
@@ -138,7 +159,7 @@ Edge Runtime não decide preço, elegibilidade, split, cobrança, Evidence ou di
 
 ### 6.3 Player
 
-Player é a camada de reprodução, timeline, decode e renderização. Sua engine, perfil de memória, codecs, armazenamento e integração local ainda não são escolhidos por este ADR.
+Player é a camada de reprodução, timeline, decode e renderização. A arquitetura `Player Web + conteúdo local` está definida; sua engine, codecs e integração concreta ainda dependem da matriz de hardware e de homologação.
 
 A reprodução offline de conteúdo previamente sincronizado permanece a direção já registrada no ADR-002; os detalhes técnicos continuam sujeitos ao contrato de Player e ao `HardwareProfile` homologado.
 
@@ -157,6 +178,18 @@ decode e renderização do hardware
 ```
 
 O navegador não é tratado como repositório autoritativo de mídia e a reprodução não depende de conexão contínua com a Internet. A engine, o mecanismo local e os codecs permanecem decisões das especificações derivadas.
+
+#### 6.3.1 Critérios de elegibilidade de capacidade
+
+Os perfis devem ser avaliados contra os seguintes limites antes da homologação:
+
+| Perfil | RAM mínima | Armazenamento mínimo | Tratamento |
+| --- | ---: | ---: | --- |
+| Experimental | 1 GB | 8 GB | restrito, não presume capacidade de produção |
+| Produção inicial | 2 GB | 16 GB | mínimo para candidato de produção |
+| Preferencial | 4 GB | 32 GB | faixa recomendada para estabilidade e evolução |
+
+Os limites são critérios de elegibilidade, não promessa de desempenho. A aprovação de um perfil exige evidência de reprodução, persistência local, atualização, recuperação e telemetria compatíveis com os contratos vigentes.
 
 ### 6.4 Installation Adapter
 
@@ -215,15 +248,15 @@ O instalador não deve prometer instalação interna para qualquer dispositivo a
 | `EDGE-GAP-002..004` | reconhece o pacote de fotografia, gaps e roadmap como fonte de análise | documentado |
 | `EDGE-GAP-005` | aceita o conceito de `HardwareProfile`, não um catálogo ou hardware específico | técnico aberto |
 | `EDGE-GAP-006` | aceita a necessidade de discovery/fingerprint, não seu protocolo | técnico aberto |
-| `EDGE-GAP-007` | aceita adapters por perfil, não o método Android → Edge OS | técnico aberto |
+| `EDGE-GAP-007` | aceita adapters por perfil e Android apenas como bootstrap possível, não o método Android → Edge OS | técnico aberto |
 | `EDGE-GAP-008..009` | mantém boot, Secure Boot, imagem e base fora do ADR | técnico aberto |
-| `EDGE-GAP-010..011` | preserva separação Player/offline, sem congelar engine, RAM, codec ou storage | técnico aberto |
+| `EDGE-GAP-010..011` | fixa Player Web, Local Content Store e offline como direção/requisito; mantém engine, codec e implementação local abertas e aplica os limites de RAM/storage da seção 4.1 | técnico aberto |
 | `EDGE-GAP-012..013` | preserva identidade e capability como fronteiras existentes; exige sincronização futura | parcialmente documentado |
-| `EDGE-GAP-014..015` | mantém OTA, rollback e recovery como capacidades de plataforma, sem escolher mecanismos | técnico aberto |
+| `EDGE-GAP-014..015` | torna OTA e rollback capacidades obrigatórias e mantém seus mecanismos, A/B e recovery específicos abertos | técnico aberto |
 | `EDGE-GAP-016` | não resolve a sobreposição TV Network/Edge Runtime/Telemetry; encaminha para gate arquitetural | arquitetural aberto |
 | `EDGE-GAP-017` | preserva operação offline do ADR-002; mantém retenção, TTL e reentrada abertas | operacional aberto |
 | `EDGE-GAP-018` | exige contratos posteriores e producers únicos, sem publicar schemas agora | dependente de decisão |
-| `EDGE-GAP-019..020` | mantém classificação e homologação por perfil fora do escopo | técnico/operacional aberto |
+| `EDGE-GAP-019..020` | bloqueia hardware desconhecido, registra limites de elegibilidade e mantém classificação/homologação por perfil fora do escopo | técnico/operacional aberto |
 | `EDGE-GAP-021` | não pretende fechar legal, retenção, autorização ou compliance | produção aberto |
 | `EDGE-GAP-022` | preserva a necessidade de matriz única de ownership antes da aceitação | arquitetural aberto |
 
@@ -318,7 +351,7 @@ Nenhum código de produção, contrato público ou hardware específico deve tra
 
 ## Status
 
-Esta revisão é uma **candidata à aprovação**. Ela não aprova hardware heterogêneo, não escolhe Armbian, não aprova MXQ Pro 4K, não define APK universal, não escolhe Web Engine, não fecha RAM/storage/codec e não atualiza a Specification da Plataforma.
+Esta revisão é uma **candidata à aprovação**. Ela não aprova hardware heterogêneo para produção, não adota Armbian como base permanente, não aprova MXQ Pro 4K, não define APK universal, não escolhe Web Engine ou codecs e não atualiza a Specification da Plataforma. Ela registra limites de elegibilidade de RAM/storage e direções de Player local-first, OTA, rollback e bootstrap como critérios sujeitos à validação dos perfis.
 
 Nenhum código de produção deve assumir esta decisão como `ACCEPTED` antes da conclusão da governança documental e dos gates de aceitação.
 
