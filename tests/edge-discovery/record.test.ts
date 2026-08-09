@@ -34,5 +34,5 @@ test("sealed records are immutable snapshots", () => {
 
   const sealed = sealDiscoveryRecord(record, "2026-08-09T12:00:00.000Z");
 
-  assert.throws(() => sealed.facts.push({} as never), /immutable|read only|not extensible/i);
+  assert.throws(() => Reflect.apply(Array.prototype.push, sealed.facts, [{}]), /immutable|read only|not extensible/i);
 });
