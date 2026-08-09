@@ -37,11 +37,11 @@ Hardware Profile
         ↓
 Installation Profile
         ↓
-Recovery Profile / Recovery Plan
+Recovery Plan
         ↓
 Recovery
         ↓
-Known-Good Edge State
+Operational Recovery Result
 ```
 
 Recovery consumes previously authorized contracts.
@@ -63,15 +63,16 @@ When hardware identity cannot be established safely, Recovery shall enter a diag
 
 ## 3. Recovery Objectives
 
-A successful recovery shall restore the device to one of the following states:
+A successful recovery shall produce one explicit operational result. Operational results are not process states; they are the state of the device after the recovery process terminates.
 
 ```text
 KNOWN_GOOD_EDGE
 SAFE_BOOTSTRAP
 CONTROLLED_RECOVERY
+NO_OPERATIONAL_STATE
 ```
 
-The preferred terminal state is:
+The preferred operational result is:
 
 ```text
 KNOWN_GOOD_EDGE
@@ -87,13 +88,13 @@ where:
 - telemetry is operational;
 - recovery markers are cleared.
 
-If this cannot be achieved safely, the device shall remain in:
+If a complete Edge state cannot be achieved safely, the device may produce:
 
 ```text
 CONTROLLED_RECOVERY
 ```
 
-and shall not falsely report itself as operational.
+The recovery process shall still terminate in one of the process terminal states defined in Section 7. `SAFE_BOOTSTRAP` and `CONTROLLED_RECOVERY` are operational results, not additional process states.
 
 ---
 
@@ -169,7 +170,7 @@ System rollback shall preserve:
 
 ### 5.3 FULL_RECOVERY
 
-Restores the complete Edge system using a validated Recovery Profile.
+Restores the complete Edge system using the validated Recovery Plan.
 
 It may rewrite:
 
@@ -207,7 +208,14 @@ If identity destruction is unavoidable, the operation shall require an explicit 
 
 ## 6. Recovery State Machine
 
-Recovery shall use the following state machine:
+Recovery shall use one normative process state machine. Every state named in this document belongs to one of the categories below:
+
+- process states: active execution steps;
+- wait/block states: execution is paused or prohibited and may require a dependency, rollback or controlled handoff;
+- terminal states: the current recovery operation has ended;
+- operational results: the device state produced by a terminal recovery result. Operational results are not process states.
+
+### 6.1 Normative process states
 
 ```text
 NOT_STARTED
@@ -240,18 +248,79 @@ RECOVERY_CONFIRMING
       ├── RECOVERED
       ├── ROLLBACK_REQUIRED
       ├── RECOVERY_FAILED
+      ├── MANUAL_INTERVENTION_REQUIRED
+      └── BLOCKED
+
+ROLLBACK_REQUIRED
+      ├── ROLLED_BACK
+      ├── RECOVERY_REQUIRED
+      ├── RECOVERY_FAILED
       └── MANUAL_INTERVENTION_REQUIRED
 ```
 
-Recovery shall also support:
+### 6.2 Wait and block states
 
 ```text
 PAUSED
-CANCELLED
+WAITING_FOR_DEPENDENCY
+RECOVERY_REQUIRED
 BLOCKED
+CANCELLED
 ```
 
-where applicable.
+These states are part of the same machine. They may be entered from any active state when the Recovery Plan permits a safe pause or handoff. A wait or handoff state may return to the recorded previous active state only after its explicit precondition is satisfied and a new transition is journaled.
+
+`RECOVERY_REQUIRED` means that the current recovery path cannot continue and an explicitly declared fallback recovery path must be resolved. It is not a successful result.
+
+`WAITING_FOR_DEPENDENCY` means that a declared dependency, such as a locally unavailable artifact or authorized network service, is not currently available. It is not a failure and it is not a compatibility decision.
+
+`MANUAL_INTERVENTION_REQUIRED` means that no safe automatic path remains. It is a terminal process state, even when the operational result is `CONTROLLED_RECOVERY`.
+
+### 6.3 Terminal process states
+
+```text
+RECOVERED
+ROLLED_BACK
+RECOVERY_FAILED
+MANUAL_INTERVENTION_REQUIRED
+BLOCKED
+CANCELLED
+```
+
+`ROLLBACK_REQUIRED` is a process state that leads to the declared rollback path; it is not terminal. After rollback, the operation terminates as `ROLLED_BACK`, `RECOVERY_FAILED`, `MANUAL_INTERVENTION_REQUIRED` or `BLOCKED`.
+
+### 6.4 Operational results
+
+The terminal process result shall carry exactly one operational result:
+
+```text
+KNOWN_GOOD_EDGE
+SAFE_BOOTSTRAP
+CONTROLLED_RECOVERY
+NO_OPERATIONAL_STATE
+```
+
+The mapping is explicit:
+
+| Terminal process state | Allowed operational result |
+| --- | --- |
+| `RECOVERED` | `KNOWN_GOOD_EDGE` or `SAFE_BOOTSTRAP` |
+| `ROLLED_BACK` | `KNOWN_GOOD_EDGE` or `SAFE_BOOTSTRAP` |
+| `RECOVERY_FAILED` | `CONTROLLED_RECOVERY` or `NO_OPERATIONAL_STATE` |
+| `MANUAL_INTERVENTION_REQUIRED` | `CONTROLLED_RECOVERY` or `NO_OPERATIONAL_STATE` |
+| `BLOCKED` | `CONTROLLED_RECOVERY` or `NO_OPERATIONAL_STATE` |
+| `CANCELLED` | `NO_OPERATIONAL_STATE` |
+
+`KNOWN_GOOD_EDGE` is the only result that represents a fully operational Edge state. `SAFE_BOOTSTRAP` represents a verified limited bootstrap state that is not equivalent to production Edge operation. `CONTROLLED_RECOVERY` represents a controlled diagnostic or recovery state that must not be reported as operational.
+
+### 6.5 Transition constraints
+
+- Every active process state may enter `PAUSED`, `WAITING_FOR_DEPENDENCY`, `RECOVERY_REQUIRED`, `BLOCKED` or `CANCELLED` only at a safe, journaled boundary.
+- `PAUSED` may return to the recorded active state only after the same plan and identity are revalidated.
+- `WAITING_FOR_DEPENDENCY` may return to the recorded active state only after the dependency is verified; otherwise it may enter `RECOVERY_REQUIRED`, `BLOCKED` or `MANUAL_INTERVENTION_REQUIRED`.
+- `RECOVERY_REQUIRED` may return to `RECOVERY_PLAN_RESOLVING` only when a new explicitly authorized fallback plan is available; otherwise it terminates as `MANUAL_INTERVENTION_REQUIRED` or `BLOCKED`.
+- `ROLLBACK_REQUIRED` may enter `ROLLED_BACK`, `RECOVERY_REQUIRED`, `RECOVERY_FAILED` or `MANUAL_INTERVENTION_REQUIRED` according to the declared rollback result.
+- Terminal process states have no implicit outgoing transition. A later attempt is a new append-only recovery attempt linked to the prior result.
 
 ---
 
@@ -327,21 +396,41 @@ All mandatory recovery checks are evaluated before declaring success.
 
 ### 7.15 RECOVERED
 
-The device is operational and the recovery result is sealed.
+The recovery checks completed successfully and the result is sealed. The result must explicitly state whether the operational result is `KNOWN_GOOD_EDGE` or `SAFE_BOOTSTRAP`.
 
-### 7.16 ROLLBACK_REQUIRED
+### 7.16 ROLLED_BACK
+
+The declared rollback path restored and verified a previous known-good state. Rollback is a terminal process result, not a new recovery state.
+
+### 7.17 ROLLBACK_REQUIRED
 
 The recovery operation itself produced an invalid or unsafe state and a declared fallback exists.
 
-### 7.17 RECOVERY_FAILED
+### 7.18 RECOVERY_FAILED
 
 Recovery could not restore a known-good state.
 
-### 7.18 MANUAL_INTERVENTION_REQUIRED
+### 7.19 MANUAL_INTERVENTION_REQUIRED
 
 No safe automatic path remains.
 
-### 7.19 BLOCKED
+### 7.20 WAITING_FOR_DEPENDENCY
+
+A declared dependency is temporarily unavailable. The operation remains paused without claiming success or failure.
+
+### 7.21 RECOVERY_REQUIRED
+
+The current path cannot continue and an explicitly declared fallback recovery path must be resolved. The operation shall not continue by selecting an arbitrary artifact or method.
+
+### 7.22 PAUSED
+
+The operation is stopped at a safe checkpoint and may resume with the same recovery identity and unchanged plan.
+
+### 7.23 CANCELLED
+
+The operation was cancelled at an allowed safe point. Cancellation never produces a successful operational result.
+
+### 7.24 BLOCKED
 
 Recovery is prohibited because integrity, identity or hardware conditions make automatic recovery unsafe.
 
@@ -897,7 +986,7 @@ Security contract
 If the device identity no longer matches the expected Hardware Profile:
 
 ```text
-RECOVERY_BLOCKED
+BLOCKED
 ```
 
 unless an explicit diagnostic/recovery procedure authorizes re-discovery.
