@@ -110,8 +110,9 @@ function makeFact(
 ): DiscoveryFact {
   const factType = COMMAND_REQUIREMENT.get(command) ?? `android.command.${command}`;
   const normalizedValue = normalizeOutput(command, value);
+  const commandId = command.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "");
   return {
-    factId: `adb-${factType.replace(/[^a-z0-9]+/gi, "-")}`,
+    factId: `adb-${commandId}-${factType.replace(/[^a-z0-9]+/gi, "-")}`,
     factType,
     source: {
       kind: "RUNTIME_SOURCE",
