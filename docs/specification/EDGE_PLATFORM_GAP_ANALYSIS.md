@@ -2,6 +2,7 @@
 
 - **Status:** `AUDIT ARTIFACT — NÃO NORMATIVO`
 - **Data-base:** 2026-08-08
+- **Corte do repositório:** `main @ ddad9bf`
 - **Baseline:** [`CURRENT_ARCHITECTURE.md`](CURRENT_ARCHITECTURE.md)
 - **Target candidate:** [`ADR-010`](../adr/ADR-010-Edge-Hardware-and-Provisioning.md) e [`EDGE_PROVISIONING_AND_HARDWARE_PLATFORM.md`](../tv-network/EDGE_PROVISIONING_AND_HARDWARE_PLATFORM.md)
 
@@ -19,30 +20,32 @@ Um gap pode ser:
 
 ## 2. Matriz de gaps
 
-| ID | Área | Evidência do estado atual | Necessidade indicada pela proposta | Natureza do fechamento | Estado |
-| --- | --- | --- | --- | --- | --- |
-| EDGE-GAP-001 | Autoridade | `PLATFORM_SPECIFICATION.md` está Draft e ADR-010 está Proposed | declarar se a plataforma heterogênea passa a ser norma | decisão arquitetural e sincronização | aberto |
-| EDGE-GAP-002 | Fotografia atual | não havia `CURRENT_ARCHITECTURE.md` | separar existente, planejado e ausente | documentação de auditoria | em fechamento por este pacote |
-| EDGE-GAP-003 | Gaps e dependências | não havia análise dedicada | mapear impacto sem alterar contratos | documentação de auditoria | em fechamento por este pacote |
-| EDGE-GAP-004 | Ordem de execução | não havia roadmap Edge específico | ordenar gates e dependências | planejamento governado | em fechamento por este pacote |
-| EDGE-GAP-005 | Hardware Profile | ADR-002 aceita Mini PC; proposta prevê catálogo heterogêneo | identificar hardware determinístico e perfil compatível | decisão de catálogo e homologação | aberto |
-| EDGE-GAP-006 | Hardware Discovery | a proposta exige fingerprint e identificação além do nome comercial | definir campos confiáveis, coleta e falha de identificação | contrato técnico e política de segurança | aberto |
-| EDGE-GAP-007 | Instalação Android → Edge OS | os adaptadores são conceituais; não há método universal aceito | definir caminho seguro por família de hardware | decisão por perfil e recovery | aberto |
-| EDGE-GAP-008 | Boot e Secure Boot | ADR-010 condiciona verificação à capacidade da plataforma; critérios não estão fechados | definir cadeia de confiança por perfil | decisão de segurança | aberto |
-| EDGE-GAP-009 | Imagem e base do sistema | Armbian/Linux aparecem como opções técnicas no Draft | escolher base e ferramenta de build por família | especificação técnica por perfil | aberto |
-| EDGE-GAP-010 | Player/Web engine | estratégia Web/HTML5 é prioritária, mas engine definitiva e limites de RAM permanecem abertos | definir perfil de player, compatibilidade e limites observáveis | contrato técnico e homologação | aberto |
-| EDGE-GAP-011 | Local Content Store | cache/offline são previstos; retenção e pressão de armazenamento estão abertas | definir capacidade, retenção, prioridade e comportamento de escassez | política técnica/operacional | aberto |
-| EDGE-GAP-012 | Provisioning e credenciais | identidade de EdgeInstallation e substituição estão documentadas para Mini PC | tornar registro independente de hardware e preservar revogação | contrato de identidade e processo | dependente do ADR-010 |
-| EDGE-GAP-013 | Capability Manifest | TVCapability e inventário existem; o target inclui capacidades por perfil | alinhar manifesto, versão, capability efetiva e suporte | sincronização de contratos | parcialmente documentado |
-| EDGE-GAP-014 | OTA | UpdateRollout e assinatura existem, mas catálogo/assinatura por imagem e perfil não estão completos | definir artefatos, compatibilidade e falha de atualização | especificação de update e segurança | aberto |
-| EDGE-GAP-015 | Rollback e Recovery | políticas existem, mas Recovery Profile e método por hardware são candidatos | definir baseline, restauração e limites por perfil | especificação técnica e operacional | aberto |
-| EDGE-GAP-016 | Telemetry e Health | Heartbeat, Health e Telemetry estão documentados em partes e há sobreposição de ownership na auditoria | separar fato local, ingestão, avaliação e projeção | decisão arquitetural e contratos | aberto |
-| EDGE-GAP-017 | Offline prolongado | filas, replay e gaps existem; retenção, expiração, credenciais e quarentena prolongada estão abertas | definir como operar e reintegrar depois de desconexão longa | política operacional | aberto |
-| EDGE-GAP-018 | Eventos e contratos | catálogos existentes não cobrem integralmente os novos perfis e adapters | publicar contratos versionados e producers únicos | sincronização normativa | dependente de decisão |
-| EDGE-GAP-019 | Hardware não homologado | Draft indica incompatível ou não avaliado; fluxo operacional completo não está fechado | determinar somente após decisão como registrar, bloquear ou encaminhar | decisão de compatibilidade | aberto |
-| EDGE-GAP-020 | Homologação | proposta lista primeiro hardware experimental, mas critérios e evidências finais não estão aceitos | definir laboratório, testes mínimos e promoção de perfil | processo de homologação | aberto |
-| EDGE-GAP-021 | Segurança de operação | mTLS, assinatura e quarentena existem; retenção, LGPD, autorização e incidentes permanecem na auditoria | completar controles de produção e segregação | produção/compliance | aberto |
-| EDGE-GAP-022 | Ownership transversal | auditoria registra sobreposição TV Network/Edge Runtime/Telemetry | produzir matriz única de owner, producer e consumer | decisão arquitetural | aberto |
+Cada linha responde separadamente a situação atual, target candidato, documentação afetada, decisão necessária, dependências, risco, efeito sobre implementação e efeito sobre o ADR-010. “Pode ser resolvido depois” significa que não precisa bloquear a revisão do ADR-010; não significa que pode ser decidido silenciosamente por código.
+
+| ID | Área | Situação atual | Situação desejada (target candidato) | Documento afetado | Decisão necessária | Dependências | Risco | Bloqueia implementação? | Bloqueia ADR-010? | Pode ser resolvido depois? |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| EDGE-GAP-001 | Autoridade | `PLATFORM_SPECIFICATION.md` é Draft; ADR-010 é Proposed | mudança de hardware possuir autoridade única | `PLATFORM_SPECIFICATION.md`, ADR-010, `TRACEABILITY.md` | aceitar/rejeitar ADR-010 | pacote de auditoria | implementação seguir premissa errada | sim, para target heterogêneo | sim | não |
+| EDGE-GAP-002 | Fotografia atual | corte não possuía inventário factual dedicado | separar contrato, implementação e intenção | `CURRENT_ARCHITECTURE.md` | nenhuma regra; registrar fatos | `ARCHITECTURE_AUDIT.md` | confundir proposta com estado atual | sim, por ambiguidade | não | não; resolvido pelo pacote |
+| EDGE-GAP-003 | Gaps e dependências | gaps estavam dispersos na auditoria e nos documentos | uma matriz de impacto rastreável | `EDGE_PLATFORM_GAP_ANALYSIS.md` | nenhuma regra; classificar gaps | `CURRENT_ARCHITECTURE.md` | executar tarefas fora de ordem | sim, por dependência | não | não; resolvido pelo pacote |
+| EDGE-GAP-004 | Ordem de execução | não havia roadmap Edge dedicado | gates dependentes e verificáveis | `EDGE_TECHNICAL_ROADMAP.md` | nenhuma regra; ordenar trabalho | gaps classificados | installer ou player prematuros | sim, por dependência | não | não; resolvido pelo pacote |
+| EDGE-GAP-005 | Hardware Profile | Mini PC é premissa aceita; catálogo heterogêneo é proposta | perfil determinístico por hardware homologado | ADR-010, hardware compatibility | definir catálogo e critério de perfil | discovery, segurança, recovery | hardware semelhante tratado como compatível | sim | sim | não |
+| EDGE-GAP-006 | Hardware Discovery | fingerprint é exigido pelo Draft, sem contrato executável aprovado | identificação confiável e falha explícita | provisioning, device identity | definir campos, fonte e rejeição | Hardware Profile | spoofing ou instalação no perfil errado | sim | sim | não |
+| EDGE-GAP-007 | Instalação Android → Edge OS | adapters são conceituais e não há método universal aceito | caminho seguro específico por família | installer, recovery | escolher mecanismo autorizado por perfil | discovery, boot, recovery | brick, instalação falsa ou perda de identidade | sim | sim | não |
+| EDGE-GAP-008 | Boot e Secure Boot | verificação depende da capacidade do hardware; critérios abertos | cadeia de confiança declarada por perfil | security, OS, hardware profile | definir confiança, fallback e rejeição | Hardware Profile, assinatura | executar imagem adulterada ou não verificável | sim | sim | não |
+| EDGE-GAP-009 | Imagem e base do sistema | Linux/Armbian aparecem como opções no Draft | imagem reprodutível e suportada por família | Edge OS, build | definir base e build por perfil | hardware, boot, player | divergência entre imagem e hardware | sim | sim | não |
+| EDGE-GAP-010 | Player/Web engine | Web/HTML5 é prioridade; engine, RAM e codec não estão fechados | Player comprovadamente compatível com recursos do perfil | Player, capability, Edge OS | definir engine, RAM, storage e codecs | hardware, local store | travamento, consumo excessivo ou falha de playback | sim | sim | não |
+| EDGE-GAP-011 | Local Content Store | cache/offline existem; retenção e pressão de storage estão abertas | armazenamento local com capacidade e política conhecidas | Player, offline storage | definir retenção, prioridade e escassez | RAM/storage, offline | tela sem conteúdo ou descarte indevido | sim | não | sim, após o contrato base |
+| EDGE-GAP-012 | Provisioning e credenciais | identidade e substituição estão documentadas para Mini PC | identidade independente da família sem reutilizar credencial | provisioning, device identity | alinhar registro, revogação e replacement | ADR-010, discovery | colisão de identidade ou credencial órfã | sim | sim | não |
+| EDGE-GAP-013 | Capability Manifest | `TVCapability` e inventário existem; target exige perfil por capability | manifesto versionado e observável por perfil | capability, TV Network | sincronizar capability, versão e suporte | Hardware Profile, Player | enviar workload não suportado | sim | não | sim, se não bloquear decisão de hardware |
+| EDGE-GAP-014 | OTA | rollout/assinatura existem, mas artefato por perfil não está completo | update verificável e compatível com hardware | update, security | definir imagem, compatibilidade e falha | OS, profile, signing | atualização incompatível sem retorno | sim | sim | não |
+| EDGE-GAP-015 | Rollback e Recovery | políticas existem; Recovery Profile e método são candidatos | recuperação verificável por perfil | rollback, recovery | definir baseline, restauração e limites | boot, storage, signing | equipamento inutilizado ou estado incompatível | sim | sim | não |
+| EDGE-GAP-016 | Telemetry e Health | documentos existem e auditoria registra ownership sobreposto | fato local, ingestão, avaliação e projeção separados | telemetry, health, TV Network | owner e contratos únicos | architecture review, events | sinais duplicados ou decisões conflitantes | sim | sim | não |
+| EDGE-GAP-017 | Offline prolongado | filas/replay/gaps existem; retenção, expiração e reentrada estão abertas | operação e reintegração auditáveis | runtime, heartbeat, offline | definir TTL, credenciais, backlog e quarantine | security, storage, health | executar intenção expirada ou perder fatos | sim | não | sim, para primeira decisão de hardware |
+| EDGE-GAP-018 | Eventos e contratos | catálogos não cobrem integralmente adapters/perfis | producer único e schemas versionados | events, commands, traceability | fechar contratos após decisão | ADR-010 e owners | consumidores divergentes | sim | sim | não |
+| EDGE-GAP-019 | Hardware não homologado | Draft menciona incompatível/não avaliado, sem fluxo completo | resultado explícito sem inferência de compatibilidade | compatibility, installer | definir registro, bloqueio e encaminhamento | discovery, catalog | instalar ou operar dispositivo não validado | sim | sim | não |
+| EDGE-GAP-020 | Homologação | primeiro hardware experimental é intenção; critérios finais não aceitos | evidências reproduzíveis para promoção de perfil | hardware compatibility, tests | definir laboratório, testes e promoção | todos os gaps de perfil | homologação por opinião ou sem cobertura | sim | não | sim, até existir perfil escolhido |
+| EDGE-GAP-021 | Segurança de operação | mTLS/assinatura/quarantine existem; legal, retenção e autorização têm gaps | controles de produção e segregação completos | security, platform, legal policies | fechar políticas de produção | authority baseline | exposição, fraude ou operação sem autoridade | sim para produção | não | sim para revisão do ADR, não para produção |
+| EDGE-GAP-022 | Ownership transversal | auditoria registra sobreposição TV Network/Edge Runtime/Telemetry | owner, producer e consumer únicos | ownership, commands/events | aprovar matriz de responsabilidade | current architecture, contracts | command/event no contexto errado | sim | sim | não |
 
 ## 3. Dependências observáveis
 

@@ -2,6 +2,7 @@
 
 - **Status:** `ROADMAP CANDIDATE — NÃO NORMATIVO`
 - **Data-base:** 2026-08-08
+- **Corte do repositório:** `main @ ddad9bf`
 - **Objetivo:** ordenar o fechamento da arquitetura Edge sem antecipar decisões do ADR-010
 - **Não autoriza:** implementação de hardware heterogêneo, geração de contratos públicos ou alteração de regras de domínio
 
@@ -23,6 +24,46 @@ Código e infraestrutura
 
 No estado atual, `ADR-002` continua aceito, `ADR-010` continua Proposed e `PLATFORM_SPECIFICATION` continua Draft.
 
+## 1.1 Dependências que precisam ser respeitadas
+
+O roadmap não permite implementar um artefato antes das decisões das quais ele depende. A ordem mínima do target candidato é:
+
+```text
+Estado atual
+    ↓
+CURRENT_ARCHITECTURE
+    ↓
+EDGE_PLATFORM_GAP_ANALYSIS
+    ↓
+EDGE_TECHNICAL_ROADMAP
+    ↓
+Revisão do ADR-010
+    ↓
+Hardware Discovery
+    ↓
+Hardware Profile
+    ↓
+Installation Profile
+    ↓
+Recovery Profile
+```
+
+O Player possui uma cadeia independente de pré-requisitos:
+
+```text
+RAM
+  + Storage
+  + Offline Content Store
+  + Web Engine
+  + Codec Capability
+        ↓
+Player Profile
+        ↓
+Homologação do Player no Hardware Profile
+```
+
+O ADR-010 é revisado somente depois que o pacote de auditoria e suas dependências estiverem explícitos. Nenhum dos dois grafos escolhe valores; eles apenas impedem que uma decisão posterior seja usada como premissa anterior.
+
 ## 2. Fases e gates
 
 ### Fase 0 — Baseline forense
@@ -41,7 +82,15 @@ No estado atual, `ADR-002` continua aceito, `ADR-010` continua Proposed e `PLATF
 
 **Não permitido:** escolher hardware, método de instalação, base Linux, engine Web ou política quantitativa.
 
-### Fase 1 — Revisão do ADR-010
+### Fase 1 — Gate de dependências e gaps
+
+Esta fase é a revisão interna do pacote produzido na Fase 0. Ela confirma que cada gap possui fonte, risco, dependência e indicação de bloqueio antes que o ADR-010 seja apreciado.
+
+**Saída necessária:** `EDGE_PLATFORM_GAP_ANALYSIS.md` e este roadmap não contêm escolhas silenciosas e a ordem `Discovery → Hardware Profile → Installation Profile → Recovery Profile` está preservada.
+
+**Não permitido:** revisar o ADR-010 por inferência, homologar hardware ou escrever especificação derivada.
+
+### Fase 2 — Revisão do ADR-010
 
 **Entrada:** pacote de auditoria e [`ADR-010`](../adr/ADR-010-Edge-Hardware-and-Provisioning.md).
 
@@ -54,7 +103,7 @@ No estado atual, `ADR-002` continua aceito, `ADR-010` continua Proposed e `PLATF
 
 **Saída possível:** aprovação, rejeição ou devolução para revisão. Nenhuma dessas saídas pode ser presumida pelo roadmap.
 
-### Fase 2 — Sincronização normativa
+### Fase 3 — Sincronização normativa
 
 Esta fase só inicia se o ADR-010 for formalmente aceito.
 
@@ -70,7 +119,7 @@ Esta fase só inicia se o ADR-010 for formalmente aceito.
 
 **Não fazer nesta fase:** inventar payloads técnicos, escolher engine, publicar imagem de OS ou implementar adapter.
 
-### Fase 3 — Especificações derivadas
+### Fase 4 — Especificações derivadas
 
 Somente após a sincronização normativa, produzir as especificações especializadas necessárias:
 
@@ -86,7 +135,7 @@ Somente após a sincronização normativa, produzir as especificações especial
 
 Cada documento deve declarar fonte superior, owner, boundary, estados, contratos, falhas, compatibilidade e decisões ainda abertas. Nenhum documento derivado pode criar Bounded Context ou alterar o significado de Evidence, Pricing, Campaign ou Financial.
 
-### Fase 4 — Primeiro HardwareProfile
+### Fase 5 — Primeiro HardwareProfile
 
 Esta fase trata um único perfil por vez. O perfil não é promovido por semelhança comercial ou por inferência de SoC.
 
@@ -106,7 +155,7 @@ Esta fase trata um único perfil por vez. O perfil não é promovido por semelha
 
 O conjunto acima é um checklist de homologação; os valores mínimos e o estado final (`SUPPORTED`, `EXPERIMENTAL` ou outro) só podem ser definidos pela decisão e política correspondentes.
 
-### Fase 5 — Vertical Slice controlado
+### Fase 6 — Vertical Slice controlado
 
 Depois da homologação do primeiro perfil, validar ponta a ponta somente o caminho autorizado:
 
@@ -117,7 +166,7 @@ Discovery → Identify → Match → Verify → Install → Provision
 
 O slice deve provar identidade, armazenamento local, replay de fatos operacionais, atualização assinada, falha controlada, rollback/recovery e integração com TV Network. Ele não deve introduzir lógica comercial no Edge.
 
-### Fase 6 — Implementação incremental
+### Fase 7 — Implementação incremental
 
 Somente após as fases anteriores e a certificação dos contratos:
 
@@ -137,7 +186,8 @@ Nenhuma implementação de um perfil pode ser usada como autorização implícit
 | --- | --- | --- |
 | auditoria e fotografia atual | sim | nenhuma além das fontes existentes |
 | gap analysis e roadmap | sim | fotografia atual |
-| revisão do ADR-010 | sim | pacote de auditoria |
+| gate de dependências e gaps | sim | `CURRENT_ARCHITECTURE.md` e `EDGE_PLATFORM_GAP_ANALYSIS.md` |
+| revisão do ADR-010 | sim | gate de dependências e gaps |
 | atualizar Specification/Traceability | não | ADR-010 aceito |
 | escrever especificações derivadas | não como norma | ADR-010 aceito e fontes sincronizadas |
 | homologar TV Box/Armbian | não | perfil, método de instalação, segurança e critérios aprovados |

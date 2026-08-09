@@ -2,6 +2,7 @@
 
 - **Status:** `AUDIT BASELINE — NÃO NORMATIVO`
 - **Data-base:** 2026-08-08
+- **Corte do repositório:** `main @ ddad9bf`
 - **Finalidade:** registrar, de forma factual, como a arquitetura Edge está descrita hoje no repositório
 - **Não é:** uma aceitação do ADR-010, uma substituição da `PLATFORM_SPECIFICATION.md` ou uma autorização de implementação
 
@@ -15,6 +16,18 @@ Este documento é uma fotografia da documentação versionada. Ele separa quatro
 4. **Lacuna ou conflito:** informação que a própria auditoria registra como insuficiente ou sobreposta.
 
 Nenhuma lacuna é preenchida por inferência neste documento. Quando duas fontes descrevem responsabilidades diferentes, ambas são registradas e o conflito é encaminhado para a análise de gaps.
+
+## 1.1 Eixos de classificação
+
+Uma arquitetura documentada não é automaticamente uma arquitetura implementada. Cada item abaixo usa três eixos independentes:
+
+| Eixo | Valores usados | Significado |
+| --- | --- | --- |
+| Contrato | `ACCEPTED`, `PROPOSED`, `DRAFT`, `OPEN` | força documental da regra ou contrato no corte |
+| Implementação | `IMPLEMENTED`, `PARTIALLY IMPLEMENTED`, `NOT IMPLEMENTED` | evidência de código e testes no repositório; ausência de código não é tratada como implementação |
+| Intenção | `CURRENT`, `CANDIDATE INTENT`, `NOT APPLICABLE` | se o item descreve o estado vigente ou um target pretendido |
+
+`ACCEPTED` não significa `IMPLEMENTED`. `PROPOSED` e `DRAFT` não autorizam implementação. `OPEN` significa que a decisão necessária não está fechada. Quando não existe evidência de código, o estado de implementação é `NOT IMPLEMENTED`, ainda que exista documentação detalhada.
 
 ## 2. Fontes e autoridade observadas
 
@@ -30,6 +43,22 @@ Nenhuma lacuna é preenchida por inferência neste documento. Quando duas fontes
 ### 2.1 Consequência de autoridade
 
 Enquanto o ADR-010 permanecer `Proposed`, o estado normativo atual continua sendo o descrito pelo ADR-002. A proposta de hardware heterogêneo pode ser analisada, mas não pode ser tratada como premissa aceita por código, contrato público ou documento derivado.
+
+## 2.2 Estado factual por área
+
+| Área | Contrato | Implementação no corte | Intenção | Evidência factual |
+| --- | --- | --- | --- | --- |
+| Edge baseado em Mini PC | `ACCEPTED` | `PARTIALLY IMPLEMENTED` | `CURRENT` | ADR-002 aceito; há contratos e componentes transversais no repositório, mas não há um pacote completo de Edge Runtime |
+| TV Network e lifecycles | `DRAFT`/derivado | `NOT IMPLEMENTED` como serviço de frota | `CURRENT` | documentos de TV Network, mas nenhum serviço correspondente identificado no corte |
+| Edge Runtime | `ACCEPTED` no ADR-002; parâmetros `OPEN` | `NOT IMPLEMENTED` como aplicação Edge | `CURRENT` | `EDGE_RUNTIME.md`; não existe `apps/edge` ou `packages/edge` no corte |
+| Telemetry Ledger e identidades | contratos especializados existentes | `IMPLEMENTED` em escopo limitado | `CURRENT` | `packages/telemetry`, `packages/kernel`, testes de conformance e gates documentais |
+| Persistence/Event Store/Projection Store | contratos TBS e persistência existentes | `PARTIALLY IMPLEMENTED` | `CURRENT` | pacotes `persistence`, `persistence-postgres`, migrações e testes de integração |
+| Provisioning e Device Registry | `DRAFT`/derivado | `NOT IMPLEMENTED` como fluxo executável | `CURRENT` | `PROVISIONING.md`, `DEVICE_REGISTRY.md` e `INSTALLATION.md` são documentação |
+| Hardware heterogêneo, Edge OS e Installer | `PROPOSED`/`DRAFT` | `NOT IMPLEMENTED` | `CANDIDATE INTENT` | ADR-010 e especificação Draft |
+| OTA, Recovery e Hardware Compatibility por perfil | parcialmente documentados; decisões `OPEN` | `NOT IMPLEMENTED` como plataforma por perfil | `CANDIDATE INTENT` | `UPDATE_MANAGEMENT.md`, `ROLLBACK_POLICY.md` e proposta ADR-010 |
+| Contracts públicos específicos do target heterogêneo | `OPEN`/não sincronizados | `NOT IMPLEMENTED` | `CANDIDATE INTENT` | `TRACEABILITY.md` ainda não referencia a mudança proposta |
+
+Esta tabela não afirma que componentes transversais já entregam a plataforma Edge. Ela diferencia código existente no repositório de serviços e contratos que ainda não foram materializados.
 
 ## 3. Bounded Context e fronteira atual
 
