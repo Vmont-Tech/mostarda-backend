@@ -2,7 +2,7 @@
 
 - **Status:** `ROADMAP CANDIDATE — NÃO NORMATIVO`
 - **Data-base:** 2026-08-09
-- **Corte do repositório:** `main @ reconciliation-cycle` (commit final registrado no cross-audit)
+- **Corte do repositório:** `main @ 7f16926c5060cb94772b688a80eb0ec3ea975c16`
 - **Objetivo:** ordenar o fechamento da arquitetura Edge sem antecipar decisões do ADR-010
 - **Não autoriza:** implementação de hardware heterogêneo, geração de contratos públicos ou alteração de regras de domínio
 

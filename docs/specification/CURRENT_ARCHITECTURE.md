@@ -2,7 +2,7 @@
 
 - **Status:** `AUDIT BASELINE — NÃO NORMATIVO`
 - **Data-base:** 2026-08-09
-- **Corte do repositório:** `main @ reconciliation-cycle` (commit final registrado no cross-audit)
+- **Corte do repositório:** `main @ 7f16926c5060cb94772b688a80eb0ec3ea975c16`
 - **Finalidade:** registrar, de forma factual, como a arquitetura Edge está descrita hoje no repositório
 - **Não é:** uma aceitação do ADR-010, uma substituição da `PLATFORM_SPECIFICATION.md` ou uma autorização de implementação
 

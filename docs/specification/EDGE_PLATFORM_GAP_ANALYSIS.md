@@ -2,7 +2,7 @@
 
 - **Status:** `AUDIT ARTIFACT — NÃO NORMATIVO`
 - **Data-base:** 2026-08-09
-- **Corte do repositório:** `main @ reconciliation-cycle` (commit final registrado no cross-audit)
+- **Corte do repositório:** `main @ 7f16926c5060cb94772b688a80eb0ec3ea975c16`
 - **Baseline:** [`CURRENT_ARCHITECTURE.md`](CURRENT_ARCHITECTURE.md)
 - **Target candidate:** [`ADR-010`](../adr/ADR-010-Edge-Hardware-and-Provisioning.md) e [`EDGE_PROVISIONING_AND_HARDWARE_PLATFORM.md`](../tv-network/EDGE_PROVISIONING_AND_HARDWARE_PLATFORM.md)
 

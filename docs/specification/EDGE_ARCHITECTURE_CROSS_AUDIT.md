@@ -2,7 +2,7 @@
 
 - **Status:** `AUDIT ARTIFACT — NON-NORMATIVE`
 - **Version:** `2.0.0`
-- **Repository cut:** `reconciliation cycle; final commit recorded in §12.7`
+- **Repository cut:** `main @ 7f16926c5060cb94772b688a80eb0ec3ea975c16`
 - **Audit date:** `2026-08-09`
 - **Scope:** cross-audit of the Edge chain; no source contract is changed by this report
 - **Decision:** `CROSS-AUDIT CLEAR — IMPLEMENTATION AUTHORIZED`
@@ -360,7 +360,7 @@ These items do not authorize a developer to bypass the profile contract or infer
 
 ### 12.7 Reconciled audit commit
 
-The substantive reconciliation commit is recorded in the final repository metadata. The verification suite is recorded in this section so the result is reproducible:
+The substantive reconciliation commit is `7f16926c5060cb94772b688a80eb0ec3ea975c16`. The verification suite is recorded in this section so the result is reproducible:
 
 - `npm run test:all`: 137 tests, 135 passed, 2 PostgreSQL tests skipped because `DATABASE_URL` is not configured; architecture 4/4; documentation 54/54;
 - `npm run typecheck`: passed;
