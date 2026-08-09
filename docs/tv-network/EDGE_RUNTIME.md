@@ -15,7 +15,7 @@ Ele:
 
 Ele não contém regras de Campaign, anúncio, Pricing, Financeiro, Evidence ou Settlement. Player e Canvas são conhecidos apenas como processos, versões e dependências operacionais; seu conteúdo interno permanece fora de TV Network.
 
-Edge coleta sinais locais autorizados e fecha cada one-minute bucket as immutable observation. Em conectividade normal, envia os buckets normalmente em five-minute batches sem apagar as cinco fronteiras de minuto. Cada collector reporta `AVAILABLE`, `UNAVAILABLE`, `DISABLED`, `DEGRADED` ou `FAILED`. Wi-Fi and camera absence or failure is explicitly reported; playback continues sem fabricar valores. Telemetry Context, e não Edge, valida, aceita e mantém o Telemetry Ledger e `AudienceProjection`.
+Edge coleta sinais locais autorizados e encaminha observações com sua origem, identidade e sequência. O Edge não fecha nem possui os buckets canônicos: o Telemetry Context valida as observações e fecha cada one-minute bucket as immutable observation, mantém o Telemetry Ledger e produz `AudienceProjection`. Em conectividade normal, os buckets aceitos são enviados em five-minute batches sem apagar as cinco fronteiras de minuto. Cada collector reporta `AVAILABLE`, `UNAVAILABLE`, `DISABLED`, `DEGRADED` ou `FAILED`. Wi-Fi and camera absence or failure is explicitly reported; playback continues sem fabricar valores.
 
 Para `CollectorVersion`, o owner Edge Runtime declara inicialmente `VersionSyntax = OPAQUE_TOKEN_V1` e referencia `CONTRACT_COMPATIBILITY.md`, contrato canonical `DEC-065`, sem repetição local.
 
@@ -54,11 +54,38 @@ qualquer não final → DECOMMISSIONED
 
 `DECOMMISSIONED` é final. Estados operacionais não substituem HealthRecord: refletem a condição do Aggregate conforme fatos aceitos.
 
+### Mapeamento canônico entre estados
+
+As máquinas locais continuam pertencendo aos seus respectivos contratos. A única máquina pública da frota é a de `EdgeInstallation`, cujo owner é TV Network. O mapeamento abaixo é a única tradução autorizada entre sinais locais e o estado operacional público:
+
+| Estado público `EdgeInstallation` | Condição de entrada observável | Estados locais que não devem ser publicados como equivalentes |
+| --- | --- | --- |
+| `UNINSTALLED` | não existe instalação aceita ou identidade operacional registrada | qualquer estado de Runtime ainda não iniciado |
+| `INSTALLING` | Installer ou Provisioning possui operação ativa antes da confirmação pós-provisioning | `PREPARING`, `WRITING` ou `ACTIVATING` não são estados de EdgeInstallation |
+| `UPDATING` | OTA possui operação ativa entre staging e confirmação, sem rollback em curso | `STAGED`, `VERIFIED`, `BOOTED` e `CONFIRMED` permanecem estados de OTA |
+| `ROLLING_BACK` | OTA ou Recovery executa rollback autorizado | `ROLLBACK_REQUIRED` e `RECOVERY_REQUIRED` permanecem estados de processo |
+| `QUARANTINED` | Security ou TV Network declarou bloqueio operacional por identidade, integridade ou comprometimento | `SAFE_MODE` do Runtime não é, sozinho, quarentena |
+| `FAILED` | não há estado operacional válido após uma falha e não existe caminho ativo de rollback/recovery | `FAILED` de um módulo não encerra a EdgeInstallation por si só |
+| `DEGRADED` | Runtime/OS continuam operáveis com limitações declaradas ou capability opcional indisponível | `WAITING_FOR_DEPENDENCY` e `DEGRADED` de um módulo não são publicados sem avaliação do Aggregate |
+| `HEALTHY` | Current State autenticado, OS `ACTIVE`, Runtime `ACTIVE`/`READY`, Player `HEALTHY`, identidade e Security verificadas e nenhum gate obrigatório pendente | nenhum estado `UNKNOWN`, `UNHEALTHY` ou `SAFE_MODE` pode ser tratado como saudável |
+| `DECOMMISSIONED` | encerramento definitivo autorizado | terminal; não há transição implícita de retorno |
+
+Quando mais de uma condição for verdadeira, aplica-se a precedência: `DECOMMISSIONED` → `QUARANTINED` → `ROLLING_BACK` → `UPDATING` → `INSTALLING` → `FAILED` → `DEGRADED` → `HEALTHY`. A decisão e os sinais usados permanecem no Health/EdgeInstallation history; o Runtime não altera o Aggregate diretamente.
+
 ## Supervisor
 
 Supervisor mantém catálogo versionado de processos críticos, dependências, condição esperada e ação permitida. Uma transição de processo registra estado anterior, estado observado, causa, tentativa, política, instante e resultado.
 
 Supervisor nunca interpreta o trabalho do Player. Pode concluir que o processo não progride; não pode concluir que um anúncio foi ou não exibido.
+
+### Fronteira de supervisão
+
+- **Edge OS** supervisiona o processo do Edge Runtime, fornece watchdog de sistema, limites de recursos e a ação mínima para reiniciar ou isolar o Runtime.
+- **Edge Runtime** supervisiona apenas os módulos registrados sob seu contrato (Player, Store, OTA, Recovery, Security e Telemetry), mantendo seus próprios resultados e orçamento de restart.
+- **Player** observa a própria reprodução e publica `PlayerHealth`/`PlaybackResult`; o Runtime não transforma liveness em fato de Playback.
+- **Recovery** executa o Recovery Plan quando o Runtime ou OS não conseguem restaurar um estado seguro; não recebe autoridade do Supervisor para escolher outro plano.
+
+O mesmo processo não pode ser reiniciado por OS e Runtime simultaneamente. Uma falha do processo Runtime é fato do OS e inicia a recuperação do Runtime; uma falha de módulo é fato do Runtime e segue sua Restart Policy. Causalidade e identidade da operação são preservadas no evento público correspondente.
 
 ## Watchdog e Restart Policy
 
@@ -118,7 +145,21 @@ Fatos pendentes preservam identidade, ordering key e instante original. Na recon
 - mensagens expiradas não são executadas;
 - Current State atual é enviado separadamente do replay histórico.
 
-Retenção, capacidade, prioridade entre classes operacionais e tratamento de pressão de armazenamento são `OPEN`. O runtime nunca fabrica confirmação e nunca altera evento antigo para fazê-lo parecer atual.
+Retenção, capacidade, prioridade entre classes operacionais e tratamento de pressão de armazenamento são parâmetros obrigatórios do `HardwareProfile`/`InstallationProfile` e da configuração operacional vigente. Eles não podem ser omitidos em um perfil de produção, mas também não são valores globais inferidos pelo Runtime. O runtime nunca fabrica confirmação e nunca altera evento antigo para fazê-lo parecer atual.
+
+## Eventos públicos derivados do Runtime
+
+`RuntimeCommand`, `RuntimeResult` e `RuntimeHealth` são contratos locais. Eles não são eventos públicos de TV Network. O adaptador autorizado de `EdgeInstallation` traduz resultados locais para os eventos já definidos em [`TV_NETWORK_EVENTS.md`](TV_NETWORK_EVENTS.md), preservando `operationId`, `commandId`, `correlationId`, `causationId`, sessão de boot e digest:
+
+| Resultado/fato local | Evento público autorizado | Produtor público |
+| --- | --- | --- |
+| Desired State aplicado e Current State autenticado | `CurrentStateReported` | `EdgeInstallation` a partir do Edge |
+| tentativa de restart autorizada | `ProcessRestartRequested` | `EdgeInstallation` |
+| restart concluído ou falho | `ProcessRestarted` / `ProcessRestartFailed` | `EdgeInstallation` |
+| watchdog detectou ausência de progresso | `WatchdogStallDetected` | `EdgeInstallation` |
+| operação remota concluída, rejeitada, expirada ou cancelada | `RemoteOperationSucceeded` / `RemoteOperationFailed` / `RemoteOperationTimedOut` / `RemoteOperationRejected` / `RemoteOperationExpired` / `RemoteOperationCancelled` | owner do target/coordinator |
+
+`ObservedStateDerived` continua sendo projeção do TV Network. Nenhum módulo Edge publica esse evento como se fosse um fato local.
 
 ## Comandos remotos e segurança
 

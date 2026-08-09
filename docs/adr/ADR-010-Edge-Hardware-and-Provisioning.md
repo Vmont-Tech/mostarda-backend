@@ -47,7 +47,7 @@ Installation Profile
         ↓
 Installation Adapter
         ↓
-Recovery Profile
+Recovery Plan
         ↓
 Mostarda Edge OS
         ↓
@@ -85,7 +85,7 @@ As decisões arquiteturais candidatas deste ADR são limitadas às seguintes:
 2. cada hardware suportado deve ser representado por um `HardwareProfile` versionado e homologado;
 3. a forma de transformar um hardware em Edge deve ser representada por um `InstallationProfile`;
 4. mecanismos específicos de instalação devem ficar isolados em `InstallationAdapters`;
-5. recuperação deve ser representada por um `RecoveryProfile` associado ao hardware/profile;
+5. recuperação deve ser representada por um `Recovery Plan` associado ao hardware/profile;
 6. o usuário deve consumir uma experiência coerente de provisioning sem precisar escolher SoC, kernel, DTB ou mecanismo de baixo nível;
 7. `Mostarda Edge OS` é o envelope de produto do sistema Edge, separado da base técnica que eventualmente o materialize;
 8. Edge OS, Edge Runtime e Player permanecem camadas distintas;
@@ -195,9 +195,9 @@ Os limites são critérios de elegibilidade, não promessa de desempenho. A apro
 
 Um `InstallationAdapter` encapsula um mecanismo específico de instalação ou recuperação para um perfil. A existência do conceito não autoriza nenhum adapter concreto, nem permite que um adapter alegue sucesso sem provas de identidade, integridade e recuperação.
 
-### 6.5 Recovery Profile
+### 6.5 Recovery Plan
 
-`RecoveryProfile` descreve, para um hardware/profile, como uma instalação ou atualização pode ser recuperada. O perfil ainda não define mídia, partições, bootloader, comandos, número de tentativas ou estratégia de fallback.
+`Recovery Plan` descreve, para um hardware/profile, como uma instalação ou atualização pode ser recuperada. O plano ainda não define mídia, partições, bootloader, comandos, número de tentativas ou estratégia de fallback.
 
 A direção arquitetural é que um update possa convergir por:
 
@@ -294,7 +294,7 @@ ADR-010 (Proposed)
     ├── Hardware Profile
     ├── Installation Profile
     ├── Installation Adapter
-    └── Recovery Profile
+    └── Recovery Plan
             │
             ▼
     decisões técnicas ainda abertas

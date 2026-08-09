@@ -151,6 +151,7 @@ Every terminal installation operation shall produce an immutable `InstallationRe
 ```text
 InstallationResult
 ├── operation_id
+├── provisioning_id
 ├── terminal_state
 ├── target_identity
 ├── discovery_reference
@@ -161,6 +162,7 @@ InstallationResult
 ├── identity_result
 ├── data_disposition_result
 ├── verification_result
+├── provisioning_result_reference
 ├── recovery_result, if applicable
 ├── diagnostic_references
 ├── telemetry_summary_reference
@@ -190,22 +192,13 @@ PRECHECKING
     ├── REJECTED
     └── PREPARED
           ↓
-      PRESERVING_DATA
+      HANDOFF_PENDING
           ↓
-      STAGING_ARTIFACTS
-          ↓
-      WRITING
-          ↓
-      VERIFYING
+      PROVISIONING_DELEGATED
+          ├── COMPLETED
           ├── ROLLBACK_REQUIRED
-          └── VERIFIED
-                 ↓
-              ACTIVATING
-                 ↓
-              CONFIRMING
-                 ├── COMPLETED
-                 ├── RECOVERY_REQUIRED
-                 └── FAILED
+          ├── RECOVERY_REQUIRED
+          └── FAILED
 ```
 
 An operation may also enter `CANCELLED` before an irreversible write begins.
@@ -238,49 +231,63 @@ All safety, authorization, capacity, artifact, identity and data-disposition che
 
 Preflight passed and the operation has a durable journal. The Installer may proceed only with the exact resolved plan.
 
-### 5.8 PRESERVING_DATA
+### 5.8 HANDOFF_PENDING
 
-The Installer performs the declared `PRESERVE`, `MIGRATE` or `ERASE` policy. A different policy cannot be substituted at runtime.
+The Installer has completed preflight and is sealing the immutable `ProvisioningRequest`. No target write is permitted in this state. The request must contain the parent `operation_id`, a new `provisioning_id`, the sealed discovery record, compatibility result, Hardware Profile, Installation Profile, artifact manifest, data disposition, identity/network plans, authorization and recovery references.
 
-### 5.9 STAGING_ARTIFACTS
+### 5.9 PROVISIONING_DELEGATED
 
-Artifacts are acquired or made available locally and verified before target writes.
+Provisioning has accepted the exact request and now owns preservation, staging, partitioning, writing, boot configuration, identity configuration, activation and post-provisioning validation. The Installer only observes the child `ProvisioningResult`, forwards cancellation or recovery requests allowed by that result, and does not execute or reinterpret those steps.
 
-### 5.10 WRITING
+The states `PRESERVING_DATA`, `STAGING_ARTIFACTS`, `WRITING`, `VERIFYING`, `ACTIVATING` and `CONFIRMING` belong exclusively to the Provisioning state machine. They are not Installer states.
 
-The selected Installation Profile writes only the target locations declared by its authorized plan.
-
-### 5.11 VERIFYING
-
-The written system, metadata, identity and required artifacts are verified before activation.
-
-### 5.12 ACTIVATING
-
-The validated installation is selected for boot or runtime activation according to the Installation Profile.
-
-### 5.13 CONFIRMING
-
-The Installer waits for first boot, identity presentation, runtime health, Player availability and required post-install checks.
-
-### 5.14 COMPLETED
+### 5.10 COMPLETED
 
 All required post-installation checks passed and the result was sealed.
 
-### 5.15 ROLLBACK_REQUIRED
+### 5.11 ROLLBACK_REQUIRED
 
 The current attempt cannot be activated safely and a validated rollback path is available.
 
-### 5.16 RECOVERY_REQUIRED
+### 5.12 RECOVERY_REQUIRED
 
 The normal rollback path did not complete or the Installation Profile requires a recovery path. The Installer shall stop normal activation and hand off to the authorized Recovery contract.
 
-### 5.17 FAILED
+### 5.13 FAILED
 
 The operation ended without a valid installation and without a completed rollback or recovery result. The failure reason and target state shall be explicit.
 
-### 5.18 CANCELLED
+### 5.14 CANCELLED
 
 The operation was cancelled before an irreversible write or at a cancellation point defined by the Installation Profile. Cancellation shall not be reported as success.
+
+## 5.15 Formal handoff to Provisioning
+
+The handoff is the single boundary between Installer and Provisioning:
+
+```text
+Installer PREPARED
+        ↓ seal ProvisioningRequest
+Installer HANDOFF_PENDING
+        ↓ Provisioning accepts the same request
+Provisioning ACCEPTED
+        ↓
+Installer PROVISIONING_DELEGATED
+```
+
+The Installer creates exactly one `provisioning_id` for an accepted handoff and records it together with `operation_id`. Provisioning is the only component allowed to mutate the target after `ACCEPTED`. The Installer may retry delivery with the same identities, but it shall not create a second child operation or repeat a target write.
+
+The child result is authoritative for the delegated work:
+
+| Provisioning terminal result | Installer result |
+| --- | --- |
+| `COMPLETED` | `COMPLETED` after Installer post-confirmation and result sealing |
+| `ROLLED_BACK` | `ROLLBACK_REQUIRED` or `FAILED`, never success without explicit post-rollback confirmation |
+| `RECOVERY_REQUIRED` | `RECOVERY_REQUIRED` and Recovery handoff |
+| `FAILED` | `FAILED` unless an authorized rollback/recovery path is entered |
+| `CANCELLED` / `PAUSED` | Installer remains non-terminal or records cancellation according to the child result; no success is implied |
+
+Provisioning shall return the immutable `ProvisioningResult`, including its state history, checkpoint references, identity result, artifact verification and recovery/rollback references. The Installer does not duplicate that state machine.
 
 ---
 
@@ -581,7 +588,7 @@ Private keys and secret material shall never be copied into logs or diagnostic o
 
 ## 13. Safe Write Protocol
 
-The Installer shall treat installation as a staged, verifiable operation.
+The Installer shall treat installation as a staged, verifiable operation. The Installer validates and seals the plan; Provisioning executes the target writes and owns the write journal.
 
 ```text
 PREPARE
@@ -601,7 +608,7 @@ CONFIRM
 
 The exact partition and boot mechanism belongs to the Installation Profile, but the safety properties are mandatory.
 
-The Installer shall:
+Before handoff, the Installer shall:
 
 - maintain a durable operation journal;
 - record each target write before and after execution;
@@ -611,6 +618,8 @@ The Installer shall:
 - preserve a validated rollback or recovery path;
 - make activation explicit;
 - survive process restart without losing the operation identity.
+
+After `Provisioning ACCEPTED`, these write, checkpoint, activation and rollback obligations are executed only by Provisioning under `provisioning_id`. Installer observations reference the child journal and do not create a competing write history.
 
 The Installer shall not write unknown partitions, generic DTB files, guessed kernels or unlisted boot locations.
 

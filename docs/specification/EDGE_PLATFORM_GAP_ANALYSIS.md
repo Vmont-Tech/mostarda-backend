@@ -1,14 +1,16 @@
 # Edge Platform Gap Analysis
 
 - **Status:** `AUDIT ARTIFACT — NÃO NORMATIVO`
-- **Data-base:** 2026-08-08
-- **Corte do repositório:** `main @ ddad9bf`
+- **Data-base:** 2026-08-09
+- **Corte do repositório:** `main @ reconciliation-cycle` (commit final registrado no cross-audit)
 - **Baseline:** [`CURRENT_ARCHITECTURE.md`](CURRENT_ARCHITECTURE.md)
 - **Target candidate:** [`ADR-010`](../adr/ADR-010-Edge-Hardware-and-Provisioning.md) e [`EDGE_PROVISIONING_AND_HARDWARE_PLATFORM.md`](../tv-network/EDGE_PROVISIONING_AND_HARDWARE_PLATFORM.md)
 
 ## 1. Objetivo e limite
 
 Esta análise compara a arquitetura documentada hoje com a plataforma heterogênea proposta. Ela não aprova o target, não resolve `OPEN`s e não escolhe tecnologia, hardware ou política quantitativa.
+
+Esta matriz preserva o diagnóstico do corte original e não é o gate atual de autorização. Os campos `Bloqueia implementação?` e `Bloqueia ADR-010?` descrevem o baseline anterior; a reconciliação e o gate vigente estão em [`EDGE_ARCHITECTURE_CROSS_AUDIT.md`](EDGE_ARCHITECTURE_CROSS_AUDIT.md). A matriz continua válida como histórico de dependências do target heterogêneo, enquanto a implementação dos contratos reconciliados é autorizada somente pelo resultado V2 desse cross-audit.
 
 Um gap pode ser:
 
@@ -38,7 +40,7 @@ Cada linha responde separadamente a situação atual, target candidato, document
 | EDGE-GAP-012 | Provisioning e credenciais | identidade e substituição estão documentadas para Mini PC | identidade independente da família sem reutilizar credencial | provisioning, device identity | alinhar registro, revogação e replacement | ADR-010, discovery | colisão de identidade ou credencial órfã | sim | sim | não |
 | EDGE-GAP-013 | Capability Manifest | `TVCapability` e inventário existem; target exige perfil por capability | manifesto versionado e observável por perfil | capability, TV Network | sincronizar capability, versão e suporte | Hardware Profile, Player | enviar workload não suportado | sim | não | sim, se não bloquear decisão de hardware |
 | EDGE-GAP-014 | OTA | rollout/assinatura existem, mas artefato por perfil não está completo | update verificável e compatível com hardware | update, security | definir imagem, compatibilidade e falha | OS, profile, signing | atualização incompatível sem retorno | sim | sim | não |
-| EDGE-GAP-015 | Rollback e Recovery | políticas existem; Recovery Profile e método são candidatos | recuperação verificável por perfil | rollback, recovery | definir baseline, restauração e limites | boot, storage, signing | equipamento inutilizado ou estado incompatível | sim | sim | não |
+| EDGE-GAP-015 | Rollback e Recovery | políticas existem; Recovery Plan e método são candidatos | recuperação verificável por perfil | rollback, recovery | definir baseline, restauração e limites | boot, storage, signing | equipamento inutilizado ou estado incompatível | sim | sim | não |
 | EDGE-GAP-016 | Telemetry e Health | documentos existem e auditoria registra ownership sobreposto | fato local, ingestão, avaliação e projeção separados | telemetry, health, TV Network | owner e contratos únicos | architecture review, events | sinais duplicados ou decisões conflitantes | sim | sim | não |
 | EDGE-GAP-017 | Offline prolongado | filas/replay/gaps existem; retenção, expiração e reentrada estão abertas | operação e reintegração auditáveis | runtime, heartbeat, offline | definir TTL, credenciais, backlog e quarantine | security, storage, health | executar intenção expirada ou perder fatos | sim | não | sim, para primeira decisão de hardware |
 | EDGE-GAP-018 | Eventos e contratos | catálogos não cobrem integralmente adapters/perfis | producer único e schemas versionados | events, commands, traceability | fechar contratos após decisão | ADR-010 e owners | consumidores divergentes | sim | sim | não |

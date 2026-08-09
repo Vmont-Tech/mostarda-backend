@@ -158,6 +158,22 @@ recovery path
 
 Provisioning may validate that the plan is internally consistent, but it shall not replace a declared value with a locally preferred value.
 
+### 3.3 Installer handoff boundary
+
+Provisioning begins only when the Installer has sealed and delivered a complete `ProvisioningRequest`.
+
+```text
+Installer PREPARED
+        ↓
+ProvisioningRequest(provisioning_id, parent_installation_operation_id)
+        ↓
+Provisioning ACCEPTED
+```
+
+`provisioning_id` is created once for the child operation and is bound permanently to `parent_installation_operation_id`. Re-delivery of the same request is idempotent; a divergent request with either identity is a conflict. Before `ACCEPTED`, Installer owns discovery, compatibility, profile resolution and preflight. After `ACCEPTED`, Provisioning alone owns preservation, staging, partitioning, writing, boot, identity configuration, activation, rollback and post-provisioning validation.
+
+Installer does not enter or execute Provisioning states. It observes the immutable `ProvisioningResult` and maps the child terminal result to its own orchestration result according to the Installer contract. Provisioning does not create a new Hardware Profile, Installation Profile or compatibility decision during the handoff.
+
 ---
 
 ## 4. Provisioning Output

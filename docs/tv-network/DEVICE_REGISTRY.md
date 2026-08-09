@@ -6,11 +6,11 @@ Device Registry mantém identidade, atributos declarados e vínculos históricos
 
 - `TVIdentifier` identifica o nó lógico da rede;
 - `DeviceIdentifier` identifica permanentemente uma peça física;
-- `EdgeInstallationIdentifier` identifica uma instalação lógica do runtime em um MiniPC.
+- `EdgeInstallationId` identifica uma instalação lógica do runtime em um MiniPC.
 
 Nenhum identificador é reutilizado. Serial de fabricante é atributo de verificação, não identidade de domínio.
 
-A credencial operacional identifica uma `EdgeInstallation`, não a TV abstrata nem o MiniPC isoladamente. Durante sua vigência, uma EdgeInstallation referencia exatamente um MiniPC e uma TV. Troca de MiniPC encerra vínculo e credencial anteriores e exige nova EdgeInstallation; a TVIdentifier permanece. Credencial antiga nunca é copiada ou reativada no equipamento substituto.
+A credencial operacional identifica uma `EdgeInstallation`, não a TV abstrata nem o MiniPC isoladamente. Durante sua vigência, uma EdgeInstallation referencia exatamente um MiniPC e uma TV. Troca de MiniPC encerra vínculo e credencial anteriores e exige nova EdgeInstallation; a TVIdentifier permanece. Credencial antiga nunca é copiada ou reativada no equipamento substituto. `EdgeInstallationId` é o nome canônico; referências históricas a `EdgeInstallationIdentifier` são apenas a forma editorial anterior do mesmo campo e não criam uma segunda identidade.
 
 ## Registro conceitual
 

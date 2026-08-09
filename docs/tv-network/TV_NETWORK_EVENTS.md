@@ -70,6 +70,21 @@ Envelope conceitual:
 
 Eventos de operação são ordenados por `operationId`; mudança de Aggregate continua ordenada pelo Aggregate owner.
 
+### Ponte Runtime → eventos públicos
+
+`RuntimeCommand`, `RuntimeResult` e `RuntimeHealth` são contratos locais do Edge Runtime. Eles não são eventos públicos por renomeação. O adaptador autenticado de `EdgeInstallation` produz os eventos públicos abaixo, preservando o mesmo `operationId`, `commandId`, `correlationId`, `causationId`, `bootSessionId`, sequência e digest:
+
+| Fato/resultado local | Evento público | Produtor público | Regra de idempotência |
+| --- | --- | --- | --- |
+| Desired aplicada e Current State selado | `CurrentStateReported` | `EdgeInstallation` a partir do Edge | uma declaração por identidade, sessão e sequência |
+| restart autorizado | `ProcessRestartRequested` | `EdgeInstallation` | mesma operação não cria novo `eventId` em retry |
+| restart concluído/falhou | `ProcessRestarted` / `ProcessRestartFailed` | `EdgeInstallation` | `operationId` e causalidade preservados |
+| watchdog detectou ausência de progresso | `WatchdogStallDetected` | `EdgeInstallation` | duplicata por `eventId` é ignorada; payload divergente é conflito |
+| operação remota terminou | evento `RemoteOperation*` correspondente | owner do target/coordinator | estado terminal é append-only e ligado à operação original |
+| sinais aceitos para projeção | `ObservedStateDerived` | projeção TV Network | nunca é produzido pelo Runtime ou pelo Edge |
+
+O envelope universal desta especificação continua sendo obrigatório para todos esses eventos: `eventId`, `eventType`, `eventVersion`, Aggregate identity/revision quando aplicável, `occurredAt`, `recordedAt`, `producer`, `correlationId`, `causationId`, `commandId` quando aplicável e integridade. O Runtime fornece fatos locais; TV Network mantém a autoridade do catálogo público.
+
 ## Heartbeat e conectividade
 
 | Eventos | Produtor | Consumidores | Payload conceitual / ordering / compensação |

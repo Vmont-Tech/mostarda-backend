@@ -298,6 +298,25 @@ Content storage shall never be allowed to consume storage required for:
 
 The implementation shall enforce storage thresholds before accepting new content.
 
+## 6.1 Canonical cross-layer resource contract
+
+`EDGE_HARDWARE_COMPATIBILITY.md` is the sole source for platform-wide eligibility thresholds. Other Edge specifications consume the values declared by the active `HardwareProfile` and `InstallationProfile`; they shall not introduce competing minimums.
+
+| Dimension | Experimental minimum | Production minimum | Preferred target | Source of remaining operational limits |
+| --- | --- | --- | --- | --- |
+| RAM | 1 GB | 2 GB | 4 GB | `memory.ram.usable`, Runtime/Player reserve and profile evidence |
+| Usable storage | 8 GB | 16 GB | 32 GB | `storage.usable`, `storage.reserved`, partition plan and Store quota |
+| CPU/SoC | supported architecture and validated workload | same plus production homologation | validated sustained margin | Hardware Profile operational limits and test evidence |
+| GPU/VPU/codecs/display | required path validated for the declared Player workload | production playback evidence | validated margin for intended workload | Hardware Profile capability and playback evidence |
+| Thermal | bounded laboratory validation | sustained commercial workload without unsafe throttling | validated margin under long-run workload | Hardware Profile `maximum_sustained_temperature` and evidence |
+| Network | declared bootstrap/offline behavior | at least one reliable path | Ethernet preferred for fixed installations | Hardware Profile interface and reconnection limits |
+| Player/Web Engine | profile-specific health and playback validation | production playback and offline validation | validated resource/thermal margin | Player, Web Engine and codec references in Hardware Profile |
+| Local Content Store | reserved system/update/recovery/telemetry capacity | same plus production quota and power-loss validation | additional content margin | Installation Profile storage plan and Store quota |
+
+For dimensions without a universal scalar, `minimum`, `recommended` and `preferred` are profile states, not guessed numbers: the minimum is a mandatory measured capability, the recommended value is a tested operating margin and the preferred value is the margin required for `PREFERRED` lifecycle. A profile cannot omit a limit, replace it with a commercial name or leave a production threshold implicit.
+
+The active profile must expose, at minimum, the limit name, value, unit, scope, test reference, test environment, confidence and observation time defined by `EDGE_HARDWARE_PROFILES.md`. This makes generic implementation deterministic while keeping hardware-specific values out of the platform-wide contract.
+
 ---
 
 # 7. CPU / SoC

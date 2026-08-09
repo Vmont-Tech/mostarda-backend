@@ -422,6 +422,19 @@ validated_network_recovery_time
 validated_continuous_playback_window
 ```
 
+For the resource dimensions governed by `EDGE_HARDWARE_COMPATIBILITY.md`, a homologated profile shall also reference the applicable minimum/recommended/preferred band and the Installation Profile's operational resource policy:
+
+```text
+memory reserve and Player budget
+storage reserved/system/update/recovery/telemetry/content quotas
+CPU/GPU/VPU sustained workload limits
+thermal limit and escalation policy
+network bootstrap and reconnection limits
+Player/Web Engine/codec resource envelope
+```
+
+The values are profile facts backed by test evidence. They are not inferred from a commercial name, SoC family or nominal capacity, and no downstream specification may redefine them.
+
 A profile shall not claim a limit that is absent from evidence or that was inferred solely from a component datasheet.
 
 ---

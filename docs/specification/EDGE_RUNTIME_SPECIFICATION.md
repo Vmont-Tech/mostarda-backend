@@ -4,7 +4,8 @@
 **Version:** 1.0.0
 **Owner:** Edge Runtime
 **Prerequisites:** `EDGE_HARDWARE_COMPATIBILITY.md`, `EDGE_HARDWARE_DISCOVERY.md`, `EDGE_HARDWARE_PROFILES.md`, `EDGE_INSTALLATION_PROFILES.md`, `EDGE_INSTALLER_SPECIFICATION.md`, `EDGE_PROVISIONING.md`, `EDGE_RECOVERY.md`, `EDGE_OS_SPECIFICATION.md`, `EDGE_OTA.md`, `EDGE_SECURITY.md`, `EDGE_PLAYER_SPECIFICATION.md`, `EDGE_OFFLINE_STORAGE.md`, `EDGE_TELEMETRY.md`
-**Related Domains:** Configuration Service, Playback, Evidence Ledger, Pricing, Operations
+**Related Domains:** Configuration Service, Playback, Evidence Ledger, Pricing, Operations, TV Network
+**Authority Dependencies:** `ADR-008-TV-Network.md`, `DEC-009`, `DEC-063`, `TV_NETWORK_EVENTS.md`
 **Scope:** local coordination, module supervision, desired/observed state, low-resource operation and Edge control-plane contracts
 
 ---
@@ -19,7 +20,7 @@ The Runtime defines:
 
 - the boundary between Edge OS, Runtime and specialized modules;
 - lifecycle, startup, shutdown, restart and safe-mode behavior;
-- Desired State and Observed State;
+- Desired State consumption, Current State declaration and internal RuntimeObservation;
 - the module dependency graph and startup order;
 - internal command, result, health and IPC contracts;
 - supervision, watchdogs, retry and idempotency;
@@ -86,7 +87,7 @@ The Runtime owns:
 
 - local lifecycle and operational coordination;
 - module registration and supervision;
-- Desired State and Observed State for the Edge installation;
+- Desired State consumption, Current State declaration and internal RuntimeObservation for the Edge installation;
 - internal routing of authorized commands;
 - dependency readiness and degraded-mode calculation;
 - restart, retry and idempotency of Runtime operations;
@@ -247,16 +248,18 @@ Startup is idempotent. Repeating startup with the same boot session and configur
 
 ---
 
-## 6. Desired State and Observed State
+## 6. Desired, Current and Observed State
 
-The Runtime maintains two distinct representations:
+TV Network owns the public `DesiredState`, `CurrentState` and `ObservedState` model under `ADR-008` and `DEC-009`. The Runtime consumes Desired State and supplies authenticated local facts from which the EdgeInstallation adapter produces Current State. The Runtime does not own or publish the TV Network `ObservedState` projection.
 
 ```text
-DesiredState  -> what authorized configuration and Cloud instructions request
-ObservedState -> what the Edge has actually verified locally
+DesiredState   -> authorized intention published for EdgeInstallation
+CurrentState   -> authenticated declaration of what the Edge applied and runs
+ObservedState   -> TV Network projection derived from accepted signals
+RuntimeObservation -> internal local observation used by Runtime coordination
 ```
 
-Neither representation is automatically the other.
+`RuntimeObservation` is intentionally not an alias for public `ObservedState`. This prevents a local process observation from being mistaken for the fleet projection.
 
 ### 6.1 DesiredState
 
@@ -279,12 +282,12 @@ source and authorization
 
 The Runtime stores only an authorized desired state. An unavailable Cloud command remains pending or rejected; it is not treated as locally effective merely because it was received.
 
-### 6.2 ObservedState
+### 6.2 RuntimeObservation
 
-`ObservedState` is a local, signed or integrity-protected observation containing:
+`RuntimeObservation` is a local, signed or integrity-protected observation containing:
 
 ```text
-observed_state_id
+runtime_observation_id
 revision
 EdgeInstallationId
 boot_session_reference
@@ -300,11 +303,11 @@ last transition reason
 observed_at
 ```
 
-Observed State never claims that Desired State was achieved unless every relevant module confirms it.
+RuntimeObservation never claims that Desired State was achieved. The authenticated declaration of applied state is `CurrentState`, and only the TV Network projection may produce `ObservedState`.
 
 ### 6.3 Reconciliation
 
-Reconciliation compares Desired State and Observed State by stable identity and version. It may issue idempotent requests to authorized modules, but it shall not invent a missing target, downgrade an active state or bypass compatibility, Security, OTA or Recovery.
+The TV Network Reconciler compares Desired State and the accepted Current/Observed State pair by stable identity and version. Runtime-local coordination may compare Desired State with RuntimeObservation, but it shall not emit `ObservedStateDerived`, invent a missing target, downgrade an active state or bypass Compatibility, Security, OTA or Recovery.
 
 ---
 
@@ -344,7 +347,7 @@ The startup order is:
 8. initialize Network if available, without blocking local-first startup;
 9. initialize Player only after content and capability gates are known;
 10. initialize OTA and Recovery orchestration hooks;
-11. publish `ObservedState` and `RuntimeHealth`;
+11. publish `RuntimeObservation` and `RuntimeHealth` to the authorized EdgeInstallation adapter;
 12. enter `ACTIVE`, `DEGRADED`, `WAITING_FOR_DEPENDENCY` or `SAFE_MODE` according to explicit results.
 
 This order is logical, not a requirement for a particular init system or process supervisor. Implementations may optimize it only when the observable dependency guarantees remain identical.
@@ -450,7 +453,7 @@ The minimum internal interface set is:
 ```text
 registerModule
 getRuntimeHealth
-getObservedState
+getRuntimeObservation
 applyDesiredState
 startModule
 stopModule
@@ -566,11 +569,34 @@ UNKNOWN    -> the Runtime could not evaluate the gate
 
 The Runtime shall not report `READY` when the active profile, identity, required content snapshot or required security gate is unknown.
 
+### 11.1 Canonical OTA health predicates
+
+The health contracts remain owned by their modules, but OTA uses the following deterministic predicates:
+
+| OTA gate | Required contract result |
+| --- | --- |
+| `RUNTIME_HEALTHY` | `RuntimeHealth.lifecycle_state = ACTIVE`, `readiness_state = READY`, `liveness_state = ALIVE`, `identity_state = VERIFIED`, `security_state = TRUSTED`, and every dependency marked `required_for_runtime` is satisfied. |
+| `PLAYER_HEALTHY` | `PlayerHealth.state = HEALTHY`, Player state is `READY` or `PLAYING`, the active Local Content Store snapshot is integrity-verified, and mandatory display/Web Engine/codec checks pass. |
+| OS prerequisite | `Edge OS` is `ACTIVE`, boot trust is verified, identity is stable and no mandatory OS health dimension is `UNHEALTHY` or `UNKNOWN`. |
+
+`DEGRADED`, `NOT_READY`, `UNKNOWN`, `UNHEALTHY`, `SAFE_MODE`, `RECOVERING` or a failed mandatory capability never satisfy an OTA health gate. Optional collector absence may coexist with `HEALTHY` only when the active Hardware Profile declares that collector optional.
+
 ---
 
 ## 12. Supervision, Watchdog and Restart
 
 ### 12.1 Supervision
+
+Supervision is layered and non-overlapping:
+
+| Layer | Sole supervision responsibility | It must not supervise |
+| --- | --- | --- |
+| Edge OS | the Edge Runtime process, OS resources and OS watchdog | individual Player/Store/OTA/Recovery module operations |
+| Edge Runtime | registered module processes/service boundaries and Runtime watchdog | the OS, bootloader, public EdgeInstallation Aggregate or Playback facts |
+| Player | audiovisual progress and PlayerHealth | Runtime process, OS state or Evidence validity |
+| Recovery | execution of the authorized Recovery Plan after handoff | choosing compatibility, changing identity implicitly or replacing another module's owner |
+
+The OS may restart or isolate the Runtime process. Runtime may request restart of a registered module. The same process shall not be restarted concurrently by both layers. A restart fact is translated to the public TV Network events only by the EdgeInstallation adapter described in [`TV_NETWORK_EVENTS.md`](../tv-network/TV_NETWORK_EVENTS.md).
 
 The Runtime supervises registered module processes or service boundaries through:
 
@@ -806,6 +832,21 @@ Runtime emits operational observations through Telemetry and requests queue flus
 
 ---
 
+## 16.7 Public event bridge
+
+Runtime-local results never become public TV Network events by name substitution. The authorized EdgeInstallation adapter maps them as follows:
+
+| Runtime observation/result | Public event | Authority and ordering |
+| --- | --- | --- |
+| desired revision applied and local Current State sealed | `CurrentStateReported` | EdgeInstallation; ordered by boot session and sequence |
+| restart operation accepted | `ProcessRestartRequested` | EdgeInstallation; causal link to Runtime command |
+| restart operation completed/failed | `ProcessRestarted` / `ProcessRestartFailed` | EdgeInstallation; same operation identity |
+| watchdog stall detected | `WatchdogStallDetected` | EdgeInstallation; no Playback conclusion |
+| remote operation terminal result | matching `RemoteOperation*` event | target owner/coordinator; original operation identity |
+| local observation used for fleet projection | consumed as signal for `ObservedStateDerived` | TV Network projection only; never Runtime producer |
+
+The Runtime preserves event identity, correlation, causation, boot session and digest in the handoff. `RuntimeResult` remains the authoritative local result; the public event is a separate fact produced by its accepted TV Network owner.
+
 ## 17. Desired-State Reconciliation and Checkpoints
 
 The Runtime journal is append-only for accepted control-plane facts and contains:
@@ -1006,7 +1047,7 @@ Retries shall reuse the original command and operation identities.
 
 ### RT-005
 
-The Runtime shall maintain distinct Desired State and Observed State records.
+The Runtime shall preserve the distinction between Desired State, Current State and the TV Network Observed State projection. Its local record shall be named `RuntimeObservation` and shall never be published as `ObservedStateDerived`.
 
 ### RT-006
 
@@ -1159,7 +1200,7 @@ runtime artifact and contract identity
 EdgeInstallationId and Security integration
 acyclic dependency graph
 module registration and compatibility
-Desired State and Observed State persistence
+Desired State consumption, Current State declaration and RuntimeObservation persistence
 startup, shutdown and power-loss recovery
 RuntimeCommand and RuntimeResult behavior
 RuntimeHealth and watchdog behavior
@@ -1214,7 +1255,7 @@ Before implementation, the Architecture Review Gate shall verify:
 Runtime remains a coordinator and not a supermodule
 all module owners and boundaries are unique
 startup dependencies are acyclic
-Desired State and Observed State cannot be confused
+Desired State, Current State, RuntimeObservation and TV Network Observed State cannot be confused
 RuntimeCommand and RuntimeResult are idempotent and authenticated
 Player keeps playback authority
 Content Store keeps asset authority

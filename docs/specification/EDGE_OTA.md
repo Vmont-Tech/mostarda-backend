@@ -588,11 +588,25 @@ The device booted the exact activated artifact set and presented the expected Ha
 
 ### 15.3 Runtime healthy
 
-Edge Runtime started, loaded compatible configuration and passed its health checks.
+`RUNTIME_HEALTHY` is produced only when the Runtime contract reports all of the following for the target boot session:
+
+```text
+lifecycle_state = ACTIVE
+readiness_state = READY
+liveness_state = ALIVE
+identity_state = VERIFIED
+security_state = TRUSTED
+all required_for_runtime dependencies = SATISFIED
+Edge OS = ACTIVE with no mandatory health dimension UNKNOWN or UNHEALTHY
+```
+
+`DEGRADED`, `NOT_READY`, `UNKNOWN`, `UNHEALTHY`, `SAFE_MODE` and `RECOVERING` do not satisfy this gate.
 
 ### 15.4 Player healthy
 
-Player initialized in the validated Web Engine/codec environment and passed the profile-specific playback health checks.
+`PLAYER_HEALTHY` is produced only when `PlayerHealth.state = HEALTHY`, the Player is in `READY` or `PLAYING`, the active Local Content Store snapshot is integrity-verified and the mandatory display, Web Engine and codec checks for the Hardware Profile pass. Optional collector absence may coexist with `HEALTHY` only when the profile declares the collector optional.
+
+If either health gate fails or remains unknown, OTA shall not reach `CONFIRMED` or `MARKED_GOOD`. The active Last Known Good state remains authoritative; activation failure enters `ROLLBACK_REQUIRED`, and rollback failure hands off to the Recovery Plan with the failed gate and health references preserved.
 
 ### 15.5 Confirmed
 

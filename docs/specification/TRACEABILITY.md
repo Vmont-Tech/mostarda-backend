@@ -15,6 +15,7 @@
 | `SPEC-CONT-001..004` | `domain/HARDWARE_CONTINUITY.md`, `INFLUENCER_DEVELOPMENT_FUND.md`, `INSURANCE.md`; catálogos Domain/Execution | — |
 | `SPEC-PARTNER-001..003` | `product/PARTNER_NETWORK_OPERATING_MODEL.md`, Campaign/Pricing/Evidence, TV Network e Financial | ADR-002/007/008 |
 | `SPEC-TV-001..005` | todos os documentos em `tv-network/` | ADR-008 |
+| Edge hardware/provisioning/runtime | `EDGE_HARDWARE_COMPATIBILITY.md`, `EDGE_HARDWARE_DISCOVERY.md`, `EDGE_HARDWARE_PROFILES.md`, `EDGE_INSTALLATION_PROFILES.md`, `EDGE_INSTALLER_SPECIFICATION.md`, `EDGE_PROVISIONING.md`, `EDGE_OS_SPECIFICATION.md`, `EDGE_RUNTIME_SPECIFICATION.md`, `EDGE_PLAYER_SPECIFICATION.md`, `EDGE_OFFLINE_STORAGE.md`, `EDGE_OTA.md`, `EDGE_RECOVERY.md`, `EDGE_SECURITY.md`, `EDGE_TELEMETRY.md` | ADR-002, ADR-008, ADR-010 (Proposed) |
 | AI e Grão | `domain/AI_ARCHITECTURE.md`, `GRAO.md`; ADR-006 | ADR-006 |
 | Marketplace/evolução | `domain/BOUNDED_CONTEXTS.md`, `DOMAIN_EVOLUTION.md` | — |
 | Commands/Events/Sagas | todos os documentos em `execution/` | ADR-001 |

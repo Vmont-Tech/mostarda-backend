@@ -80,9 +80,13 @@ Provides the validated boot path, hardware initialization, device-tree or equiva
 
 Provides the kernel, system libraries, filesystem, device access, process supervision, security boundary, networking and persistent system configuration required by Edge Runtime.
 
+The OS process supervisor and watchdog own the Edge Runtime process and OS resources. They do not execute module-level Player, Store, OTA, Recovery or Telemetry restart policies.
+
 ### 3.3 Edge Runtime
 
 Provides the Mostarda operational envelope. It supervises Player, Local Content Store, Telemetry, OTA and health behavior without containing business rules.
+
+Runtime supervision begins only after the Runtime process is alive. Runtime owns registered module supervision and its own restart budget; it cannot restart the OS or boot path and cannot replace OS health with a module result.
 
 ### 3.4 Player
 
@@ -758,6 +762,8 @@ The OS shall provide a watchdog capable of detecting:
 - unacceptable resource pressure;
 - failed update activation.
 
+The OS watchdog may restart or isolate the Edge Runtime process and may escalate an OS-level failure to the declared Recovery path. It shall not directly restart an individual module that is supervised by Runtime. Runtime watchdog actions are reported through the Runtime contract and the TV Network public event bridge; the OS watchdog does not emit module restart events on Runtime's behalf.
+
 ### 22.2 Health dimensions
 
 Health shall be reported separately for:
@@ -808,6 +814,22 @@ quarantine/manual intervention
 ```
 
 The exact escalation thresholds are profile or operational parameters; the ordering and observability are mandatory.
+
+The escalation boundary is therefore:
+
+```text
+OS watchdog detects Runtime failure
+        ↓
+OS restarts/isolate Runtime
+        ↓
+Runtime watchdog detects module failure
+        ↓
+Runtime applies module Restart Policy
+        ↓
+Recovery executes only after explicit handoff
+```
+
+No process may be restarted concurrently by OS and Runtime. A failed or ambiguous action is preserved with its original operation and boot-session identity.
 
 ---
 
@@ -921,13 +943,13 @@ The OS shall distinguish:
 
 ```text
 Desired State
-Observed State
+Local OS Observation
 Last Known Good State
 ```
 
 Desired State is supplied through authorized contracts. The OS shall not invent desired configuration when the control plane is unavailable.
 
-Observed State shall report actual service, network, storage, display, Player, identity and update conditions.
+The OS may expose an integrity-protected local OS observation containing actual service, network, storage, display, Player, identity and update conditions. This local observation is not the public TV Network `ObservedState`; the latter remains a TV Network projection under `ADR-008` and `DEC-009`.
 
 Last Known Good State shall reference verified OS, Runtime, Player, configuration, identity and recovery metadata.
 
@@ -1173,7 +1195,7 @@ Unknown module, artifact, profile or schema behavior shall be rejected or explic
 
 ### OS-029
 
-The OS shall distinguish Desired State, Observed State and Last Known Good State.
+The OS shall distinguish Desired State, its local OS observation and Last Known Good State. Public `ObservedState` remains owned and projected by TV Network.
 
 ### OS-030
 

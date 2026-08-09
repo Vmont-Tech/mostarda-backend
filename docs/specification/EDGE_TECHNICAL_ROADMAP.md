@@ -1,8 +1,8 @@
 # Edge Technical Roadmap
 
 - **Status:** `ROADMAP CANDIDATE — NÃO NORMATIVO`
-- **Data-base:** 2026-08-08
-- **Corte do repositório:** `main @ ddad9bf`
+- **Data-base:** 2026-08-09
+- **Corte do repositório:** `main @ reconciliation-cycle` (commit final registrado no cross-audit)
 - **Objetivo:** ordenar o fechamento da arquitetura Edge sem antecipar decisões do ADR-010
 - **Não autoriza:** implementação de hardware heterogêneo, geração de contratos públicos ou alteração de regras de domínio
 
@@ -23,6 +23,8 @@ Código e infraestrutura
 ```
 
 No estado atual, `ADR-002` continua aceito, `ADR-010` continua Proposed e `PLATFORM_SPECIFICATION` continua Draft.
+
+Após a execução da reconciliação, [`EDGE_ARCHITECTURE_CROSS_AUDIT.md`](EDGE_ARCHITECTURE_CROSS_AUDIT.md) é o gate de consistência transversal. Ele não aceita ADR-010 nem substitui a autoridade dos contratos; apenas autoriza implementação quando ownership, estados, handoffs, eventos e parâmetros de perfil estão reconciliados.
 
 ## 1.1 Dependências que precisam ser respeitadas
 
@@ -45,7 +47,7 @@ Hardware Profile
     ↓
 Installation Profile
     ↓
-Recovery Profile
+Recovery Plan
 ```
 
 O Player possui uma cadeia independente de pré-requisitos:
@@ -86,7 +88,7 @@ O ADR-010 é revisado somente depois que o pacote de auditoria e suas dependênc
 
 Esta fase é a revisão interna do pacote produzido na Fase 0. Ela confirma que cada gap possui fonte, risco, dependência e indicação de bloqueio antes que o ADR-010 seja apreciado.
 
-**Saída necessária:** `EDGE_PLATFORM_GAP_ANALYSIS.md` e este roadmap não contêm escolhas silenciosas e a ordem `Discovery → Hardware Profile → Installation Profile → Recovery Profile` está preservada.
+**Saída necessária:** `EDGE_PLATFORM_GAP_ANALYSIS.md` e este roadmap não contêm escolhas silenciosas e a ordem `Discovery → Hardware Profile → Installation Profile → Recovery Plan` está preservada.
 
 **Não permitido:** revisar o ADR-010 por inferência, homologar hardware ou escrever especificação derivada.
 
@@ -113,6 +115,7 @@ Esta fase só inicia se o ADR-010 for formalmente aceito.
 - [`TRACEABILITY.md`](TRACEABILITY.md);
 - [`TV_NETWORK_ARCHITECTURE.md`](../tv-network/TV_NETWORK_ARCHITECTURE.md);
 - [`EDGE_RUNTIME.md`](../tv-network/EDGE_RUNTIME.md);
+- [`EDGE_RUNTIME_SPECIFICATION.md`](EDGE_RUNTIME_SPECIFICATION.md);
 - `PROVISIONING.md`, `DEVICE_REGISTRY.md`, `CAPABILITY_MANAGEMENT.md` e catálogos de Events/Commands afetados.
 
 **Saída necessária:** uma fonte normativa única, referências cruzadas atualizadas e nenhum documento derivado tratando a proposta como aceitação parcial.
@@ -124,14 +127,15 @@ Esta fase só inicia se o ADR-010 for formalmente aceito.
 Somente após a sincronização normativa, produzir as especificações especializadas necessárias:
 
 1. Edge OS;
-2. Installer;
-3. Hardware Compatibility;
-4. Provisioning e Device Identity;
-5. Player e Local Content Store;
-6. OTA;
-7. Recovery;
-8. Telemetry e integração com Health;
-9. Security.
+2. Edge Runtime;
+3. Installer;
+4. Hardware Compatibility;
+5. Provisioning e Device Identity;
+6. Player e Local Content Store;
+7. OTA;
+8. Recovery;
+9. Telemetry e integração com Health;
+10. Security.
 
 Cada documento deve declarar fonte superior, owner, boundary, estados, contratos, falhas, compatibilidade e decisões ainda abertas. Nenhum documento derivado pode criar Bounded Context ou alterar o significado de Evidence, Pricing, Campaign ou Financial.
 

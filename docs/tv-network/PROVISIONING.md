@@ -13,7 +13,7 @@ Participantes:
 - `TVCapability`: declarações operacionais;
 - Health Monitoring e Reconciler: observação independente.
 
-`EdgeInstallationIdentifier` e sua credencial operacional pertencem à instalação lógica do runtime. Eles não são aliases de `TVIdentifier` ou `DeviceIdentifier`. Uma EdgeInstallation referencia uma TV e um MiniPC durante sua vigência; substituição física encerra a instalação anterior e cria outra identidade/credencial, preservando toda a linha do tempo.
+`EdgeInstallationId` e sua credencial operacional pertencem à instalação lógica do runtime. Eles não são aliases de `TVIdentifier` ou `DeviceIdentifier`. Uma EdgeInstallation referencia uma TV e um MiniPC durante sua vigência; substituição física encerra a instalação anterior e cria outra identidade/credencial, preservando toda a linha do tempo. `EdgeInstallationIdentifier` é uma referência histórica ao mesmo campo, não um contrato concorrente.
 
 ## Pré-condições
 

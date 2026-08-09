@@ -1,11 +1,11 @@
 # Mostarda Edge — Cross-Architecture Audit
 
 - **Status:** `AUDIT ARTIFACT — NON-NORMATIVE`
-- **Version:** `1.0.0`
-- **Repository cut:** `main @ 9eeba14`
+- **Version:** `2.0.0`
+- **Repository cut:** `reconciliation cycle; final commit recorded in §12.7`
 - **Audit date:** `2026-08-09`
 - **Scope:** cross-audit of the Edge chain; no source contract is changed by this report
-- **Decision:** `CROSS-AUDIT NOT CLEAR — IMPLEMENTATION AUTHORIZATION BLOCKED`
+- **Decision:** `CROSS-AUDIT CLEAR — IMPLEMENTATION AUTHORIZED`
 
 ## 1. Purpose and limits
 
@@ -83,9 +83,9 @@ The audited contracts are:
 | Security | [`EDGE_SECURITY.md`](EDGE_SECURITY.md) | Trust boundary and identity preservation are coherent. |
 | Telemetry | [`EDGE_TELEMETRY.md`](EDGE_TELEMETRY.md) | Telemetry/Evidence separation and offline queue are coherent. |
 
-## 4. Executive verdict
+## 4. Original baseline verdict (V1)
 
-The module contracts are mostly coherent in isolation. The audit did **not** find:
+The module contracts were mostly coherent in isolation. The baseline audit did **not** find:
 
 - broken relative Markdown references in the Edge specifications;
 - a second Audience or Evidence authority;
@@ -95,7 +95,7 @@ The module contracts are mostly coherent in isolation. The audit did **not** fin
 - a rule that makes Telemetry materialize Evidence;
 - a rule that makes OTA or Recovery silently change `EdgeInstallationId`.
 
-The audit **did** find integration ambiguities that prevent deterministic end-to-end implementation. They are recorded below as `ARCHITECTURE_BLOCKER` and must be reconciled before the Edge chain can be authorized as a whole.
+The baseline audit **did** find integration ambiguities that prevented deterministic end-to-end implementation. They remain recorded below for traceability; §12 records the reconciliation decisions and final result.
 
 ## 5. Findings matrix
 
@@ -261,10 +261,109 @@ The following are the minimum unresolved integration decisions evidenced by this
 7. Runtime result to TV Network Command/Event mapping;
 8. production values for profile/configuration parameters before production certification.
 
-## 11. Final certification verdict
+## 11. Baseline certification verdict (V1)
 
 **`CROSS-AUDIT NOT CLEAR — IMPLEMENTATION AUTHORIZATION BLOCKED`**
 
 The Edge chain is not ready for end-to-end implementation authorization because `ECA-001`, `ECA-002`, `ECA-004`, `ECA-005`, `ECA-006`, `ECA-007` and `ECA-008` are objective architecture blockers. `ECA-003`, `ECA-010` and `ECA-011` are documentation debt, and `ECA-009` is a production/configuration gate rather than a domain blocker.
 
-No existing specification was edited, no decision was silently resolved and no new Bounded Context or module contract was introduced by this audit.
+No existing specification was edited and no decision was silently resolved by the V1 audit.
+
+## 12. Reconciliation V2
+
+This section records the single reconciliation cycle executed from the V1 backlog. It is an audit trail, not a new domain authority.
+
+### 12.1 Decisions and authority
+
+| Original finding | Reconciliation decision | Sole authority used |
+| --- | --- | --- |
+| `ECA-001` | TV Network remains owner of public Desired/Current/Observed State. Runtime uses internal `RuntimeObservation`, supplies Current State facts through the EdgeInstallation adapter and never produces `ObservedStateDerived`. | `ADR-008-TV-Network.md`, `DEC-009`, `TV_NETWORK_EVENTS.md` |
+| `ECA-002` | Public `EdgeInstallation` state is mapped by one precedence table; Installer, Provisioning, OS, Runtime, OTA and Recovery retain their own qualified process states. | `ADR-008-TV-Network.md` plus the canonical mapping added to `docs/tv-network/EDGE_RUNTIME.md` |
+| `ECA-003` | Telemetry Context alone closes accepted minute buckets. Legacy Edge text now forwards observations instead of claiming bucket ownership. | `DEC-063`, `EDGE_TELEMETRY.md` |
+| `ECA-004` | OS supervises the Runtime process and OS resources; Runtime supervises registered modules; Player and Recovery retain their own contracts. Concurrent cross-layer restart is prohibited. | `EDGE_OS_SPECIFICATION.md`, `EDGE_RUNTIME_SPECIFICATION.md`, `ADR-008-TV-Network.md` |
+| `ECA-005` | Installer ends its owned lifecycle at `HANDOFF_PENDING`/`PROVISIONING_DELEGATED`; Provisioning begins only with one immutable `ProvisioningRequest` and owns all target writes and checkpoints. | `EDGE_INSTALLER_SPECIFICATION.md`, `EDGE_PROVISIONING.md` |
+| `ECA-006` | OTA gates are bound to exact RuntimeHealth, PlayerHealth and OS predicates. Unknown/degraded mandatory health cannot reach `CONFIRMED` or `MARKED_GOOD`; failures use Last Known Good and Recovery. | `EDGE_OTA.md`, `EDGE_RUNTIME_SPECIFICATION.md`, `EDGE_PLAYER_SPECIFICATION.md`, `EDGE_OS_SPECIFICATION.md` |
+| `ECA-007` | `EdgeInstallationId` is the canonical field. `EdgeInstallationIdentifier` is historical wording only and is not allowed in new contracts. | `EDGE_SECURITY.md`, `DEC-063`, `PLATFORM_SPECIFICATION.md` and synchronized TV Network documents |
+| `ECA-008` | Runtime-local results are bridged by the authenticated EdgeInstallation adapter to the existing TV Network events; Runtime never renames a local result into a public event. | `TV_NETWORK_EVENTS.md`, `EDGE_RUNTIME_SPECIFICATION.md` |
+| `ECA-009` | Platform-wide numeric eligibility remains centralized at 1/2/4 GB RAM and 8/16/32 GB usable storage. CPU, thermal, network, Player and Store limits are mandatory profile facts with evidence; no downstream document may invent a second scalar. | `EDGE_HARDWARE_COMPATIBILITY.md`, `EDGE_HARDWARE_PROFILES.md`, `EDGE_INSTALLATION_PROFILES.md` |
+| `ECA-010` / `ECA-011` | Stale cuts, Recovery terminology and Runtime dependency references were synchronized in existing audit/roadmap/legacy documents. | `CURRENT_ARCHITECTURE.md`, `EDGE_TECHNICAL_ROADMAP.md`, `EDGE_PLATFORM_GAP_ANALYSIS.md`, existing TV Network documents |
+
+### 12.2 Documents changed
+
+Only existing documents were changed:
+
+- `docs/tv-network/EDGE_RUNTIME.md`;
+- `docs/tv-network/TV_NETWORK_EVENTS.md`;
+- `docs/tv-network/DEVICE_REGISTRY.md`;
+- `docs/tv-network/PROVISIONING.md`;
+- `docs/tv-network/EDGE_PROVISIONING_AND_HARDWARE_PLATFORM.md`;
+- `docs/adr/ADR-010-Edge-Hardware-and-Provisioning.md` (terminology only; status remains `Proposed`);
+- `docs/specification/EDGE_RUNTIME_SPECIFICATION.md`;
+- `docs/specification/EDGE_INSTALLER_SPECIFICATION.md`;
+- `docs/specification/EDGE_PROVISIONING.md`;
+- `docs/specification/EDGE_OS_SPECIFICATION.md`;
+- `docs/specification/EDGE_OTA.md`;
+- `docs/specification/EDGE_SECURITY.md`;
+- `docs/specification/EDGE_HARDWARE_COMPATIBILITY.md`;
+- `docs/specification/EDGE_HARDWARE_PROFILES.md`;
+- `docs/specification/EDGE_PLATFORM_GAP_ANALYSIS.md`;
+- `docs/specification/CURRENT_ARCHITECTURE.md`;
+- `docs/specification/EDGE_TECHNICAL_ROADMAP.md`;
+- `tests/documentation/edge-architecture-audit-package.test.mjs` (expectativas do pacote de auditoria sincronizadas com o corte reconciliado);
+- this report.
+
+No new Edge specification was created. `ADR-002` was not changed and `ADR-010` was not promoted.
+
+### 12.3 Explicitly preserved constraints
+
+- ADR-002 remains accepted/current while ADR-010 remains Proposed.
+- No concrete MXQ Pro profile was created.
+- Armbian remains a replaceable candidate, not a permanent dependency.
+- Hardware remains heterogeneous and profile-driven.
+- Player Web, Local Content Store and offline playback remain mandatory architectural directions.
+- Installer, Provisioning, Runtime, Player, OTA, Recovery, Security and Telemetry remain separate authorities.
+- Telemetry never materializes Evidence; Evidence Ledger remains the sole Evidence authority.
+- Optional sensors may degrade telemetry without stopping authorized playback.
+
+### 12.4 Final cross-audit checks
+
+The V2 audit verified all of the following against the reconciled tree:
+
+- one public state owner and one explicit mapping table;
+- no Installer/Provisioning target-write overlap;
+- OS/Runtime/Player/Recovery supervision boundaries are non-overlapping;
+- OTA health gates are exact and reproducible;
+- `EdgeInstallationId` is the only new-contract identity spelling;
+- every Runtime-to-public event mapping names producer, consumer, envelope and idempotency;
+- RAM/storage thresholds are not redefined downstream;
+- profile-specific CPU, thermal, network, Player and Store limits are required and evidenced;
+- all relative references resolve;
+- ADR-002 remains unchanged and ADR-010 remains Proposed;
+- no production code is modified.
+
+**Resultado da auditoria estrutural:** `PASS`.
+
+### 12.5 Final result
+
+`CROSS-AUDIT CLEAR — IMPLEMENTATION AUTHORIZED`. The clear result authorizes implementation of the reconciled contracts; it does not accept ADR-010, homologate a concrete TV Box or certify production deployment.
+
+### 12.6 Real pending items after reconciliation
+
+The following remain profile/deployment work, not unresolved cross-architecture ownership:
+
+- creation and homologation of the first concrete Hardware Profile;
+- selection of concrete profile values for CPU, thermal, network, Player and Store quotas;
+- production SLOs, rollout waves and operational capacity;
+- formal acceptance or rejection of ADR-010 after its stated evidence gates.
+
+These items do not authorize a developer to bypass the profile contract or infer a hardware capability.
+
+### 12.7 Reconciled audit commit
+
+The substantive reconciliation commit is recorded in the final repository metadata. The verification suite is recorded in this section so the result is reproducible:
+
+- `npm run test:all`: 137 tests, 135 passed, 2 PostgreSQL tests skipped because `DATABASE_URL` is not configured; architecture 4/4; documentation 54/54;
+- `npm run typecheck`: passed;
+- `git diff --check`: passed;
+- audited relative-link validation: 147 Markdown files under `docs/`, 172 links, all resolved;
+- production code guard: no changes under `apps/` or `packages/`.

@@ -429,7 +429,7 @@ TVIdentifier é permanente e não reutilizável; dispositivos substituíveis pos
 
 Instalação pode ser autoguiada pelo parceiro sob sessão remota de técnico Mostarda. Prova de presença usa desafio temporário, serial, fotos/vídeo, checklist, assinatura e testes. Proprietário declara ownership; dono do local diferente atua somente como custodiante autorizado.
 
-`TVIdentifier`, `DeviceIdentifier` e `EdgeInstallationIdentifier` nunca são sinônimos. TV identifica o nó lógico permanente; Device identifica uma peça física; EdgeInstallation identifica uma instalação do runtime vinculada a exatamente um MiniPC durante sua vigência. A credencial operacional pertence à EdgeInstallation. Troca de MiniPC encerra o vínculo e a credencial anteriores e cria nova EdgeInstallation; não transfere a chave antiga nem recria a TV.
+`TVIdentifier`, `DeviceIdentifier` e `EdgeInstallationId` nunca são sinônimos. TV identifica o nó lógico permanente; Device identifica uma peça física; EdgeInstallation identifica uma instalação do runtime vinculada a exatamente um MiniPC durante sua vigência. A credencial operacional pertence à EdgeInstallation. Troca de MiniPC encerra o vínculo e a credencial anteriores e cria nova EdgeInstallation; não transfere a chave antiga nem recria a TV. `EdgeInstallationIdentifier` é apenas uma grafia histórica e não pode aparecer em novos contratos.
 
 ### SPEC-TV-003 — Estado e reconciliação
 

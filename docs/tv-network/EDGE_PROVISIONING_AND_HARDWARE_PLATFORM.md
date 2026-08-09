@@ -181,7 +181,7 @@ Hardware Profile
 ├── Installation Adapter
 ├── Player Profile
 ├── Capability Manifest
-├── Recovery Profile
+├── Recovery Plan
 └── Compatibility status
 ```
 
@@ -234,7 +234,7 @@ InstallationProfile:
     InstallAdapter: Rockchip-A
     Target: Internal Storage
     PlayerProfile: Web-Low-Memory
-    RecoveryProfile: Rockchip-Recovery-A
+    RecoveryPlan: Rockchip-Recovery-A
 ```
 
 ---
@@ -651,7 +651,7 @@ O Edge NÃO DEVE instalar imagem destinada a hardware incompatível.
 
 ## 22. Recovery
 
-Cada `HardwareProfile` DEVE possuir um `RecoveryProfile`.
+Cada `HardwareProfile` DEVE possuir um `Recovery Plan`.
 
 Recovery DEVE permitir, conforme as capacidades do hardware:
 
@@ -882,4 +882,3 @@ Discover
 ```
 
 Esse é o contrato operacional do Mostarda Edge.
-

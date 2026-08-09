@@ -18,7 +18,7 @@ test("current architecture preserves accepted and proposed authority", () => {
   const current = read("docs/specification/CURRENT_ARCHITECTURE.md");
 
   assert.match(current, /AUDIT BASELINE — NÃO NORMATIVO/);
-  assert.match(current, /main @ ddad9bf/);
+  assert.match(current, /main @ (?:[0-9a-f]{7,40}|reconciliation-cycle)/i);
   for (const state of ["ACCEPTED", "PROPOSED", "DRAFT", "IMPLEMENTED", "PARTIALLY IMPLEMENTED", "OPEN"]) {
     assert.match(current, new RegExp(`\\b${state}\\b`), state);
   }
@@ -55,7 +55,7 @@ test("roadmap blocks normative synchronization and implementation until approval
   const roadmap = read("docs/specification/EDGE_TECHNICAL_ROADMAP.md");
 
   assert.match(roadmap, /ROADMAP CANDIDATE — NÃO NORMATIVO/);
-  assert.match(roadmap, /main @ ddad9bf/);
+  assert.match(roadmap, /main @ (?:[0-9a-f]{7,40}|reconciliation-cycle)/i);
   assert.match(roadmap, /ADR-002.*continua aceito/i);
   assert.match(roadmap, /ADR-010.*continua Proposed/i);
   assert.match(roadmap, /PLATFORM_SPECIFICATION.*continua Draft/i);
@@ -63,7 +63,7 @@ test("roadmap blocks normative synchronization and implementation until approval
   assert.match(roadmap, /Fase 1 — Gate de dependências e gaps/);
   assert.match(roadmap, /Fase 2 — Revisão do ADR-010/);
   assert.match(roadmap, /Fase 3 — Sincronização normativa/);
-  assert.match(roadmap, /Hardware Discovery[\s\S]*Hardware Profile[\s\S]*Installation Profile[\s\S]*Recovery Profile/);
+  assert.match(roadmap, /Hardware Discovery[\s\S]*Hardware Profile[\s\S]*Installation Profile[\s\S]*Recovery Plan/);
   assert.match(roadmap, /RAM[\s\S]*Storage[\s\S]*Offline Content Store[\s\S]*Web Engine[\s\S]*Codec Capability[\s\S]*Player Profile/);
   assert.match(roadmap, /Não fazer nesta fase/);
   assert.match(roadmap, /\| implementar installer\/OS\/adapters \| não \|/i);

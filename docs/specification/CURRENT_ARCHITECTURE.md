@@ -1,8 +1,8 @@
 # Current Architecture — Edge e TV Network
 
 - **Status:** `AUDIT BASELINE — NÃO NORMATIVO`
-- **Data-base:** 2026-08-08
-- **Corte do repositório:** `main @ ddad9bf`
+- **Data-base:** 2026-08-09
+- **Corte do repositório:** `main @ reconciliation-cycle` (commit final registrado no cross-audit)
 - **Finalidade:** registrar, de forma factual, como a arquitetura Edge está descrita hoje no repositório
 - **Não é:** uma aceitação do ADR-010, uma substituição da `PLATFORM_SPECIFICATION.md` ou uma autorização de implementação
 
@@ -16,6 +16,8 @@ Este documento é uma fotografia da documentação versionada. Ele separa quatro
 4. **Lacuna ou conflito:** informação que a própria auditoria registra como insuficiente ou sobreposta.
 
 Nenhuma lacuna é preenchida por inferência neste documento. Quando duas fontes descrevem responsabilidades diferentes, ambas são registradas e o conflito é encaminhado para a análise de gaps.
+
+Este documento continua sendo uma fotografia histórica do corte indicado no cabeçalho. Ele não substitui a reconciliação posterior nem o gate de autorização vigente, que é registrado em [`EDGE_ARCHITECTURE_CROSS_AUDIT.md`](EDGE_ARCHITECTURE_CROSS_AUDIT.md).
 
 ## 1.1 Eixos de classificação
 
@@ -50,7 +52,7 @@ Enquanto o ADR-010 permanecer `Proposed`, o estado normativo atual continua send
 | --- | --- | --- | --- | --- |
 | Edge baseado em Mini PC | `ACCEPTED` | `PARTIALLY IMPLEMENTED` | `CURRENT` | ADR-002 aceito; há contratos e componentes transversais no repositório, mas não há um pacote completo de Edge Runtime |
 | TV Network e lifecycles | `DRAFT`/derivado | `NOT IMPLEMENTED` como serviço de frota | `CURRENT` | documentos de TV Network, mas nenhum serviço correspondente identificado no corte |
-| Edge Runtime | `ACCEPTED` no ADR-002; parâmetros `OPEN` | `NOT IMPLEMENTED` como aplicação Edge | `CURRENT` | `EDGE_RUNTIME.md`; não existe `apps/edge` ou `packages/edge` no corte |
+| Edge Runtime | `ACCEPTED` no ADR-002; parâmetros `OPEN` | `NOT IMPLEMENTED` como aplicação Edge | `CURRENT` | `EDGE_RUNTIME.md` e `EDGE_RUNTIME_SPECIFICATION.md`; não existe `apps/edge` ou `packages/edge` no corte |
 | Telemetry Ledger e identidades | contratos especializados existentes | `IMPLEMENTED` em escopo limitado | `CURRENT` | `packages/telemetry`, `packages/kernel`, testes de conformance e gates documentais |
 | Persistence/Event Store/Projection Store | contratos TBS e persistência existentes | `PARTIALLY IMPLEMENTED` | `CURRENT` | pacotes `persistence`, `persistence-postgres`, migrações e testes de integração |
 | Provisioning e Device Registry | `DRAFT`/derivado | `NOT IMPLEMENTED` como fluxo executável | `CURRENT` | `PROVISIONING.md`, `DEVICE_REGISTRY.md` e `INSTALLATION.md` são documentação |
@@ -237,7 +239,7 @@ O ADR-002 aceita comunicação mTLS, assinatura de Playback Events por chave loc
 
 Os documentos de runtime e provisioning distinguem `TVIdentifier`, `DeviceIdentifier` e `EdgeInstallationId`; `bootSessionId` não é reutilizável; credenciais revogadas não são reutilizadas.
 
-A proposta do ADR-010 acrescenta catálogo de hardware, assinatura de imagem, Recovery Profile e instalação por adaptadores, mas esses elementos ainda não são aceitos normativamente.
+A proposta do ADR-010 acrescenta catálogo de hardware, assinatura de imagem, Recovery Plan e instalação por adaptadores, mas esses elementos ainda não são aceitos normativamente.
 
 ## 13. O que está vigente e o que é apenas candidato
 

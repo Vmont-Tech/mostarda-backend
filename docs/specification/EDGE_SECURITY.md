@@ -313,6 +313,18 @@ DESTROYED
 
 `REVOKED`, `COMPROMISED` and `DESTROYED` keys shall not authenticate new production operations. Historical signatures remain evidence and are not rewritten.
 
+### 6.5 Identity authority map
+
+`EdgeInstallationId` and `DeviceKey` are distinct identities with distinct owners:
+
+| Artifact | Authority | Other components |
+| --- | --- | --- |
+| `EdgeInstallationId` logical installation identity | TV Network / `EdgeInstallation` | Installer and Provisioning request creation or preservation; Runtime, OTA and Recovery consume it |
+| `DeviceKey` cryptographic key material and lifecycle | Security | Provisioning requests authorized creation; Runtime requests use; OTA/Recovery preserve or invoke explicit rotation/reset |
+| identity binding to Hardware/Installation Profile | Provisioning result under the accepted profiles | Security validates; Runtime reports; no component infers a new binding |
+
+Installer, Provisioning, Runtime, OTA and Recovery shall never create competing identity models. A retry reuses the same identity and operation references. Migration, rotation, revocation and reset are explicit Security-authorized operations; ordinary installation retry, OTA and Recovery preserve the existing identity.
+
 ---
 
 ## 7. Key Generation and Storage
