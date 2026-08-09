@@ -6,7 +6,11 @@ import {
   type AdbTransport,
   collectAndroidFacts,
 } from "../../packages/edge-discovery/src/index.ts";
-import { runDiscoveryWithTransport } from "../../scripts/edge-discovery.ts";
+import {
+  createProcessAdbTransport,
+  parseArguments,
+  runDiscoveryWithTransport,
+} from "../../scripts/edge-discovery.ts";
 
 test("composed discovery seals facts without compatibility or profile classification", async () => {
   const intake = createInitialMxqIntake({
@@ -60,4 +64,13 @@ test("laboratory runner composes a read-only discovery from an injected transpor
 
   assert.equal(result.lifecycleState, "SEALED");
   assert.equal(result.facts.find((fact) => fact.factType === "software.device_model")?.value, "Nex30");
+});
+
+test("CLI requires an explicit ADB serial and never accepts an empty target", () => {
+  assert.deepEqual(parseArguments(["--serial", "192.168.1.50:5555"]), {
+    serial: "192.168.1.50:5555",
+    evidenceReference: "adb:192.168.1.50:5555",
+  });
+  assert.throws(() => parseArguments([]), /usage:/i);
+  assert.throws(() => createProcessAdbTransport(""), /serial must not be empty/i);
 });
