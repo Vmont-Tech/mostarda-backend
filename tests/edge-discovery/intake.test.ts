@@ -23,6 +23,8 @@ test("initial MXQ intake preserves observations and flags unverified capacities"
   assert.equal(byType.get("device.serial")?.value, "unknown");
   assert.ok(record.facts.every((fact) => fact.observedAt === null));
   assert.ok(record.facts.every((fact) => /^[a-f0-9]{64}$/.test(fact.evidence.digest ?? "")));
+  assert.ok(record.facts.every((fact) => fact.evidence.digestScope === "DECLARATION_ENVELOPE"));
+  assert.ok(record.facts.every((fact) => fact.evidence.integrityState === "UNVERIFIED"));
   assert.equal(byType.get("soc.family")?.inference, "PROBABLE_NOT_VALIDATED");
   assert.equal(byType.get("memory.ram.total")?.value, "256 GB");
   assert.equal(byType.get("memory.ram.total")?.normalizedValue, undefined);
@@ -33,4 +35,16 @@ test("initial MXQ intake preserves observations and flags unverified capacities"
   assert.equal(record.lifecycleState, "PARTIAL");
   assert.ok(record.missingRequirements.includes("memory.ram.total.physical"));
   assert.ok(record.missingRequirements.includes("soc.model"));
+  for (const requirement of [
+    "player.web_engine.validation",
+    "ota.validation",
+    "thermal.validation",
+    "offline.playback.validation",
+    "ota.rollback.validation",
+    "stability.long_run.validation",
+    "hardware.profile.lifecycle",
+  ]) {
+    assert.ok(record.missingRequirements.includes(requirement), requirement);
+    assert.equal(byType.has(requirement), false, requirement);
+  }
 });

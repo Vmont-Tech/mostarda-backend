@@ -23,6 +23,11 @@ export type EvidenceIntegrityState =
   | "INVALID"
   | "UNAVAILABLE";
 
+export type EvidenceDigestScope =
+  | "ORIGINAL_EVIDENCE_BYTES"
+  | "DECLARATION_ENVELOPE"
+  | "ADB_COMMAND_RESULT";
+
 export type FactValidationState =
   | "VERIFIED"
   | "UNVERIFIED"
@@ -46,6 +51,8 @@ export interface FactSource {
 export interface FactEvidence {
   readonly kind: string;
   readonly digest?: string;
+  /** Identifies what was hashed; a digest is not proof of original evidence bytes unless explicitly scoped so. */
+  readonly digestScope?: EvidenceDigestScope;
   readonly signature?: string;
   readonly signingKeyId?: string;
   readonly sourceReference?: string;
@@ -154,6 +161,7 @@ function evidenceManifest(facts: readonly DiscoveryFact[]): readonly unknown[] {
       evidence: {
         kind: fact.evidence.kind,
         digest: fact.evidence.digest ?? null,
+        digestScope: fact.evidence.digestScope ?? null,
         signature: fact.evidence.signature ?? null,
         signingKeyId: fact.evidence.signingKeyId ?? null,
         sourceReference: fact.evidence.sourceReference ?? null,
@@ -180,6 +188,9 @@ function validateFact(fact: DiscoveryFact): void {
   assertNonEmpty(fact.collectedAt, "collectedAt");
   assertIsoInstant(fact.collectedAt, "collectedAt");
   if (fact.observedAt !== null) assertIsoInstant(fact.observedAt, "observedAt");
+  if (fact.evidence.digest !== undefined && fact.evidence.digestScope === undefined) {
+    throw new Error("evidence.digest requires an explicit digestScope");
+  }
   assertConfidence(fact.confidence);
   if (!Number.isInteger(fact.observationSequence) || fact.observationSequence < 0) {
     throw new Error("observationSequence must be a non-negative integer");

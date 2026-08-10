@@ -1,6 +1,6 @@
 {
   "discovery": {
-    "discoveryId": "disc-mxq-real-1786386131702",
+    "discoveryId": "disc-mxq-real-1786387463036",
     "targetIdentity": {
       "bindingState": "PROVISIONAL",
       "reference": "mxq-pro-4k-5g-lab-001"
@@ -8,7 +8,7 @@
     "schemaVersion": "hardware-discovery-schema-v1",
     "collectorVersion": "edge-discovery-intake-v1",
     "lifecycleState": "SEALED",
-    "startedAt": "2026-08-10T18:22:11.699Z",
+    "startedAt": "2026-08-10T18:44:23.034Z",
     "facts": [
       {
         "factId": "mxq-intake-board-identifier",
@@ -22,10 +22,11 @@
         },
         "value": "R329Q_V8.1",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "e723199ee7f9c5faca1061750bbc0190c6642d0cd9c3c6f3dc15d9a6d7405272",
+          "digest": "3ac9a182c8d4d74364b6a567e16ec107f2563ac90dbb57f1d2569f5b01c58b41",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -53,10 +54,11 @@
         },
         "value": "2020.06.15",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "d086d9aa992752a751e6965755e18f30743fdea1785664045767b1753128d9cb",
+          "digest": "cc6b82c00d2f545543807205b3de3bfba476bc72623197b7c0315ded283487fb",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -84,10 +86,11 @@
         },
         "value": "ARM 32-bit",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "2e4881f3171c6a8aa3ac247d27b0b3b092031d172a90b232e82f90b71d3818c9",
+          "digest": "b6a9e79481699289bd5dd958b4c21dcee2ed39e4a64244485ab81342c6cfdb14",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -115,10 +118,11 @@
         },
         "value": "MXQ Pro 4K 5G",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "f2cf5fb578554df45bfd05061536ffe17ecedb4b2a9617d4cafc8f044c2f6442",
+          "digest": "0448f9f170f6fcc1afd38ac948ddefc062306bae79783cd600cbdb352cae8c84",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -146,10 +150,11 @@
         },
         "value": "unknown",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "e0d561964724446f3020e9ebe904cdf49eb2b0e27f39d5023526aad340ba26cc",
+          "digest": "16c81f29ce6e073bf4f3fd0f3d48ca9fda192b3d41cc0bc26a81fdbfcc98690f",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -176,10 +181,11 @@
         },
         "value": "256 GB",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "d74db945a64db9a4a99e889a7c4ca3f7c9f6028c35a8e83895b95d630fd0105e",
+          "digest": "6e90aa9fd4d299e2ca573ad11b4f7da8ecf1d69cea01c7f602c5ab1a4a5d37a5",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -206,10 +212,11 @@
         },
         "value": "192.168.0.1",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "12983e2833dcd7bd5287f1ef5775ea15e60600eaa54c25271d05dec811d4085a",
+          "digest": "31ac9ab95318e0dda1f61bd4155c7bc4d33c3c2ff0c814d2b207824acfc52144",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -237,10 +244,11 @@
         },
         "value": "DHCP",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "1c74e9e8ea0444c8c345ed741260c3caa30666514f7e1503499e07383f5b69df",
+          "digest": "edb4d903c89f499aaeb2b3bec2b1e8363a99859e3df246280215ffc17e85bc3b",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -268,10 +276,11 @@
         },
         "value": "192.168.0.106",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "c5f6e18f6c4c24b690098c3265ed7578b701f1c9c80b3fbf2d592f041f0734f6",
+          "digest": "8ba884691e2873f83e13cbe4896e99815dc2c7c67fb8e86beaba91e0421d8b5e",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -299,10 +308,11 @@
         },
         "value": "9c:00:d3:40:e1:3c",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "e14bc1836c41637e1507289c6a495e34bf13668fe3a59e5eeca4f28bf5471bbb",
+          "digest": "b022092321b9dfa1037d4c52e0c26ce77847073fde4f6690eff805b9183dac5f",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -330,10 +340,11 @@
         },
         "value": true,
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "20fda5341f863b50c60e8bd5e29657480aa177a9f11daaeea20e5dff2c93ecf0",
+          "digest": "567f1c59729b49975ca23bd253775925dbe4c42eb60f1ee41a0246243ba346a0",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -360,10 +371,11 @@
         },
         "value": "SV6256P",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "72fc58abefe1d242d32f1f87b06a8a16d3353f0fc3a5f6f56320a04932fb39eb",
+          "digest": "03cc00c67761738865135439d187afec79e64adb728af860aa873b45e0564f5c",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -391,10 +403,11 @@
         },
         "value": true,
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "87c17ac2e7c7abd80b6369cb616510fc779b2c96f5a361f0d6586f844ed75441",
+          "digest": "f58cbe6a919cd3bdc2ec44d25e16555bf08f8b32ab10bafe7bdc2a6d06d731ec",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -421,10 +434,11 @@
         },
         "value": "RK3228A/RK3229",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "b6b7d3115e628144d21515079055cbf255015b2442c62b9c1b3f28e9f3759f11",
+          "digest": "41a6879e5be0cb4f5dccf667d03449a4e2277b7ed0e6a7335fc8d25d069fd184",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -452,10 +466,11 @@
         },
         "value": "2022-04-05",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "53d0f3482feaff65679761d6f937f8562848cbf5a4b4267a24b623441ef7ef94",
+          "digest": "ec3050c4ad75fb5d677e99dbfea800abd320ea505ee07710b1caa48dbc038af9",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -483,10 +498,11 @@
         },
         "value": "TV BOX eng.akrd2.20240222.161226",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "348773a23c7a18372312a92283990926024fc94a5c0991a1a6a3d257cd16e7c3",
+          "digest": "676bdd6c761e9ce3d274173dd0199ea7ac5afc710302e8f7a5627446b7d7fea0",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -514,10 +530,11 @@
         },
         "value": "Nex30",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "7fef0ab6bd39bcd215dceb76d423eff9070a4e7e23ea38050401dfa7020ade81",
+          "digest": "0ebb06f3b4a9b0a3b2d96d99556ad96f6173e2dcda29c37757dfeab28d12ee9d",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -545,10 +562,11 @@
         },
         "value": "akrd2@R740XD #1",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "f6fac7fe40841f94828b28553dd388a80afb75597f6bedb4eb89b18b7444a4d6",
+          "digest": "a03549b2273a96316ef142f7d1b111d1ac998d14be0910bcf5e996a296801ae8",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -576,10 +594,11 @@
         },
         "value": "Thu Feb 22 16:10:31 CST 2024",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "9fe2bd802de7bfde3d38bc4b4fb003436d69a19e030ae37ec90e8a82dc96c441",
+          "digest": "be00a8c91c3db7b14037e976615701fd36d43b1725de796c9b8a6bd0843ad931",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -607,10 +626,11 @@
         },
         "value": "3.10.104",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "f22ad5904794e07c2ebc2055a8890eecfc68cb18b7d52b1d32ebb51452ee67aa",
+          "digest": "f66bccad48fb9b95b8ca3320f096213a54191c9745eb59e3a5c73957c21633c6",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -638,10 +658,11 @@
         },
         "value": "Android",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "a98da81f0af86bd536ad1c8cff03e6854986b0cc929bf7349f7fd7082adfc61c",
+          "digest": "41e0ccd54f30f6a31c865aa8988d892f7127fef4a1f8fa78b1ff5793ac1a10dd",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -669,10 +690,11 @@
         },
         "value": "13.0",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "f0f82e0d838d993a32a4ab6457a4765175c759bb66b3cd6b0270dbfa5e800d81",
+          "digest": "e6cbd973318af01ae98643b9ab19f8a82d527c927d5d99ba53f1b8b591249b52",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -700,10 +722,11 @@
         },
         "value": "1024 GB",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "3bd41540f43a8bacea807c10e6d1d3b1cbe39fbc37568358781068dcc0e4076f",
+          "digest": "86758944ca516ce9902125cf9289cfe4fcb9920bff63709d59ab33b847543abc",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -730,10 +753,11 @@
         },
         "value": true,
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "collectedAt": "2026-08-10T18:44:23.034Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "1868bc64cf7e76f9c4f2f5631f75b72d90fa4f64bd0f12963d0a090d398493c2",
+          "digest": "9834f2c0277b1a13ff3314d61000764161debf4849e9ca31683adec5470614d8",
+          "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
@@ -757,28 +781,35 @@
       "cpu.architecture.effective",
       "display.hdmi.probe",
       "gpu.model",
+      "hardware.profile.lifecycle",
       "identity.device_key_capability",
       "identity.edge_installation_id_capability",
       "memory.ram.total.physical",
       "network.ethernet.probe",
       "network.wifi.probe",
+      "offline.playback.validation",
+      "ota.rollback.validation",
+      "ota.validation",
+      "player.web_engine.validation",
       "recovery.validation",
       "security.secure_boot.state",
       "soc.model",
+      "stability.long_run.validation",
       "storage.partitions",
       "storage.usable.physical",
+      "thermal.validation",
       "usb.probe",
       "vpu.model"
     ],
-    "evidenceRoot": "5f5ac7fd20150a9f343cacabb4241adab64f2890dfc6cb136b2468d76a730317",
-    "sealedAt": "2026-08-10T18:22:11.699Z",
-    "recordHash": "358b30fd1ad219bc19a6185ed652e6a4343451c85d75ce2c2f9a2d8adc28d297"
+    "evidenceRoot": "ff014668a58f94173f32eea070f1f2427447f53bde9bef6ac47cab279d760558",
+    "sealedAt": "2026-08-10T18:44:23.034Z",
+    "recordHash": "31d72de574583c641884383c06632a82c70bc43711c96cca1895e757475eb338"
   },
   "compatibility": {
-    "evaluationId": "compat-mxq-real-1786386131702",
-    "discoveryId": "disc-mxq-real-1786386131702",
-    "recordHash": "358b30fd1ad219bc19a6185ed652e6a4343451c85d75ce2c2f9a2d8adc28d297",
-    "evaluatedAt": "2026-08-10T18:22:11.699Z",
+    "evaluationId": "compat-mxq-real-1786387463036",
+    "discoveryId": "disc-mxq-real-1786387463036",
+    "recordHash": "31d72de574583c641884383c06632a82c70bc43711c96cca1895e757475eb338",
+    "evaluatedAt": "2026-08-10T18:44:23.034Z",
     "evaluatorVersion": "edge-hardware-compatibility-v1",
     "state": "UNKNOWN",
     "automaticProvisioning": "BLOCKED",

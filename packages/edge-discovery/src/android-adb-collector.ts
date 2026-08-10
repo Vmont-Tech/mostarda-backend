@@ -142,6 +142,7 @@ function makeFact(
     evidence: {
       kind: "adb-command-output",
       digest: digestAdbResult(command, result),
+      digestScope: "ADB_COMMAND_RESULT" as const,
       sourceReference: context.evidenceReference,
       captureMethod: command,
       integrityState: "UNVERIFIED",

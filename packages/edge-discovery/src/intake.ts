@@ -37,6 +37,13 @@ const MISSING_REQUIREMENTS = [
   "security.secure_boot.state",
   "identity.edge_installation_id_capability",
   "identity.device_key_capability",
+  "player.web_engine.validation",
+  "ota.validation",
+  "thermal.validation",
+  "offline.playback.validation",
+  "ota.rollback.validation",
+  "stability.long_run.validation",
+  "hardware.profile.lifecycle",
 ] as const;
 
 function slug(value: string): string {
@@ -85,6 +92,7 @@ function fact(
     evidence: {
       kind: "user-provided-image-observation",
       digest: digestDeclaredObservation(input, factType, value),
+      digestScope: "DECLARATION_ENVELOPE" as const,
       sourceReference: input.evidenceReference,
       captureMethod: "user-provided-system-and-network-images",
       integrityState: "UNVERIFIED" as const,

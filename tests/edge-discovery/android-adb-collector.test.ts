@@ -75,4 +75,6 @@ test("ADB facts explicitly mark observation time as unavailable and digest the r
     }))
     .digest("hex");
   assert.equal(fact.evidence.digest, expectedDigest);
+  assert.equal(fact.evidence.digestScope, "ADB_COMMAND_RESULT");
+  assert.equal(fact.evidence.integrityState, "UNVERIFIED");
 });
