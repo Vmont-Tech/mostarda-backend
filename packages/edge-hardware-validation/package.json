@@ -1,0 +1,6 @@
+{
+  "name": "@mostarda/edge-hardware-validation",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0"
+}
