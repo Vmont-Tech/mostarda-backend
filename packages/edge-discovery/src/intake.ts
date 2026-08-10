@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   createDiscoveryRecord,
   type DiscoveryFact,
@@ -42,6 +43,21 @@ function slug(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+function digestDeclaredObservation(
+  input: MxqInitialIntakeInput,
+  factType: string,
+  value: unknown,
+): string {
+  return createHash("sha256")
+    .update(JSON.stringify({
+      sourceReference: input.evidenceReference,
+      capturedAt: input.capturedAt,
+      factType,
+      value,
+    }))
+    .digest("hex");
+}
+
 function fact(
   input: MxqInitialIntakeInput,
   factType: string,
@@ -57,8 +73,8 @@ function fact(
     factId: `mxq-intake-${slug(factType)}`,
     factType,
     source: {
-      kind: "HUMAN_DECLARATION",
-      component: "device-ui-intake",
+      kind: "USER_PROVIDED_EVIDENCE",
+      component: "mxq-system-and-network-screenshots",
       version: "intake-v1",
       reference: input.evidenceReference,
       trustClass: "DECLARED" as const,
@@ -67,8 +83,10 @@ function fact(
     observedAt: null,
     collectedAt: input.capturedAt,
     evidence: {
-      kind: "user-provided-observation",
+      kind: "user-provided-image-observation",
+      digest: digestDeclaredObservation(input, factType, value),
       sourceReference: input.evidenceReference,
+      captureMethod: "user-provided-system-and-network-images",
       integrityState: "UNVERIFIED" as const,
     },
     collectorVersion: COLLECTOR_VERSION,
@@ -96,14 +114,22 @@ export function createInitialMxqIntake(input: MxqInitialIntakeInput): DiscoveryR
     fact(input, "software.os.name", "Android", { normalizedValue: "Android" }),
     fact(input, "software.device_model", "Nex30", { normalizedValue: "Nex30" }),
     fact(input, "software.os.version", "13.0", { normalizedValue: normalizeVersion("13.0") }),
+    fact(input, "software.android.security_patch", "2022-04-05", { normalizedValue: normalizeVersion("2022-04-05") }),
     fact(input, "software.kernel.version", "3.10.104", { normalizedValue: normalizeVersion("3.10.104") }),
+    fact(input, "software.kernel.build", "akrd2@R740XD #1", { normalizedValue: "akrd2@R740XD #1" }),
+    fact(input, "software.kernel.build_date", "Thu Feb 22 16:10:31 CST 2024", { normalizedValue: "Thu Feb 22 16:10:31 CST 2024" }),
     fact(input, "software.build", "TV BOX eng.akrd2.20240222.161226", { normalizedValue: "TV BOX eng.akrd2.20240222.161226" }),
     fact(input, "memory.ram.total", "256 GB", { normalizedValue: normalizeCapacity("256 GB"), validationState: "UNRESOLVED" }),
     fact(input, "storage.nominal", "1024 GB", { normalizedValue: normalizeCapacity("1024 GB"), validationState: "UNRESOLVED" }),
     fact(input, "network.ethernet.present", true),
+    fact(input, "network.ethernet.ipv4", "192.168.0.106", { normalizedValue: "192.168.0.106" }),
+    fact(input, "network.ethernet.mac", "9c:00:d3:40:e1:3c", { normalizedValue: "9c:00:d3:40:e1:3c" }),
+    fact(input, "network.ethernet.ip_mode", "DHCP", { normalizedValue: "DHCP" }),
+    fact(input, "network.ethernet.gateway", "192.168.0.1", { normalizedValue: "192.168.0.1" }),
     fact(input, "network.wifi.present", true),
     fact(input, "network.wifi.chipset", "SV6256P", { normalizedValue: "SV6256P" }),
     fact(input, "usb.host_capability", true),
+    fact(input, "device.serial", "unknown", { validationState: "UNRESOLVED" }),
   ];
 
   return createDiscoveryRecord({

@@ -1,0 +1,979 @@
+{
+  "discovery": {
+    "discoveryId": "disc-mxq-real-1786386131702",
+    "targetIdentity": {
+      "bindingState": "PROVISIONAL",
+      "reference": "mxq-pro-4k-5g-lab-001"
+    },
+    "schemaVersion": "hardware-discovery-schema-v1",
+    "collectorVersion": "edge-discovery-intake-v1",
+    "lifecycleState": "SEALED",
+    "startedAt": "2026-08-10T18:22:11.699Z",
+    "facts": [
+      {
+        "factId": "mxq-intake-board-identifier",
+        "factType": "board.identifier",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "R329Q_V8.1",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "e723199ee7f9c5faca1061750bbc0190c6642d0cd9c3c6f3dc15d9a6d7405272",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "normalizedValue": "R329Q_V8.1"
+      },
+      {
+        "factId": "mxq-intake-board-observed-date",
+        "factType": "board.observed_date",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "2020.06.15",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "d086d9aa992752a751e6965755e18f30743fdea1785664045767b1753128d9cb",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "normalizedValue": "2020.06.15"
+      },
+      {
+        "factId": "mxq-intake-cpu-architecture",
+        "factType": "cpu.architecture",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "ARM 32-bit",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "2e4881f3171c6a8aa3ac247d27b0b3b092031d172a90b232e82f90b71d3818c9",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "inference": "PROBABLE_NOT_VALIDATED"
+      },
+      {
+        "factId": "mxq-intake-device-commercial-model",
+        "factType": "device.commercial_model",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "MXQ Pro 4K 5G",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "f2cf5fb578554df45bfd05061536ffe17ecedb4b2a9617d4cafc8f044c2f6442",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "normalizedValue": "MXQ Pro 4K 5G"
+      },
+      {
+        "factId": "mxq-intake-device-serial",
+        "factType": "device.serial",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "unknown",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "e0d561964724446f3020e9ebe904cdf49eb2b0e27f39d5023526aad340ba26cc",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNRESOLVED"
+      },
+      {
+        "factId": "mxq-intake-memory-ram-total",
+        "factType": "memory.ram.total",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "256 GB",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "d74db945a64db9a4a99e889a7c4ca3f7c9f6028c35a8e83895b95d630fd0105e",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNRESOLVED"
+      },
+      {
+        "factId": "mxq-intake-network-ethernet-gateway",
+        "factType": "network.ethernet.gateway",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "192.168.0.1",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "12983e2833dcd7bd5287f1ef5775ea15e60600eaa54c25271d05dec811d4085a",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "normalizedValue": "192.168.0.1"
+      },
+      {
+        "factId": "mxq-intake-network-ethernet-ip-mode",
+        "factType": "network.ethernet.ip_mode",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "DHCP",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "1c74e9e8ea0444c8c345ed741260c3caa30666514f7e1503499e07383f5b69df",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "normalizedValue": "DHCP"
+      },
+      {
+        "factId": "mxq-intake-network-ethernet-ipv4",
+        "factType": "network.ethernet.ipv4",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "192.168.0.106",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "c5f6e18f6c4c24b690098c3265ed7578b701f1c9c80b3fbf2d592f041f0734f6",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "normalizedValue": "192.168.0.106"
+      },
+      {
+        "factId": "mxq-intake-network-ethernet-mac",
+        "factType": "network.ethernet.mac",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "9c:00:d3:40:e1:3c",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "e14bc1836c41637e1507289c6a495e34bf13668fe3a59e5eeca4f28bf5471bbb",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "normalizedValue": "9c:00:d3:40:e1:3c"
+      },
+      {
+        "factId": "mxq-intake-network-ethernet-present",
+        "factType": "network.ethernet.present",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": true,
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "20fda5341f863b50c60e8bd5e29657480aa177a9f11daaeea20e5dff2c93ecf0",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED"
+      },
+      {
+        "factId": "mxq-intake-network-wifi-chipset",
+        "factType": "network.wifi.chipset",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "SV6256P",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "72fc58abefe1d242d32f1f87b06a8a16d3353f0fc3a5f6f56320a04932fb39eb",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "normalizedValue": "SV6256P"
+      },
+      {
+        "factId": "mxq-intake-network-wifi-present",
+        "factType": "network.wifi.present",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": true,
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "87c17ac2e7c7abd80b6369cb616510fc779b2c96f5a361f0d6586f844ed75441",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED"
+      },
+      {
+        "factId": "mxq-intake-soc-family",
+        "factType": "soc.family",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "RK3228A/RK3229",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "b6b7d3115e628144d21515079055cbf255015b2442c62b9c1b3f28e9f3759f11",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "inference": "PROBABLE_NOT_VALIDATED"
+      },
+      {
+        "factId": "mxq-intake-software-android-security-patch",
+        "factType": "software.android.security_patch",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "2022-04-05",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "53d0f3482feaff65679761d6f937f8562848cbf5a4b4267a24b623441ef7ef94",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "normalizedValue": "2022-04-05"
+      },
+      {
+        "factId": "mxq-intake-software-build",
+        "factType": "software.build",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "TV BOX eng.akrd2.20240222.161226",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "348773a23c7a18372312a92283990926024fc94a5c0991a1a6a3d257cd16e7c3",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "normalizedValue": "TV BOX eng.akrd2.20240222.161226"
+      },
+      {
+        "factId": "mxq-intake-software-device-model",
+        "factType": "software.device_model",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "Nex30",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "7fef0ab6bd39bcd215dceb76d423eff9070a4e7e23ea38050401dfa7020ade81",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "normalizedValue": "Nex30"
+      },
+      {
+        "factId": "mxq-intake-software-kernel-build",
+        "factType": "software.kernel.build",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "akrd2@R740XD #1",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "f6fac7fe40841f94828b28553dd388a80afb75597f6bedb4eb89b18b7444a4d6",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "normalizedValue": "akrd2@R740XD #1"
+      },
+      {
+        "factId": "mxq-intake-software-kernel-build-date",
+        "factType": "software.kernel.build_date",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "Thu Feb 22 16:10:31 CST 2024",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "9fe2bd802de7bfde3d38bc4b4fb003436d69a19e030ae37ec90e8a82dc96c441",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "normalizedValue": "Thu Feb 22 16:10:31 CST 2024"
+      },
+      {
+        "factId": "mxq-intake-software-kernel-version",
+        "factType": "software.kernel.version",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "3.10.104",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "f22ad5904794e07c2ebc2055a8890eecfc68cb18b7d52b1d32ebb51452ee67aa",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "normalizedValue": "3.10.104"
+      },
+      {
+        "factId": "mxq-intake-software-os-name",
+        "factType": "software.os.name",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "Android",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "a98da81f0af86bd536ad1c8cff03e6854986b0cc929bf7349f7fd7082adfc61c",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "normalizedValue": "Android"
+      },
+      {
+        "factId": "mxq-intake-software-os-version",
+        "factType": "software.os.version",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "13.0",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "f0f82e0d838d993a32a4ab6457a4765175c759bb66b3cd6b0270dbfa5e800d81",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED",
+        "normalizedValue": "13.0"
+      },
+      {
+        "factId": "mxq-intake-storage-nominal",
+        "factType": "storage.nominal",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": "1024 GB",
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "3bd41540f43a8bacea807c10e6d1d3b1cbe39fbc37568358781068dcc0e4076f",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNRESOLVED"
+      },
+      {
+        "factId": "mxq-intake-usb-host-capability",
+        "factType": "usb.host_capability",
+        "source": {
+          "kind": "USER_PROVIDED_EVIDENCE",
+          "component": "mxq-system-and-network-screenshots",
+          "version": "intake-v1",
+          "reference": "user-provided-images:mxq-system-and-network",
+          "trustClass": "DECLARED"
+        },
+        "value": true,
+        "observedAt": null,
+        "collectedAt": "2026-08-10T18:22:11.699Z",
+        "evidence": {
+          "kind": "user-provided-image-observation",
+          "digest": "1868bc64cf7e76f9c4f2f5631f75b72d90fa4f64bd0f12963d0a090d398493c2",
+          "sourceReference": "user-provided-images:mxq-system-and-network",
+          "captureMethod": "user-provided-system-and-network-images",
+          "integrityState": "UNVERIFIED"
+        },
+        "collectorVersion": "edge-discovery-intake-v1",
+        "schemaVersion": "hardware-discovery-schema-v1",
+        "targetIdentity": {
+          "bindingState": "PROVISIONAL",
+          "reference": "mxq-pro-4k-5g-lab-001"
+        },
+        "observationSequence": 0,
+        "confidence": 0.2,
+        "validationState": "UNVERIFIED"
+      }
+    ],
+    "conflicts": [],
+    "missingRequirements": [
+      "boot.bootloader",
+      "boot.mode",
+      "codecs.validation",
+      "cpu.architecture.effective",
+      "display.hdmi.probe",
+      "gpu.model",
+      "identity.device_key_capability",
+      "identity.edge_installation_id_capability",
+      "memory.ram.total.physical",
+      "network.ethernet.probe",
+      "network.wifi.probe",
+      "recovery.validation",
+      "security.secure_boot.state",
+      "soc.model",
+      "storage.partitions",
+      "storage.usable.physical",
+      "usb.probe",
+      "vpu.model"
+    ],
+    "evidenceRoot": "5f5ac7fd20150a9f343cacabb4241adab64f2890dfc6cb136b2468d76a730317",
+    "sealedAt": "2026-08-10T18:22:11.699Z",
+    "recordHash": "358b30fd1ad219bc19a6185ed652e6a4343451c85d75ce2c2f9a2d8adc28d297"
+  },
+  "compatibility": {
+    "evaluationId": "compat-mxq-real-1786386131702",
+    "discoveryId": "disc-mxq-real-1786386131702",
+    "recordHash": "358b30fd1ad219bc19a6185ed652e6a4343451c85d75ce2c2f9a2d8adc28d297",
+    "evaluatedAt": "2026-08-10T18:22:11.699Z",
+    "evaluatorVersion": "edge-hardware-compatibility-v1",
+    "state": "UNKNOWN",
+    "automaticProvisioning": "BLOCKED",
+    "reasons": [
+      "EXACT_HARDWARE_CONFIGURATION_UNVERIFIED",
+      "REQUIRED_CAPABILITIES_NOT_DISCOVERED",
+      "PRODUCTION_HOMOLOGATION_NOT_EXECUTED"
+    ],
+    "requirements": [
+      {
+        "id": "HC-004",
+        "status": "SATISFIED",
+        "reason": "EVALUATOR_DOES_NOT_AUTHORIZE_FROM_RAM_OR_STORAGE_ALONE",
+        "factTypes": [
+          "memory.ram.total.physical",
+          "storage.usable.physical"
+        ],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-005",
+        "status": "SATISFIED",
+        "reason": "UNKNOWN_HARDWARE_BLOCKS_AUTOMATIC_PROVISIONING",
+        "factTypes": [],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-001",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:memory.ram.total.physical",
+        "factTypes": [
+          "memory.ram.total.physical"
+        ],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-002",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:storage.usable.physical",
+        "factTypes": [
+          "storage.usable.physical"
+        ],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-003",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:memory.ram.total.physical,storage.usable.physical",
+        "factTypes": [
+          "memory.ram.total.physical",
+          "storage.usable.physical"
+        ],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-006",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:soc.model",
+        "factTypes": [
+          "board.identifier",
+          "soc.model"
+        ],
+        "evidenceReferences": [
+          "user-provided-images:mxq-system-and-network"
+        ]
+      },
+      {
+        "id": "HC-007",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:boot.bootloader,boot.mode",
+        "factTypes": [
+          "boot.bootloader",
+          "boot.mode"
+        ],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-008",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:recovery.validation",
+        "factTypes": [
+          "recovery.validation"
+        ],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-009",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:ota.validation",
+        "factTypes": [
+          "ota.validation"
+        ],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-010",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:identity.edge_installation_id_capability,identity.device_key_capability",
+        "factTypes": [
+          "identity.edge_installation_id_capability",
+          "identity.device_key_capability"
+        ],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-011",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:player.web_engine.validation",
+        "factTypes": [
+          "player.web_engine.validation"
+        ],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-012",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:codecs.validation",
+        "factTypes": [
+          "codecs.validation"
+        ],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-013",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:thermal.validation",
+        "factTypes": [
+          "thermal.validation"
+        ],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-014",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:offline.playback.validation",
+        "factTypes": [
+          "offline.playback.validation"
+        ],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-015",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:ota.rollback.validation",
+        "factTypes": [
+          "ota.rollback.validation"
+        ],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-016",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:stability.long_run.validation",
+        "factTypes": [
+          "stability.long_run.validation"
+        ],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-017",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:hardware.profile.lifecycle",
+        "factTypes": [
+          "hardware.profile.lifecycle"
+        ],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-019",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:soc.model",
+        "factTypes": [
+          "soc.model",
+          "board.identifier"
+        ],
+        "evidenceReferences": [
+          "user-provided-images:mxq-system-and-network"
+        ]
+      },
+      {
+        "id": "HC-020",
+        "status": "NOT_VERIFIABLE",
+        "reason": "MISSING_FACTS:soc.model",
+        "factTypes": [
+          "soc.model"
+        ],
+        "evidenceReferences": []
+      },
+      {
+        "id": "HC-018",
+        "status": "SATISFIED",
+        "reason": "NO_PRODUCTION_PROMOTION_PERFORMED",
+        "factTypes": [],
+        "evidenceReferences": []
+      }
+    ]
+  }
+}
