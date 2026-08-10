@@ -66,6 +66,7 @@ test("ADB facts explicitly mark observation time as unavailable and digest the r
   const fact = result.facts.find((candidate) => candidate.factType === "software.device_model");
   assert.ok(fact);
   assert.equal(fact.observedAt, null);
+  assert.equal(fact.observationKind, "OBSERVED");
   const expectedDigest = createHash("sha256")
     .update(JSON.stringify({
       command: "getprop ro.product.model",

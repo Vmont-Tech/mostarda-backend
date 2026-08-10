@@ -13,7 +13,9 @@ test("initial MXQ intake preserves observations and flags unverified capacities"
   const byType = new Map(record.facts.map((fact) => [fact.factType, fact]));
 
   assert.equal(byType.get("device.commercial_model")?.value, "MXQ Pro 4K 5G");
+  assert.equal(byType.get("device.commercial_model")?.observationKind, "DECLARED");
   assert.equal(byType.get("board.identifier")?.value, "R329Q_V8.1");
+  assert.equal(byType.get("board.identifier")?.observationKind, "DECLARED");
   assert.equal(byType.get("software.os.version")?.normalizedValue, "13.0");
   assert.equal(byType.get("software.android.security_patch")?.value, "2022-04-05");
   assert.equal(byType.get("software.kernel.build")?.value, "akrd2@R740XD #1");
@@ -26,6 +28,9 @@ test("initial MXQ intake preserves observations and flags unverified capacities"
   assert.ok(record.facts.every((fact) => fact.evidence.digestScope === "DECLARATION_ENVELOPE"));
   assert.ok(record.facts.every((fact) => fact.evidence.integrityState === "UNVERIFIED"));
   assert.equal(byType.get("soc.family")?.inference, "PROBABLE_NOT_VALIDATED");
+  assert.equal(byType.get("soc.family")?.observationKind, "INFERRED");
+  assert.equal(byType.get("cpu.architecture")?.observationKind, "INFERRED");
+  assert.ok(record.facts.every((fact) => fact.observationKind !== "VALIDATED"));
   assert.equal(byType.get("memory.ram.total")?.value, "256 GB");
   assert.equal(byType.get("memory.ram.total")?.normalizedValue, undefined);
   assert.equal(byType.get("memory.ram.total")?.validationState, "UNRESOLVED");

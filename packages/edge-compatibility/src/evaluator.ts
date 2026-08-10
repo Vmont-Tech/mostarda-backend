@@ -68,6 +68,13 @@ function evidenceForFacts(facts: readonly DiscoveryFact[], factTypes: readonly s
     .sort();
 }
 
+function nonValidatedFactTypes(
+  factTypes: readonly string[],
+  factIndex: ReadonlyMap<string, DiscoveryFact>,
+): readonly string[] {
+  return factTypes.filter((factType) => factIndex.get(factType)?.observationKind !== "VALIDATED");
+}
+
 function notVerifiable(
   id: string,
   reason: string,
@@ -92,6 +99,11 @@ function evaluateRequirement(
   const missing = factTypes.filter((factType) => !factIndex.has(factType));
   if (missing.length > 0) {
     return notVerifiable(id, `MISSING_FACTS:${missing.join(",")}`, factTypes, facts);
+  }
+
+  const unvalidated = nonValidatedFactTypes(factTypes, factIndex);
+  if (unvalidated.length > 0) {
+    return notVerifiable(id, `FACTS_NOT_VALIDATED:${unvalidated.join(",")}`, factTypes, facts);
   }
 
   if (id === "HC-001" || id === "HC-002" || id === "HC-003") {
@@ -161,6 +173,12 @@ export function evaluateHardwareCompatibility(
       "EXACT_HARDWARE_CONFIGURATION_UNVERIFIED",
       "REQUIRED_CAPABILITIES_NOT_DISCOVERED",
       "PRODUCTION_HOMOLOGATION_NOT_EXECUTED",
+      ...(record.targetIdentity.bindingState === "PROVISIONAL"
+        ? ["TARGET_IDENTITY_PROVISIONAL"]
+        : []),
+      ...(record.facts.some((fact) => fact.observationKind === "DECLARED" || fact.observationKind === "INFERRED")
+        ? ["DECLARED_OR_INFERRED_FACTS_CANNOT_AUTHORIZE_HARDWARE"]
+        : []),
     ],
     requirements,
   };

@@ -33,6 +33,19 @@ export type FactValidationState =
   | "UNVERIFIED"
   | "UNRESOLVED";
 
+export type DiscoveryFactObservationKind =
+  | "DECLARED"
+  | "OBSERVED"
+  | "INFERRED"
+  | "VALIDATED";
+
+const OBSERVATION_KINDS: ReadonlySet<DiscoveryFactObservationKind> = new Set([
+  "DECLARED",
+  "OBSERVED",
+  "INFERRED",
+  "VALIDATED",
+]);
+
 export interface DiscoveryTargetIdentity {
   readonly bindingState: "PROVISIONAL" | "BOUND";
   readonly reference: string;
@@ -90,6 +103,8 @@ export interface DiscoveryConflict {
 export interface DiscoveryFact {
   readonly factId: string;
   readonly factType: string;
+  /** Provenance classification; it never authorizes hardware compatibility by itself. */
+  readonly observationKind: DiscoveryFactObservationKind;
   readonly source: FactSource;
   readonly value: unknown;
   readonly normalizedValue?: unknown;
@@ -216,12 +231,21 @@ function normalizeConflicts(values: readonly DiscoveryConflict[]): readonly Disc
 function validateFact(fact: DiscoveryFact): void {
   assertNonEmpty(fact.factId, "factId");
   assertNonEmpty(fact.factType, "factType");
+  if (!OBSERVATION_KINDS.has(fact.observationKind)) {
+    throw new Error("observationKind must be DECLARED, OBSERVED, INFERRED or VALIDATED");
+  }
   assertNonEmpty(fact.source.reference, "source.reference");
   assertNonEmpty(fact.collectedAt, "collectedAt");
   assertIsoInstant(fact.collectedAt, "collectedAt");
   if (fact.observedAt !== null) assertIsoInstant(fact.observedAt, "observedAt");
   if (fact.evidence.digest !== undefined && fact.evidence.digestScope === undefined) {
     throw new Error("evidence.digest requires an explicit digestScope");
+  }
+  if (fact.observationKind === "INFERRED" && (fact.inference === undefined || fact.inference.trim().length === 0)) {
+    throw new Error("inferred facts require an inference description");
+  }
+  if (fact.observationKind === "VALIDATED" && fact.validationState !== "VERIFIED") {
+    throw new Error("validated facts require VERIFIED validationState");
   }
   assertConfidence(fact.confidence);
   if (!Number.isInteger(fact.observationSequence) || fact.observationSequence < 0) {
@@ -259,6 +283,7 @@ export function createDiscoveryRecord(input: CreateDiscoveryRecordInput): Discov
 }
 
 export function sealDiscoveryRecord(record: DiscoveryRecord, sealedAt: string): DiscoveryRecord & { readonly recordHash: string; readonly sealedAt: string } {
+  // SEALED closes the immutable discovery snapshot; it does not validate hardware or authorize compatibility.
   if (record.lifecycleState === "SEALED") {
     throw new Error("record is already sealed");
   }

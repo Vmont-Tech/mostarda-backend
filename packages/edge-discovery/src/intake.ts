@@ -79,6 +79,7 @@ function fact(
   const base = {
     factId: `mxq-intake-${slug(factType)}`,
     factType,
+    observationKind: options.inference === undefined ? "DECLARED" : "INFERRED",
     source: {
       kind: "USER_PROVIDED_EVIDENCE",
       component: "mxq-system-and-network-screenshots",

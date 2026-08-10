@@ -127,6 +127,7 @@ function makeFact(
   return {
     factId: `adb-${commandId}-${factType.replace(/[^a-z0-9]+/gi, "-")}`,
     factType,
+    observationKind: "OBSERVED",
     source: {
       kind: "RUNTIME_SOURCE",
       component: "android-adb",

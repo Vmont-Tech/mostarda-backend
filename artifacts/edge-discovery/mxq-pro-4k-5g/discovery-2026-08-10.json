@@ -13,6 +13,7 @@
       {
         "factId": "mxq-intake-board-identifier",
         "factType": "board.identifier",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -45,6 +46,7 @@
       {
         "factId": "mxq-intake-board-observed-date",
         "factType": "board.observed_date",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -77,6 +79,7 @@
       {
         "factId": "mxq-intake-cpu-architecture",
         "factType": "cpu.architecture",
+        "observationKind": "INFERRED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -109,6 +112,7 @@
       {
         "factId": "mxq-intake-device-commercial-model",
         "factType": "device.commercial_model",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -141,6 +145,7 @@
       {
         "factId": "mxq-intake-device-serial",
         "factType": "device.serial",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -172,6 +177,7 @@
       {
         "factId": "mxq-intake-memory-ram-total",
         "factType": "memory.ram.total",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -203,6 +209,7 @@
       {
         "factId": "mxq-intake-network-ethernet-gateway",
         "factType": "network.ethernet.gateway",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -235,6 +242,7 @@
       {
         "factId": "mxq-intake-network-ethernet-ip-mode",
         "factType": "network.ethernet.ip_mode",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -267,6 +275,7 @@
       {
         "factId": "mxq-intake-network-ethernet-ipv4",
         "factType": "network.ethernet.ipv4",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -299,6 +308,7 @@
       {
         "factId": "mxq-intake-network-ethernet-mac",
         "factType": "network.ethernet.mac",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -331,6 +341,7 @@
       {
         "factId": "mxq-intake-network-ethernet-present",
         "factType": "network.ethernet.present",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -362,6 +373,7 @@
       {
         "factId": "mxq-intake-network-wifi-chipset",
         "factType": "network.wifi.chipset",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -394,6 +406,7 @@
       {
         "factId": "mxq-intake-network-wifi-present",
         "factType": "network.wifi.present",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -425,6 +438,7 @@
       {
         "factId": "mxq-intake-soc-family",
         "factType": "soc.family",
+        "observationKind": "INFERRED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -457,6 +471,7 @@
       {
         "factId": "mxq-intake-software-android-security-patch",
         "factType": "software.android.security_patch",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -489,6 +504,7 @@
       {
         "factId": "mxq-intake-software-build",
         "factType": "software.build",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -521,6 +537,7 @@
       {
         "factId": "mxq-intake-software-device-model",
         "factType": "software.device_model",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -553,6 +570,7 @@
       {
         "factId": "mxq-intake-software-kernel-build",
         "factType": "software.kernel.build",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -585,6 +603,7 @@
       {
         "factId": "mxq-intake-software-kernel-build-date",
         "factType": "software.kernel.build_date",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -617,6 +636,7 @@
       {
         "factId": "mxq-intake-software-kernel-version",
         "factType": "software.kernel.version",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -649,6 +669,7 @@
       {
         "factId": "mxq-intake-software-os-name",
         "factType": "software.os.name",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -681,6 +702,7 @@
       {
         "factId": "mxq-intake-software-os-version",
         "factType": "software.os.version",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -713,6 +735,7 @@
       {
         "factId": "mxq-intake-storage-nominal",
         "factType": "storage.nominal",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -744,6 +767,7 @@
       {
         "factId": "mxq-intake-usb-host-capability",
         "factType": "usb.host_capability",
+        "observationKind": "DECLARED",
         "source": {
           "kind": "USER_PROVIDED_EVIDENCE",
           "component": "mxq-system-and-network-screenshots",
@@ -803,12 +827,12 @@
     ],
     "evidenceRoot": "ff014668a58f94173f32eea070f1f2427447f53bde9bef6ac47cab279d760558",
     "sealedAt": "2026-08-10T18:44:23.034Z",
-    "recordHash": "31d72de574583c641884383c06632a82c70bc43711c96cca1895e757475eb338"
+    "recordHash": "0308ec2e374dc7922226b98f12f98db01d94ca505a6e258eac3ff140040f85d8"
   },
   "compatibility": {
     "evaluationId": "compat-mxq-real-1786387463036",
     "discoveryId": "disc-mxq-real-1786387463036",
-    "recordHash": "31d72de574583c641884383c06632a82c70bc43711c96cca1895e757475eb338",
+    "recordHash": "0308ec2e374dc7922226b98f12f98db01d94ca505a6e258eac3ff140040f85d8",
     "evaluatedAt": "2026-08-10T18:44:23.034Z",
     "evaluatorVersion": "edge-hardware-compatibility-v1",
     "state": "UNKNOWN",
@@ -816,7 +840,9 @@
     "reasons": [
       "EXACT_HARDWARE_CONFIGURATION_UNVERIFIED",
       "REQUIRED_CAPABILITIES_NOT_DISCOVERED",
-      "PRODUCTION_HOMOLOGATION_NOT_EXECUTED"
+      "PRODUCTION_HOMOLOGATION_NOT_EXECUTED",
+      "TARGET_IDENTITY_PROVISIONAL",
+      "DECLARED_OR_INFERRED_FACTS_CANNOT_AUTHORIZE_HARDWARE"
     ],
     "requirements": [
       {
