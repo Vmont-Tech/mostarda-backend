@@ -2,6 +2,7 @@ import { execFile as execFileCallback } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import {
+  assertReadOnlyAndroidCommand,
   collectAndroidFacts,
   composeAndSealDiscovery,
   createInitialMxqIntake,
@@ -23,6 +24,7 @@ export function createProcessAdbTransport(serial: string): AdbTransport {
   if (serial.trim().length === 0) throw new Error("ADB serial must not be empty");
   return {
     async exec(command) {
+      assertReadOnlyAndroidCommand(command);
       try {
         const result = await execFile("adb", ["-s", serial, "shell", command], {
           encoding: "utf8",
@@ -56,6 +58,14 @@ export async function runDiscoveryWithTransport(
     targetReference: options.targetReference,
     evidenceReference: options.evidenceReference,
   });
+  if (collection.facts.length === 0) {
+    const failureSummary = collection.failures
+      .map((failure) => `${failure.code}:${failure.command}`)
+      .join(", ");
+    throw new Error(
+      `ADB discovery failed: no facts collected${failureSummary.length > 0 ? ` (${failureSummary})` : ""}`,
+    );
+  }
   return composeAndSealDiscovery(intake, collection, options.sealedAt);
 }
 

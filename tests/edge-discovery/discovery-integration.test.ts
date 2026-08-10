@@ -70,6 +70,33 @@ test("laboratory runner composes a read-only discovery from an injected transpor
   assert.equal(result.facts.find((fact) => fact.factType === "software.device_model")?.value, "Nex30");
 });
 
+test("physical runner fails instead of sealing when ADB produces no facts", async () => {
+  await assert.rejects(
+    () => runDiscoveryWithTransport({
+      discoveryId: "disc-mxq-runner-unavailable-001",
+      startedAt: "2026-08-09T12:31:00.000Z",
+      capturedAt: "2026-08-09T12:31:01.000Z",
+      sealedAt: "2026-08-09T12:31:02.000Z",
+      evidenceReference: "adb:mxq-pro-unavailable",
+      targetReference: "mxq-pro-4k-5g-lab-001",
+    }, {
+      async exec() {
+        return { stdout: "", stderr: "adb unavailable", exitCode: 1 };
+      },
+    }),
+    /ADB discovery failed.*no facts/i,
+  );
+});
+
+test("process ADB transport rejects non-read-only commands before execution", async () => {
+  const transport = createProcessAdbTransport("mxq-test");
+
+  await assert.rejects(
+    () => transport.exec("pm install evil.apk"),
+    /not allow-listed for read-only discovery/i,
+  );
+});
+
 test("CLI requires an explicit ADB serial and never accepts an empty target", () => {
   assert.deepEqual(parseArguments(["--serial", "192.168.1.50:5555"]), {
     serial: "192.168.1.50:5555",
