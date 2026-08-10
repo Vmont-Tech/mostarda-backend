@@ -1,14 +1,14 @@
 {
   "discovery": {
-    "discoveryId": "disc-mxq-real-1786387463036",
+    "discoveryId": "disc-mxq-real-1786394754570",
     "targetIdentity": {
       "bindingState": "PROVISIONAL",
       "reference": "mxq-pro-4k-5g-lab-001"
     },
-    "schemaVersion": "hardware-discovery-schema-v1",
+    "schemaVersion": "hardware-discovery-schema-v2",
     "collectorVersion": "edge-discovery-intake-v1",
     "lifecycleState": "SEALED",
-    "startedAt": "2026-08-10T18:44:23.034Z",
+    "startedAt": "2026-08-10T20:45:54.567Z",
     "facts": [
       {
         "factId": "mxq-intake-board-identifier",
@@ -23,17 +23,17 @@
         },
         "value": "R329Q_V8.1",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "3ac9a182c8d4d74364b6a567e16ec107f2563ac90dbb57f1d2569f5b01c58b41",
+          "digest": "daee769f716d737742b9575e449275982fa540a7f7916dd8c06ba2ec5ce2e017",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -56,17 +56,17 @@
         },
         "value": "2020.06.15",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "cc6b82c00d2f545543807205b3de3bfba476bc72623197b7c0315ded283487fb",
+          "digest": "4c41d56e98697bcb27ecd93cc1dd2c57cf64850e9b8863fb8468e56d70df9052",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -89,17 +89,17 @@
         },
         "value": "ARM 32-bit",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "b6a9e79481699289bd5dd958b4c21dcee2ed39e4a64244485ab81342c6cfdb14",
+          "digest": "41b253a4f3a13ca8dd33263994d87b254bc2d7fbe4d1d5e12f26ac6ebf6f18da",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -122,17 +122,17 @@
         },
         "value": "MXQ Pro 4K 5G",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "0448f9f170f6fcc1afd38ac948ddefc062306bae79783cd600cbdb352cae8c84",
+          "digest": "05a99c51cbe148b0f171c0139d3e730b49535909331f4224bd7a5521b7d270a8",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -155,17 +155,17 @@
         },
         "value": "unknown",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "16c81f29ce6e073bf4f3fd0f3d48ca9fda192b3d41cc0bc26a81fdbfcc98690f",
+          "digest": "01dae815517a6119c2f60dc0892aefdbf113c9b80261e5a254580415436275e0",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -187,17 +187,17 @@
         },
         "value": "256 GB",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "6e90aa9fd4d299e2ca573ad11b4f7da8ecf1d69cea01c7f602c5ab1a4a5d37a5",
+          "digest": "14c4d79b980878dcb02711b4c22b6227ef4a3df56426172cda1c4507050fc0ca",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -219,17 +219,17 @@
         },
         "value": "192.168.0.1",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "31ac9ab95318e0dda1f61bd4155c7bc4d33c3c2ff0c814d2b207824acfc52144",
+          "digest": "51fbad418071e081e45a201c73c5870812d2eed48c3d353be9d6bd1e39ce14be",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -252,17 +252,17 @@
         },
         "value": "DHCP",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "edb4d903c89f499aaeb2b3bec2b1e8363a99859e3df246280215ffc17e85bc3b",
+          "digest": "6a9755e017d9844ecad5c8f327955f9a97fb07d25b77e5e5de1925f3d42cdec9",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -285,17 +285,17 @@
         },
         "value": "192.168.0.106",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "8ba884691e2873f83e13cbe4896e99815dc2c7c67fb8e86beaba91e0421d8b5e",
+          "digest": "30312679db39ca9acd93428e6c3d4cf67b65fc66024f7f32269b53e510d470b1",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -318,17 +318,17 @@
         },
         "value": "9c:00:d3:40:e1:3c",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "b022092321b9dfa1037d4c52e0c26ce77847073fde4f6690eff805b9183dac5f",
+          "digest": "fd9c4c88786fc0b9be27e2fd8692620790ddde3936049b3209a2b722dc064395",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -351,17 +351,17 @@
         },
         "value": true,
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "567f1c59729b49975ca23bd253775925dbe4c42eb60f1ee41a0246243ba346a0",
+          "digest": "ab3c33ae1b871c68c69aa87a153b422fbf47205907bbdf3d0cb4abff3c1c79d2",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -383,17 +383,17 @@
         },
         "value": "SV6256P",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "03cc00c67761738865135439d187afec79e64adb728af860aa873b45e0564f5c",
+          "digest": "9f40596379cd92e12558756bbe1e1acf7190bc65da5c13da0c34e0429569b6f3",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -416,17 +416,17 @@
         },
         "value": true,
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "f58cbe6a919cd3bdc2ec44d25e16555bf08f8b32ab10bafe7bdc2a6d06d731ec",
+          "digest": "2198d544426c671b999ae1545753765f2655aff13afc4bf5b107b6a4aea44aea",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -448,17 +448,17 @@
         },
         "value": "RK3228A/RK3229",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "41a6879e5be0cb4f5dccf667d03449a4e2277b7ed0e6a7335fc8d25d069fd184",
+          "digest": "fdafa5f58f93c363dcab25597185a5ae34dedd49d3724052a5eca358889b91ca",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -481,17 +481,17 @@
         },
         "value": "2022-04-05",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "ec3050c4ad75fb5d677e99dbfea800abd320ea505ee07710b1caa48dbc038af9",
+          "digest": "62423668ac7d492047aed8ba654a53de4d185c9375971f9e01c958908a41b3a8",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -514,17 +514,17 @@
         },
         "value": "TV BOX eng.akrd2.20240222.161226",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "676bdd6c761e9ce3d274173dd0199ea7ac5afc710302e8f7a5627446b7d7fea0",
+          "digest": "1923ace1826de133f13b586158126a21ba7a85dc4c6451dc7e801383edee3ca1",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -547,17 +547,17 @@
         },
         "value": "Nex30",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "0ebb06f3b4a9b0a3b2d96d99556ad96f6173e2dcda29c37757dfeab28d12ee9d",
+          "digest": "9dda9ea5ef49323e3aa087998831db7214b3b28a387bb90b4d7d790acf3634eb",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -580,17 +580,17 @@
         },
         "value": "akrd2@R740XD #1",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "a03549b2273a96316ef142f7d1b111d1ac998d14be0910bcf5e996a296801ae8",
+          "digest": "248703dce5072a97d006c683fb570f31be15fa6af3c368044e7ad8042ae9abe7",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -613,17 +613,17 @@
         },
         "value": "Thu Feb 22 16:10:31 CST 2024",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "be00a8c91c3db7b14037e976615701fd36d43b1725de796c9b8a6bd0843ad931",
+          "digest": "15cde433f9457b4c7c9ec3a883ace1c76b673bf2b67d8acd1a619e74670f3175",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -646,17 +646,17 @@
         },
         "value": "3.10.104",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "f66bccad48fb9b95b8ca3320f096213a54191c9745eb59e3a5c73957c21633c6",
+          "digest": "288e9b13e05c774b20bd9f189bc213b27d798333dece05137a06a20ad9d72ec4",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -679,17 +679,17 @@
         },
         "value": "Android",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "41e0ccd54f30f6a31c865aa8988d892f7127fef4a1f8fa78b1ff5793ac1a10dd",
+          "digest": "e32c9221d39405b142520da59382e2141a7473664408e6e0cd720bd099b2936f",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -712,17 +712,17 @@
         },
         "value": "13.0",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "e6cbd973318af01ae98643b9ab19f8a82d527c927d5d99ba53f1b8b591249b52",
+          "digest": "97e7333659f3f3b7f6e660c09aab53b25d3dadbd0cc8f8e934e931d73ff319cc",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -745,17 +745,17 @@
         },
         "value": "1024 GB",
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "86758944ca516ce9902125cf9289cfe4fcb9920bff63709d59ab33b847543abc",
+          "digest": "6c98f03805ec49c837114432fe5f92efb656ea37494d89bd35ad93156a86e43f",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -777,17 +777,17 @@
         },
         "value": true,
         "observedAt": null,
-        "collectedAt": "2026-08-10T18:44:23.034Z",
+        "collectedAt": "2026-08-10T20:45:54.567Z",
         "evidence": {
           "kind": "user-provided-image-observation",
-          "digest": "9834f2c0277b1a13ff3314d61000764161debf4849e9ca31683adec5470614d8",
+          "digest": "0fea6909afbe249e5bcdc51fcd944c63d72546dd3b4d0a2bcd9bfd6b3653639f",
           "digestScope": "DECLARATION_ENVELOPE",
           "sourceReference": "user-provided-images:mxq-system-and-network",
           "captureMethod": "user-provided-system-and-network-images",
           "integrityState": "UNVERIFIED"
         },
         "collectorVersion": "edge-discovery-intake-v1",
-        "schemaVersion": "hardware-discovery-schema-v1",
+        "schemaVersion": "hardware-discovery-schema-v2",
         "targetIdentity": {
           "bindingState": "PROVISIONAL",
           "reference": "mxq-pro-4k-5g-lab-001"
@@ -825,15 +825,15 @@
       "usb.probe",
       "vpu.model"
     ],
-    "evidenceRoot": "ff014668a58f94173f32eea070f1f2427447f53bde9bef6ac47cab279d760558",
-    "sealedAt": "2026-08-10T18:44:23.034Z",
-    "recordHash": "0308ec2e374dc7922226b98f12f98db01d94ca505a6e258eac3ff140040f85d8"
+    "evidenceRoot": "361f875f5f2227fc08bc1994d01f40ac519f1b105b5286aeef4ff8f4f5d94440",
+    "sealedAt": "2026-08-10T20:45:54.567Z",
+    "recordHash": "47b1961b70c23aaa951daa5c07350ee364634f469384efbc6d1ccd2b603e7689"
   },
   "compatibility": {
-    "evaluationId": "compat-mxq-real-1786387463036",
-    "discoveryId": "disc-mxq-real-1786387463036",
-    "recordHash": "0308ec2e374dc7922226b98f12f98db01d94ca505a6e258eac3ff140040f85d8",
-    "evaluatedAt": "2026-08-10T18:44:23.034Z",
+    "evaluationId": "compat-mxq-real-1786394754570",
+    "discoveryId": "disc-mxq-real-1786394754570",
+    "recordHash": "47b1961b70c23aaa951daa5c07350ee364634f469384efbc6d1ccd2b603e7689",
+    "evaluatedAt": "2026-08-10T20:45:54.567Z",
     "evaluatorVersion": "edge-hardware-compatibility-v1",
     "state": "UNKNOWN",
     "automaticProvisioning": "BLOCKED",

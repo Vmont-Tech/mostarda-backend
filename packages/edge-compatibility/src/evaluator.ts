@@ -1,4 +1,10 @@
-import type { DiscoveryFact, DiscoveryRecord } from "../../edge-discovery/src/record.ts";
+import {
+  HARDWARE_DISCOVERY_SCHEMA_VERSION,
+  canonicalEvidenceRoot,
+  canonicalRecordHash,
+  type DiscoveryFact,
+  type DiscoveryRecord,
+} from "../../edge-discovery/src/record.ts";
 
 export type CompatibilityState =
   | "UNKNOWN"
@@ -56,8 +62,14 @@ function assertIsoInstant(value: string, field: string): void {
   if (Number.isNaN(Date.parse(value))) throw new Error(`${field} must be an ISO timestamp`);
 }
 
-function indexFacts(record: DiscoveryRecord): ReadonlyMap<string, DiscoveryFact> {
-  return new Map(record.facts.map((fact) => [fact.factType, fact]));
+function indexFacts(record: DiscoveryRecord): ReadonlyMap<string, readonly DiscoveryFact[]> {
+  const index = new Map<string, DiscoveryFact[]>();
+  for (const fact of record.facts) {
+    const group = index.get(fact.factType) ?? [];
+    group.push(fact);
+    index.set(fact.factType, group);
+  }
+  return index;
 }
 
 function evidenceForFacts(facts: readonly DiscoveryFact[], factTypes: readonly string[]): readonly string[] {
@@ -68,11 +80,55 @@ function evidenceForFacts(facts: readonly DiscoveryFact[], factTypes: readonly s
     .sort();
 }
 
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, nested]) => [key, canonicalize(nested)]),
+    );
+  }
+  return value;
+}
+
+function correlationValueKey(fact: DiscoveryFact): string {
+  const value = fact.normalizedValue === undefined
+    ? { kind: "RAW_VALUE", value: fact.value }
+    : { kind: "NORMALIZED_VALUE", value: fact.normalizedValue };
+  return JSON.stringify(canonicalize(value));
+}
+
+function hasValidEvidence(fact: DiscoveryFact): boolean {
+  return fact.observationKind === "VALIDATED"
+    && fact.validationState === "VERIFIED"
+    && fact.evidence.integrityState === "VALID"
+    && typeof fact.evidence.digest === "string"
+    && /^[a-f0-9]{64}$/i.test(fact.evidence.digest)
+    && fact.evidence.digestScope !== undefined;
+}
+
+function factGroupsWithUnresolvedConflicts(
+  factTypes: readonly string[],
+  factIndex: ReadonlyMap<string, readonly DiscoveryFact[]>,
+  record: DiscoveryRecord,
+): readonly string[] {
+  const declaredConflicts = new Set(record.conflicts.map((conflict) => conflict.factType));
+  return factTypes.filter((factType) => {
+    const group = factIndex.get(factType) ?? [];
+    const valueKeys = new Set(group.map(correlationValueKey));
+    return declaredConflicts.has(factType) || valueKeys.size > 1;
+  });
+}
+
 function nonValidatedFactTypes(
   factTypes: readonly string[],
-  factIndex: ReadonlyMap<string, DiscoveryFact>,
+  factIndex: ReadonlyMap<string, readonly DiscoveryFact[]>,
 ): readonly string[] {
-  return factTypes.filter((factType) => factIndex.get(factType)?.observationKind !== "VALIDATED");
+  return factTypes.filter((factType) => {
+    const group = factIndex.get(factType) ?? [];
+    return !group.some(hasValidEvidence);
+  });
 }
 
 function notVerifiable(
@@ -90,15 +146,36 @@ function notVerifiable(
   };
 }
 
+function notSatisfied(
+  id: string,
+  reason: string,
+  factTypes: readonly string[],
+  facts: readonly DiscoveryFact[],
+): CompatibilityRequirementResult {
+  return {
+    id,
+    status: "NOT_SATISFIED",
+    reason,
+    factTypes,
+    evidenceReferences: evidenceForFacts(facts, factTypes),
+  };
+}
+
 function evaluateRequirement(
   id: string,
   facts: readonly DiscoveryFact[],
-  factIndex: ReadonlyMap<string, DiscoveryFact>,
+  factIndex: ReadonlyMap<string, readonly DiscoveryFact[]>,
+  record: DiscoveryRecord,
 ): CompatibilityRequirementResult {
   const factTypes = REQUIRED_FACTS[id] ?? [];
   const missing = factTypes.filter((factType) => !factIndex.has(factType));
   if (missing.length > 0) {
     return notVerifiable(id, `MISSING_FACTS:${missing.join(",")}`, factTypes, facts);
+  }
+
+  const conflicts = factGroupsWithUnresolvedConflicts(factTypes, factIndex, record);
+  if (conflicts.length > 0) {
+    return notSatisfied(id, `CONFLICT_UNRESOLVED:${conflicts.join(",")}`, factTypes, facts);
   }
 
   const unvalidated = nonValidatedFactTypes(factTypes, factIndex);
@@ -118,7 +195,33 @@ function evaluateRequirement(
   if (id === "HC-020") {
     return notVerifiable(id, "S905W_GXL_NOT_EVIDENCED_AND_MUST_NOT_BE_INFERRED", factTypes, facts);
   }
-  return notVerifiable(id, "REQUIRED_HOMOLOGATION_EVIDENCE_NOT_COLLECTED", factTypes, facts);
+  return {
+    id,
+    status: "SATISFIED",
+    reason: "VALIDATED_EVIDENCE_ACCEPTED",
+    factTypes,
+    evidenceReferences: evidenceForFacts(facts, factTypes),
+  };
+}
+
+function assertSealedRecordIntegrity(record: DiscoveryRecord): asserts record is DiscoveryRecord & { readonly recordHash: string; readonly sealedAt: string } {
+  if (
+    record.lifecycleState !== "SEALED"
+    || typeof record.recordHash !== "string"
+    || record.recordHash.length === 0
+    || typeof record.sealedAt !== "string"
+  ) {
+    throw new Error("compatibility evaluation requires a sealed discovery record");
+  }
+  if (record.schemaVersion !== HARDWARE_DISCOVERY_SCHEMA_VERSION) {
+    throw new Error(`compatibility evaluation requires ${HARDWARE_DISCOVERY_SCHEMA_VERSION}`);
+  }
+  if (canonicalEvidenceRoot(record.facts) !== record.evidenceRoot) {
+    throw new Error("compatibility evaluation rejected an invalid evidenceRoot");
+  }
+  if (canonicalRecordHash(record) !== record.recordHash) {
+    throw new Error("compatibility evaluation rejected an invalid recordHash");
+  }
 }
 
 export function evaluateHardwareCompatibility(
@@ -126,9 +229,7 @@ export function evaluateHardwareCompatibility(
   evaluatedAt: string,
   evaluationId: string,
 ): CompatibilityEvaluationResult {
-  if (record.lifecycleState !== "SEALED" || typeof record.recordHash !== "string" || record.recordHash.length === 0 || typeof record.sealedAt !== "string") {
-    throw new Error("compatibility evaluation requires a sealed discovery record");
-  }
+  assertSealedRecordIntegrity(record);
   assertIsoInstant(evaluatedAt, "evaluatedAt");
   if (evaluationId.trim().length === 0) throw new Error("evaluationId must not be empty");
 
@@ -151,7 +252,7 @@ export function evaluateHardwareCompatibility(
     },
     ...Object.keys(REQUIRED_FACTS)
       .filter((id) => id !== "HC-004")
-      .map((id) => evaluateRequirement(id, facts, factIndex)),
+      .map((id) => evaluateRequirement(id, facts, factIndex, record)),
     {
       id: "HC-018",
       status: "SATISFIED",

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import {
+  HARDWARE_DISCOVERY_SCHEMA_VERSION,
   createDiscoveryRecord,
   type DiscoveryFact,
   type DiscoveryRecord,
@@ -7,7 +8,7 @@ import {
 } from "./record.ts";
 import { normalizeCapacity, normalizeOpaqueText, normalizeVersion } from "./normalization.ts";
 
-const SCHEMA_VERSION = "hardware-discovery-schema-v1";
+const SCHEMA_VERSION = HARDWARE_DISCOVERY_SCHEMA_VERSION;
 const COLLECTOR_VERSION = "edge-discovery-intake-v1";
 const INITIAL_CONFIDENCE = 0.2;
 

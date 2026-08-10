@@ -14,6 +14,8 @@ test("real MXQ evidence run produces a sealed record and compatibility result wi
   });
 
   assert.equal(result.discovery.lifecycleState, "SEALED");
+  assert.equal(result.discovery.schemaVersion, "hardware-discovery-schema-v2");
+  assert.ok(result.discovery.facts.every((fact) => fact.schemaVersion === "hardware-discovery-schema-v2"));
   assert.match(result.discovery.recordHash, /^[a-f0-9]{64}$/);
   assert.match(result.discovery.evidenceRoot, /^[a-f0-9]{64}$/);
   assert.equal(result.compatibility.state, "UNKNOWN");

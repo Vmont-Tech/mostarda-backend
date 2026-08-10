@@ -1,7 +1,7 @@
 # Mostarda Edge — Hardware Discovery Specification
 
 **Status:** DRAFT  
-**Version:** 1.0.0  
+**Version:** 1.1.0
 **Owner:** Mostarda Architecture  
 **Related ADR:** ADR-010 — Edge Hardware and Provisioning  
 **Prerequisite:** `EDGE_HARDWARE_COMPATIBILITY.md`  
@@ -102,6 +102,7 @@ Every discovery observation shall use the following conceptual envelope:
 FACT
 ├── fact_id
 ├── fact_type
+├── observation_kind
 ├── source
 ├── value
 ├── normalized_value
@@ -112,7 +113,8 @@ FACT
 ├── collector_version
 ├── schema_version
 ├── target_identity
-└── observation_sequence
+├── observation_sequence
+└── validation_state
 ```
 
 ### 4.1 `fact_id`
@@ -135,7 +137,43 @@ identity.device_key_capability
 
 The fact type is not a compatibility state and shall not encode an implementation-specific decision such as `production_supported`.
 
-### 4.3 `source`
+The Fact Envelope also contains the required `observation_kind` field between
+`fact_type` and `source`. It is part of the serialized
+`hardware-discovery-schema-v2` contract.
+
+The canonical field order is therefore:
+
+```text
+fact_id → fact_type → observation_kind → source → value → normalized_value
+→ confidence → observed_at → collected_at → evidence → collector_version
+→ schema_version → target_identity → observation_sequence → validation_state
+```
+
+### 4.3 `observation_kind`
+
+`observation_kind` is a required provenance classification. It is distinct
+from `source.trust_class` and from compatibility state:
+
+```text
+DECLARED   human or administrative declaration retained as context;
+OBSERVED   value directly reported by a collector or system interface;
+INFERRED   value derived from other observations and accompanied by an inference description;
+VALIDATED  value validated by an explicit, versioned validation procedure.
+```
+
+`INFERRED` facts shall preserve the inference description. A capability
+requirement may be satisfied only by a fact whose `observation_kind` is
+`VALIDATED`, whose `validation_state` is `VERIFIED`, and whose supporting
+evidence is valid according to this contract. `DECLARED`, `OBSERVED` and
+`INFERRED` facts remain useful observations but cannot satisfy a mandatory
+capability requirement. Confidence never substitutes for validation.
+
+The field is part of the serialized Fact contract. Records produced under a
+previous schema identifier remain historical observations; a consumer that
+requires `observation_kind` shall reject a record that does not declare
+`hardware-discovery-schema-v2` rather than infer a classification.
+
+### 4.4 `source`
 
 `source` identifies where the observation came from and how it was obtained. It shall include at least:
 
@@ -147,7 +185,7 @@ source.reference
 source.trust_class
 ```
 
-### 4.4 `value`
+### 4.5 `value`
 
 `value` preserves the exact source representation, including the original textual form where applicable.
 
@@ -160,13 +198,13 @@ Examples:
 "1920x1080@60"
 ```
 
-### 4.5 `normalized_value`
+### 4.6 `normalized_value`
 
 `normalized_value` is the canonical representation used by downstream consumers. It shall be present only when normalization succeeds.
 
 The original `value` shall remain available even when normalization fails.
 
-### 4.6 `confidence`
+### 4.7 `confidence`
 
 `confidence` is a decimal value in the closed interval `[0.00, 1.00]`.
 
@@ -180,13 +218,13 @@ It represents the robustness of the observation based on source quality, integri
 
 Confidence is explanatory and auditable. A high confidence value cannot authorize a fact that lacks acceptable evidence.
 
-### 4.7 `observed_at` and `collected_at`
+### 4.8 `observed_at` and `collected_at`
 
 `observed_at` is the time at which the source states that the condition existed. `collected_at` is the time at which the discovery collector obtained the observation.
 
 Both timestamps shall be preserved when available. If the source does not provide an observation timestamp, `observed_at` shall be explicitly marked unavailable rather than fabricated.
 
-### 4.8 `evidence`
+### 4.9 `evidence`
 
 `evidence` identifies the material supporting the observation. It shall include, where applicable:
 
@@ -201,6 +239,13 @@ evidence.integrity_state
 ```
 
 Evidence is referenced, not silently discarded. A discovery record shall be able to explain why a fact was accepted, rejected or marked unresolved.
+
+For a capability requirement, supporting evidence is valid only when its
+`integrity_state` is `VALID`, its digest and digest scope are present, and the
+validation procedure recorded by the producer is represented by
+`observation_kind: VALIDATED` and `validation_state: VERIFIED`. A declaration,
+system observation, inference, unverified digest or confidence value cannot be
+used as a substitute for this evidence.
 
 ---
 
@@ -958,13 +1003,14 @@ The conceptual output shape is:
     "device_key_reference": "opaque-key-reference",
     "binding_state": "PROVISIONAL"
   },
-  "schema_version": "discovery-schema-v1",
+  "schema_version": "hardware-discovery-schema-v2",
   "collector_version": "collector-v1",
   "lifecycle_state": "SEALED",
   "facts": [
     {
       "fact_id": "fact-001",
       "fact_type": "soc.family",
+      "observation_kind": "OBSERVED",
       "source": {
         "kind": "SYSTEM_REPORTED",
         "component": "device-tree",

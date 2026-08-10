@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { DiscoveryFact } from "./record.ts";
+import { HARDWARE_DISCOVERY_SCHEMA_VERSION, type DiscoveryFact } from "./record.ts";
 
 export interface AdbResult {
   readonly stdout: string;
@@ -79,7 +79,7 @@ const COMMAND_REQUIREMENT = new Map<string, string>([
 ]);
 
 const COLLECTOR_VERSION = "edge-discovery-adb-v1";
-const SCHEMA_VERSION = "hardware-discovery-schema-v1";
+const SCHEMA_VERSION = HARDWARE_DISCOVERY_SCHEMA_VERSION;
 
 export function assertReadOnlyAndroidCommand(command: string): void {
   if (!READ_ONLY_ANDROID_COMMANDS.has(command)) {

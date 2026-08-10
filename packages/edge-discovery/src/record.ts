@@ -39,6 +39,8 @@ export type DiscoveryFactObservationKind =
   | "INFERRED"
   | "VALIDATED";
 
+export const HARDWARE_DISCOVERY_SCHEMA_VERSION = "hardware-discovery-schema-v2";
+
 const OBSERVATION_KINDS: ReadonlySet<DiscoveryFactObservationKind> = new Set([
   "DECLARED",
   "OBSERVED",
@@ -271,7 +273,7 @@ export function createDiscoveryRecord(input: CreateDiscoveryRecordInput): Discov
   return {
     discoveryId: input.discoveryId,
     targetIdentity: input.targetIdentity,
-    schemaVersion: input.schemaVersion ?? "hardware-discovery-schema-v1",
+    schemaVersion: input.schemaVersion ?? HARDWARE_DISCOVERY_SCHEMA_VERSION,
     collectorVersion: input.collectorVersion,
     lifecycleState,
     startedAt: input.startedAt,
