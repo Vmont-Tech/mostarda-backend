@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import {
   READ_ONLY_ANDROID_COMMANDS,
   assertReadOnlyAndroidCommand,
@@ -47,4 +48,31 @@ test("unavailable optional probes become typed missing observations", async () =
   assert.equal(result.facts.find((fact) => fact.factType === "software.device_model")?.value, "Nex30");
   assert.ok(result.missingRequirements.includes("cpu.architecture.effective"));
   assert.ok(result.failures.some((failure) => failure.code === "SOURCE_UNREADABLE"));
+});
+
+test("ADB facts explicitly mark observation time as unavailable and digest the raw result", async () => {
+  const result = await collectAndroidFacts({
+    async exec(command) {
+      return command === "getprop ro.product.model"
+        ? { stdout: "Nex30\n", stderr: "", exitCode: 0 }
+        : { stdout: "", stderr: "", exitCode: 0 };
+    },
+  }, {
+    collectedAt: "2026-08-09T12:10:00.000Z",
+    targetReference: "mxq-pro-4k-5g-lab-001",
+    evidenceReference: "adb:mxq-pro-001",
+  });
+
+  const fact = result.facts.find((candidate) => candidate.factType === "software.device_model");
+  assert.ok(fact);
+  assert.equal(fact.observedAt, null);
+  const expectedDigest = createHash("sha256")
+    .update(JSON.stringify({
+      command: "getprop ro.product.model",
+      stdout: "Nex30\n",
+      stderr: "",
+      exitCode: 0,
+    }))
+    .digest("hex");
+  assert.equal(fact.evidence.digest, expectedDigest);
 });

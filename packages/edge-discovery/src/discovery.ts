@@ -1,4 +1,5 @@
 import {
+  canonicalEvidenceRoot,
   createDiscoveryRecord,
   sealDiscoveryRecord,
   type DiscoveryRecord,
@@ -29,7 +30,7 @@ export function composeAndSealDiscovery(
     facts,
     conflicts: intake.conflicts,
     missingRequirements,
-    evidenceRoot: "COMPOSITE_UNVERIFIED",
+    evidenceRoot: canonicalEvidenceRoot(facts),
   });
   return sealDiscoveryRecord(combined, sealedAt);
 }

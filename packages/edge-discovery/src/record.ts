@@ -60,7 +60,8 @@ export interface DiscoveryFact {
   readonly value: unknown;
   readonly normalizedValue?: unknown;
   readonly confidence: number;
-  readonly observedAt?: string;
+  /** `null` is an explicit statement that the source supplied no observation time. */
+  readonly observedAt: string | null;
   readonly collectedAt: string;
   readonly evidence: FactEvidence;
   readonly collectorVersion: string;
@@ -145,6 +146,29 @@ function hashRecord(record: Omit<DiscoveryRecord, "recordHash" | "sealedAt">): s
   return createHash("sha256").update(canonical).digest("hex");
 }
 
+function evidenceManifest(facts: readonly DiscoveryFact[]): readonly unknown[] {
+  return [...facts]
+    .sort((left, right) => left.factId.localeCompare(right.factId))
+    .map((fact) => ({
+      factId: fact.factId,
+      evidence: {
+        kind: fact.evidence.kind,
+        digest: fact.evidence.digest ?? null,
+        signature: fact.evidence.signature ?? null,
+        signingKeyId: fact.evidence.signingKeyId ?? null,
+        sourceReference: fact.evidence.sourceReference ?? null,
+        captureMethod: fact.evidence.captureMethod ?? null,
+        integrityState: fact.evidence.integrityState,
+      },
+    }));
+}
+
+/** Hashes evidence references only; recordHash is the integrity hash of the full record. */
+export function canonicalEvidenceRoot(facts: readonly DiscoveryFact[]): string {
+  const canonical = JSON.stringify(canonicalize(evidenceManifest(facts)));
+  return createHash("sha256").update(canonical).digest("hex");
+}
+
 function normalizeList(values: readonly string[]): readonly string[] {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right));
 }
@@ -155,7 +179,7 @@ function validateFact(fact: DiscoveryFact): void {
   assertNonEmpty(fact.source.reference, "source.reference");
   assertNonEmpty(fact.collectedAt, "collectedAt");
   assertIsoInstant(fact.collectedAt, "collectedAt");
-  if (fact.observedAt !== undefined) assertIsoInstant(fact.observedAt, "observedAt");
+  if (fact.observedAt !== null) assertIsoInstant(fact.observedAt, "observedAt");
   assertConfidence(fact.confidence);
   if (!Number.isInteger(fact.observationSequence) || fact.observationSequence < 0) {
     throw new Error("observationSequence must be a non-negative integer");
@@ -196,6 +220,13 @@ export function sealDiscoveryRecord(record: DiscoveryRecord, sealedAt: string): 
     throw new Error("record is already sealed");
   }
   assertIsoInstant(sealedAt, "sealedAt");
+  const computedEvidenceRoot = canonicalEvidenceRoot(record.facts);
+  const evidenceRoot = ["UNSEALED", "UNVERIFIED_INTAKE", "COMPOSITE_UNVERIFIED"].includes(record.evidenceRoot)
+    ? computedEvidenceRoot
+    : record.evidenceRoot;
+  if (evidenceRoot !== computedEvidenceRoot) {
+    throw new Error("evidenceRoot does not match the record evidence manifest");
+  }
   const withoutHash: Omit<DiscoveryRecord, "recordHash" | "sealedAt"> = {
     discoveryId: record.discoveryId,
     targetIdentity: record.targetIdentity,
@@ -206,7 +237,7 @@ export function sealDiscoveryRecord(record: DiscoveryRecord, sealedAt: string): 
     facts: record.facts,
     conflicts: record.conflicts,
     missingRequirements: record.missingRequirements,
-    evidenceRoot: record.evidenceRoot,
+    evidenceRoot,
   };
   const sealed = {
     ...withoutHash,

@@ -64,6 +64,7 @@ function fact(
       trustClass: "DECLARED" as const,
     },
     value,
+    observedAt: null,
     collectedAt: input.capturedAt,
     evidence: {
       kind: "user-provided-observation",

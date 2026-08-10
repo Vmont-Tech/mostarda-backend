@@ -11,6 +11,7 @@ import {
   parseArguments,
   runDiscoveryWithTransport,
 } from "../../scripts/edge-discovery.ts";
+import { canonicalEvidenceRoot } from "../../packages/edge-discovery/src/record.ts";
 
 test("composed discovery seals facts without compatibility or profile classification", async () => {
   const intake = createInitialMxqIntake({
@@ -41,6 +42,9 @@ test("composed discovery seals facts without compatibility or profile classifica
 
   assert.equal(sealed.lifecycleState, "SEALED");
   assert.match(sealed.recordHash, /^[a-f0-9]{64}$/);
+  assert.match(sealed.evidenceRoot, /^[a-f0-9]{64}$/);
+  assert.equal(sealed.evidenceRoot, canonicalEvidenceRoot(sealed.facts));
+  assert.notEqual(sealed.evidenceRoot, sealed.recordHash);
   assert.ok(sealed.facts.some((fact) => fact.factType === "soc.model" && fact.value === "rk322x"));
   assert.ok(sealed.facts.some((fact) => fact.factType === "memory.ram.total.physical"));
   assert.ok(sealed.missingRequirements.length > 0);

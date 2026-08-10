@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { DiscoveryFact } from "./record.ts";
 
 export interface AdbResult {
@@ -103,12 +104,24 @@ function normalizeOutput(command: string, output: string): unknown {
   return trimmed;
 }
 
+function digestAdbResult(command: string, result: AdbResult): string {
+  return createHash("sha256")
+    .update(JSON.stringify({
+      command,
+      stdout: result.stdout,
+      stderr: result.stderr,
+      exitCode: result.exitCode,
+    }))
+    .digest("hex");
+}
+
 function makeFact(
   context: AndroidCollectionContext,
   command: string,
-  value: string,
+  result: AdbResult,
 ): DiscoveryFact {
   const factType = COMMAND_REQUIREMENT.get(command) ?? `android.command.${command}`;
+  const value = result.stdout;
   const normalizedValue = normalizeOutput(command, value);
   const commandId = command.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "");
   return {
@@ -124,9 +137,11 @@ function makeFact(
     value: value.trim(),
     ...(normalizedValue === "" ? {} : { normalizedValue }),
     confidence: 0.4,
+    observedAt: null,
     collectedAt: context.collectedAt,
     evidence: {
       kind: "adb-command-output",
+      digest: digestAdbResult(command, result),
       sourceReference: context.evidenceReference,
       captureMethod: command,
       integrityState: "UNVERIFIED",
@@ -167,7 +182,7 @@ export async function collectAndroidFacts(
         failures.push({ code: "REQUIRED_FACT_MISSING", command, detail: requirement });
         continue;
       }
-      facts.push(makeFact(context, command, result.stdout));
+      facts.push(makeFact(context, command, result));
       missing.delete(requirement);
     } catch (error) {
       failures.push({
