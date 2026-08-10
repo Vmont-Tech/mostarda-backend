@@ -78,3 +78,84 @@ test("CLI requires an explicit ADB serial and never accepts an empty target", ()
   assert.throws(() => parseArguments([]), /usage:/i);
   assert.throws(() => createProcessAdbTransport(""), /serial must not be empty/i);
 });
+
+function collectionWithModel(model: string): Promise<Awaited<ReturnType<typeof collectAndroidFacts>>> {
+  return collectAndroidFacts({
+    async exec(command) {
+      return command === "getprop ro.product.model"
+        ? { stdout: `${model}\n`, stderr: "", exitCode: 0 }
+        : { stdout: "", stderr: "", exitCode: 0 };
+    },
+  }, {
+    collectedAt: "2026-08-09T12:40:00.000Z",
+    targetReference: "mxq-pro-4k-5g-lab-001",
+    evidenceReference: "adb:mxq-pro-001",
+  });
+}
+
+test("correlation preserves corroborating facts without creating a conflict", async () => {
+  const intake = createInitialMxqIntake({
+    discoveryId: "disc-mxq-correlation-same-001",
+    startedAt: "2026-08-09T12:40:00.000Z",
+    capturedAt: "2026-08-09T12:40:00.000Z",
+    evidenceReference: "user-provided-images:mxq-system-and-network",
+  });
+  const collection = await collectionWithModel("Nex30");
+  const first = composeAndSealDiscovery(intake, collection, "2026-08-09T12:40:01.000Z");
+  const second = composeAndSealDiscovery(intake, collection, "2026-08-09T12:40:01.000Z");
+
+  assert.equal(first.conflicts.length, 0);
+  assert.equal(first.facts.filter((fact) => fact.factType === "software.device_model").length, 2);
+  assert.equal(first.recordHash, second.recordHash);
+  assert.equal(first.evidenceRoot, second.evidenceRoot);
+});
+
+test("correlation preserves both values and seals an explicit conflict", async () => {
+  const intake = createInitialMxqIntake({
+    discoveryId: "disc-mxq-correlation-conflict-001",
+    startedAt: "2026-08-09T12:41:00.000Z",
+    capturedAt: "2026-08-09T12:41:00.000Z",
+    evidenceReference: "user-provided-images:mxq-system-and-network",
+  });
+  const collection = await collectionWithModel("DifferentModel");
+  const sealed = composeAndSealDiscovery(intake, collection, "2026-08-09T12:41:01.000Z");
+  const repeated = composeAndSealDiscovery(intake, collection, "2026-08-09T12:41:01.000Z");
+
+  assert.equal(sealed.lifecycleState, "SEALED");
+  assert.equal(sealed.conflicts.length, 1);
+  const conflict = sealed.conflicts[0];
+  assert.ok(conflict);
+  assert.equal(conflict.factType, "software.device_model");
+  assert.equal(conflict.conflictKind, "VALUE_MISMATCH");
+  assert.equal(conflict.observations.length, 2);
+  assert.equal(conflict.deterministicResolution, "NO_SELECTION_ALL_OBSERVATIONS_PRESERVED");
+  assert.equal(sealed.recordHash, repeated.recordHash);
+  assert.equal(sealed.evidenceRoot, repeated.evidenceRoot);
+  assert.equal(sealed.conflicts[0]?.conflictId, repeated.conflicts[0]?.conflictId);
+  assert.deepEqual(
+    sealed.facts.filter((fact) => fact.factType === "software.device_model").map((fact) => fact.value).sort(),
+    ["DifferentModel", "Nex30"],
+  );
+});
+
+test("correlation does not create a conflict when only one source exists", async () => {
+  const intake = createInitialMxqIntake({
+    discoveryId: "disc-mxq-correlation-single-001",
+    startedAt: "2026-08-09T12:42:00.000Z",
+    capturedAt: "2026-08-09T12:42:00.000Z",
+    evidenceReference: "user-provided-images:mxq-system-and-network",
+  });
+  const collection = await collectAndroidFacts({
+    async exec() {
+      return { stdout: "", stderr: "", exitCode: 0 };
+    },
+  }, {
+    collectedAt: "2026-08-09T12:42:00.000Z",
+    targetReference: "mxq-pro-4k-5g-lab-001",
+    evidenceReference: "adb:mxq-pro-001",
+  });
+  const sealed = composeAndSealDiscovery(intake, collection, "2026-08-09T12:42:01.000Z");
+
+  assert.equal(sealed.conflicts.length, 0);
+  assert.equal(sealed.facts.filter((fact) => fact.factType === "software.device_model").length, 1);
+});

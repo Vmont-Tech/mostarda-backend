@@ -60,6 +60,33 @@ export interface FactEvidence {
   readonly integrityState: EvidenceIntegrityState;
 }
 
+export type DiscoveryConflictKind =
+  | "VALUE_MISMATCH"
+  | "IDENTITY_MISMATCH"
+  | "SOURCE_UNTRUSTED"
+  | "STALE_OBSERVATION"
+  | "NORMALIZATION_FAILURE"
+  | "EVIDENCE_INVALID"
+  | "MISSING_CORROBORATION";
+
+export interface DiscoveryConflictObservation {
+  readonly factId: string;
+  readonly value: unknown;
+  readonly normalizedValue?: unknown;
+  readonly sourceReference: string;
+  readonly evidenceReference?: string;
+}
+
+export interface DiscoveryConflict {
+  readonly conflictId: string;
+  readonly factType: string;
+  readonly observations: readonly DiscoveryConflictObservation[];
+  readonly conflictKind: DiscoveryConflictKind;
+  readonly deterministicResolution: "NO_SELECTION_ALL_OBSERVATIONS_PRESERVED";
+  readonly blockingScope: "FACT_TYPE";
+  readonly createdAt: string;
+}
+
 export interface DiscoveryFact {
   readonly factId: string;
   readonly factType: string;
@@ -88,7 +115,7 @@ export interface DiscoveryRecord {
   readonly startedAt: string;
   readonly sealedAt?: string;
   readonly facts: readonly DiscoveryFact[];
-  readonly conflicts: readonly string[];
+  readonly conflicts: readonly DiscoveryConflict[];
   readonly missingRequirements: readonly string[];
   readonly evidenceRoot: string;
   readonly recordHash?: string;
@@ -101,7 +128,7 @@ export interface CreateDiscoveryRecordInput {
   readonly collectorVersion: string;
   readonly startedAt: string;
   readonly facts: readonly DiscoveryFact[];
-  readonly conflicts?: readonly string[];
+  readonly conflicts?: readonly DiscoveryConflict[];
   readonly missingRequirements: readonly string[];
   readonly evidenceRoot?: string;
 }
@@ -181,6 +208,11 @@ function normalizeList(values: readonly string[]): readonly string[] {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right));
 }
 
+function normalizeConflicts(values: readonly DiscoveryConflict[]): readonly DiscoveryConflict[] {
+  return [...new Map(values.map((conflict) => [conflict.conflictId, conflict])).values()]
+    .sort((left, right) => left.conflictId.localeCompare(right.conflictId));
+}
+
 function validateFact(fact: DiscoveryFact): void {
   assertNonEmpty(fact.factId, "factId");
   assertNonEmpty(fact.factType, "factType");
@@ -204,7 +236,7 @@ export function createDiscoveryRecord(input: CreateDiscoveryRecordInput): Discov
   for (const fact of input.facts) validateFact(fact);
 
   const facts = [...input.facts].sort((left, right) => left.factId.localeCompare(right.factId));
-  const conflicts = normalizeList(input.conflicts ?? []);
+  const conflicts = normalizeConflicts(input.conflicts ?? []);
   const missingRequirements = normalizeList(input.missingRequirements);
   const lifecycleState: DiscoveryLifecycleState = conflicts.length > 0
     ? "CONFLICTED"
