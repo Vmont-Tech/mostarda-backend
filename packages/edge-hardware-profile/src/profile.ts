@@ -37,9 +37,10 @@ export interface HardwareCapability {
 }
 
 export interface HardwareIdentityObservation {
-  readonly state: "KNOWN_OBSERVATION" | "UNKNOWN";
+  readonly state: "UNKNOWN" | "VALIDATED";
   readonly value: unknown | null;
-  readonly normalizedValue?: unknown;
+  readonly observedValue?: unknown;
+  readonly observedNormalizedValue?: unknown;
   readonly observationKind?: DiscoveryFact["observationKind"];
   readonly validationState: FactValidationState | "UNRESOLVED";
   readonly provenanceFactIds: readonly string[];
@@ -219,10 +220,12 @@ function singleObservation(record: DiscoveryRecord, factType: string): HardwareI
   if (!first) {
     return { state: "UNKNOWN", value: null, validationState: "UNRESOLVED", provenanceFactIds: [] };
   }
+  const validated = hasValidEvidence(first);
   return {
-    state: "KNOWN_OBSERVATION",
-    value: first.value,
-    ...(first.normalizedValue === undefined ? {} : { normalizedValue: first.normalizedValue }),
+    state: validated ? "VALIDATED" : "UNKNOWN",
+    value: validated ? first.normalizedValue ?? first.value : null,
+    observedValue: first.value,
+    ...(first.normalizedValue === undefined ? {} : { observedNormalizedValue: first.normalizedValue }),
     observationKind: first.observationKind,
     validationState: first.validationState,
     provenanceFactIds: facts.map((fact) => fact.factId).sort((left, right) => left.localeCompare(right)),

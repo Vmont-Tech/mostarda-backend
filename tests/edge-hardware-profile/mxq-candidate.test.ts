@@ -44,6 +44,14 @@ test("creates only a CANDIDATE profile from the sealed MXQ Discovery", () => {
   assert.equal(profile.discoveryReference.evidenceRoot, discovery.evidenceRoot);
   assert.equal(profile.discoveryReference.discoverySchemaVersion, discovery.schemaVersion);
   assert.equal(profile.hardwareIdentity.identityStatus, "PROVISIONAL");
+  assert.equal(profile.hardwareIdentity.architecture.state, "UNKNOWN");
+  assert.equal(profile.hardwareIdentity.architecture.value, null);
+  assert.equal(profile.hardwareIdentity.architecture.observedValue, "ARM 32-bit");
+  assert.equal(profile.hardwareIdentity.socFamily.state, "UNKNOWN");
+  assert.equal(profile.hardwareIdentity.socFamily.value, null);
+  assert.equal(profile.hardwareIdentity.socFamily.observedValue, "RK3228A/RK3229");
+  assert.equal(profile.hardwareIdentity.boardIdentifier.state, "UNKNOWN");
+  assert.equal(profile.hardwareIdentity.boardIdentifier.value, null);
   assert.equal(profile.hardwareIdentity.fingerprint.validationState, "UNRESOLVED");
   assert.equal(profile.installationProfileReferences.length, 0);
   assert.equal(profile.operationalAuthorization, "BLOCKED");

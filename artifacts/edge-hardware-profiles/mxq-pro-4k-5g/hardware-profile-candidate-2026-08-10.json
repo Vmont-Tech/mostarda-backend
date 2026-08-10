@@ -9,9 +9,10 @@
     "hardwareIdentity": {
       "identityStatus": "PROVISIONAL",
       "commercialModel": {
-        "state": "KNOWN_OBSERVATION",
-        "value": "MXQ Pro 4K 5G",
-        "normalizedValue": "MXQ Pro 4K 5G",
+        "state": "UNKNOWN",
+        "value": null,
+        "observedValue": "MXQ Pro 4K 5G",
+        "observedNormalizedValue": "MXQ Pro 4K 5G",
         "observationKind": "DECLARED",
         "validationState": "UNVERIFIED",
         "provenanceFactIds": [
@@ -19,8 +20,9 @@
         ]
       },
       "architecture": {
-        "state": "KNOWN_OBSERVATION",
-        "value": "ARM 32-bit",
+        "state": "UNKNOWN",
+        "value": null,
+        "observedValue": "ARM 32-bit",
         "observationKind": "INFERRED",
         "validationState": "UNVERIFIED",
         "provenanceFactIds": [
@@ -34,8 +36,9 @@
         "provenanceFactIds": []
       },
       "socFamily": {
-        "state": "KNOWN_OBSERVATION",
-        "value": "RK3228A/RK3229",
+        "state": "UNKNOWN",
+        "value": null,
+        "observedValue": "RK3228A/RK3229",
         "observationKind": "INFERRED",
         "validationState": "UNVERIFIED",
         "provenanceFactIds": [
@@ -55,9 +58,10 @@
         "provenanceFactIds": []
       },
       "boardIdentifier": {
-        "state": "KNOWN_OBSERVATION",
-        "value": "R329Q_V8.1",
-        "normalizedValue": "R329Q_V8.1",
+        "state": "UNKNOWN",
+        "value": null,
+        "observedValue": "R329Q_V8.1",
+        "observedNormalizedValue": "R329Q_V8.1",
         "observationKind": "DECLARED",
         "validationState": "UNVERIFIED",
         "provenanceFactIds": [
@@ -2180,7 +2184,7 @@
       "endsAt": null
     },
     "integrity": {
-      "profileHash": "7c622675ae8fabc9eabd71ca57994150765c50953a2e96a7d50a22b793b223cb",
+      "profileHash": "2c59457a90d8de9e21b50d6a4af51044184b8e4702ba8ce3cccb5a4f8f630e0b",
       "hashAlgorithm": "SHA-256",
       "canonicalizationVersion": "canonical-json-v1",
       "signature": null,
