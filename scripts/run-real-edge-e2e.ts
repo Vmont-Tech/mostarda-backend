@@ -3,25 +3,26 @@ import os from "node:os";
 import path from "node:path";
 
 import { buildServer } from "../apps/cloud-api/src/server.ts";
-import { DemoCloudStore } from "../packages/e2e-slice/src/cloud.ts";
+import { createEdgeRuntimeFixtureStore } from "../apps/cloud-api/src/edge-runtime-store.ts";
 import { createHttpEdgeCloudClient, JsonEdgeStorage, RealEdgeRuntime } from "../packages/edge-runtime/src/index.ts";
 
 const root = await mkdtemp(path.join(os.tmpdir(), "mostarda-real-edge-e2e-"));
-const cloud = new DemoCloudStore();
-const server = buildServer({ demoMode: true, demoStore: cloud });
+const campaignId = "campaign-runtime-e2e-001";
+const cloud = createEdgeRuntimeFixtureStore(campaignId);
+const server = buildServer({ edgeRuntimeStore: cloud });
 try {
   await server.listen({ host: "127.0.0.1", port: 0 });
   const address = server.server.address();
   if (address === null || typeof address === "string") throw new Error("Cloud API did not expose a TCP address");
   const client = createHttpEdgeCloudClient(`http://127.0.0.1:${address.port}`);
   const runtime = new RealEdgeRuntime({
-    edgeId: "edge-real-demo-001",
+    edgeId: "edge-runtime-e2e-001",
     environment: "development",
     storage: new JsonEdgeStorage(root),
     cloud: client,
   });
   await runtime.start();
-  await runtime.sync();
+  await runtime.sync(campaignId);
   const playback = await runtime.playCached();
   await runtime.flush();
   console.log(JSON.stringify({

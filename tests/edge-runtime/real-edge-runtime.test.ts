@@ -5,20 +5,20 @@ import path from "node:path";
 import test from "node:test";
 
 import { buildServer } from "../../apps/cloud-api/src/server.ts";
-import { DemoCloudStore } from "../../packages/e2e-slice/src/cloud.ts";
-import { createFastifyDemoClient } from "../../packages/e2e-slice/src/e2e.ts";
-import { type DemoCloudClient, type DemoHttpResponse } from "../../packages/e2e-slice/src/edge.ts";
+import { createEdgeRuntimeFixtureStore } from "../../apps/cloud-api/src/edge-runtime-store.ts";
 import {
+  createHttpEdgeCloudClient,
   JsonEdgeStorage,
   RealEdgeRuntime,
+  type EdgeCloudClient,
   type EdgeRuntimeClock,
 } from "../../packages/edge-runtime/src/index.ts";
 
-class AvailabilityClient implements DemoCloudClient {
+class AvailabilityClient implements EdgeCloudClient {
   #available = true;
-  readonly delegate: DemoCloudClient;
+  readonly delegate: EdgeCloudClient;
 
-  constructor(delegate: DemoCloudClient) {
+  constructor(delegate: EdgeCloudClient) {
     this.delegate = delegate;
   }
 
@@ -26,14 +26,29 @@ class AvailabilityClient implements DemoCloudClient {
     this.#available = available;
   }
 
-  get(path: string): Promise<DemoHttpResponse> {
-    if (!this.#available) return Promise.reject(new Error("cloud unavailable"));
-    return this.delegate.get(path);
+  fetchManifest(campaignId: string) {
+    return this.#run(() => this.delegate.fetchManifest(campaignId));
   }
 
-  post(path: string, payload: unknown): Promise<DemoHttpResponse> {
-    if (!this.#available) return Promise.reject(new Error("cloud unavailable"));
-    return this.delegate.post(path, payload);
+  fetchAsset(assetId: string) {
+    return this.#run(() => this.delegate.fetchAsset(assetId));
+  }
+
+  sendTelemetry(event: Parameters<EdgeCloudClient["sendTelemetry"]>[0]) {
+    return this.#run(() => this.delegate.sendTelemetry(event));
+  }
+
+  sendEvidence(evidence: Parameters<EdgeCloudClient["sendEvidence"]>[0]) {
+    return this.#run(() => this.delegate.sendEvidence(evidence));
+  }
+
+  health() {
+    return this.#run(() => this.delegate.health());
+  }
+
+  async #run<T>(operation: () => Promise<T>): Promise<T> {
+    if (!this.#available) throw new Error("cloud unavailable");
+    return operation();
   }
 }
 
@@ -49,24 +64,27 @@ class FixedClock implements EdgeRuntimeClock {
 
 test("RealEdgeRuntime persists identity/content/queue and resumes offline after restart", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "mostarda-edge-runtime-"));
-  const store = new DemoCloudStore();
-  const server = buildServer({ demoMode: true, demoStore: store });
-  const client = new AvailabilityClient(createFastifyDemoClient(server));
+  const campaignId = "campaign-runtime-test-001";
+  const store = createEdgeRuntimeFixtureStore(campaignId);
+  const server = buildServer({ edgeRuntimeStore: store });
+  await server.listen({ host: "127.0.0.1", port: 0 });
+  const address = server.server.address();
+  if (address === null || typeof address === "string") throw new Error("Cloud API did not expose a TCP address");
+  const client = new AvailabilityClient(createHttpEdgeCloudClient(`http://127.0.0.1:${address.port}`));
 
   try {
-    const firstStorage = new JsonEdgeStorage(root);
     const first = new RealEdgeRuntime({
       edgeId: "edge-real-test-001",
       environment: "test",
-      storage: firstStorage,
+      storage: new JsonEdgeStorage(root),
       cloud: client,
       clock: new FixedClock(),
     });
     await first.start();
-    await first.sync();
+    await first.sync(campaignId);
     client.setAvailable(false);
     const firstPlayback = await first.playCached();
-    assert.equal(firstPlayback.completed, true);
+    assert.equal(firstPlayback.status, "COMPLETED");
     assert.equal((await first.diagnostics()).queueSize, 5);
 
     const restarted = new RealEdgeRuntime({
@@ -80,7 +98,7 @@ test("RealEdgeRuntime persists identity/content/queue and resumes offline after 
     assert.equal((await restarted.diagnostics()).manifestCached, true);
     assert.equal((await restarted.diagnostics()).assetCached, true);
     const resumedPlayback = await restarted.playCached();
-    assert.equal(resumedPlayback.completed, true);
+    assert.equal(resumedPlayback.status, "COMPLETED");
     assert.equal((await restarted.diagnostics()).queueSize, 8);
 
     client.setAvailable(true);
@@ -95,28 +113,25 @@ test("RealEdgeRuntime persists identity/content/queue and resumes offline after 
 
 test("RealEdgeRuntime refuses unverified or mismatched assets", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "mostarda-edge-runtime-"));
-  const store = new DemoCloudStore();
-  const server = buildServer({ demoMode: true, demoStore: store });
-  const client = createFastifyDemoClient(server);
+  const campaignId = "campaign-runtime-integrity-001";
+  const store = createEdgeRuntimeFixtureStore(campaignId);
+  const server = buildServer({ edgeRuntimeStore: store });
+  await server.listen({ host: "127.0.0.1", port: 0 });
+  const address = server.server.address();
+  if (address === null || typeof address === "string") throw new Error("Cloud API did not expose a TCP address");
+  const client = createHttpEdgeCloudClient(`http://127.0.0.1:${address.port}`);
   try {
     const runtime = new RealEdgeRuntime({
       edgeId: "edge-real-test-002",
       environment: "test",
       storage: new JsonEdgeStorage(root),
       cloud: {
-        get: async (url) => {
-          const response = await client.get(url);
-          if (url.includes("assets")) {
-            const asset = response.json<Record<string, unknown>>();
-            return { ...response, json: <T>() => ({ ...asset, digest: "tampered" } as T) };
-          }
-          return response;
-        },
-        post: client.post.bind(client),
+        ...client,
+        fetchAsset: async (assetId) => ({ ...await client.fetchAsset(assetId), digest: "tampered" }),
       },
       clock: new FixedClock(),
     });
-    await assert.rejects(() => runtime.sync(), /asset integrity check failed/);
+    await assert.rejects(() => runtime.sync(campaignId), /asset integrity check failed/);
   } finally {
     await server.close();
     await rm(root, { recursive: true, force: true });

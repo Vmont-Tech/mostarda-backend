@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import type { DemoCloudClient } from "../../e2e-slice/src/edge.ts";
+import type { EdgeCloudClient } from "./cloud-contracts.ts";
 import { createHttpEdgeCloudClient } from "./cloud-client.ts";
 import { loadEdgeRuntimeSettings } from "./config.ts";
 import { RealEdgeRuntime, type EdgeRuntimeClock } from "./runtime.ts";
@@ -8,7 +8,7 @@ import { JsonEdgeStorage } from "./storage.ts";
 
 export async function createEdgeRuntimeFromSettings(
   settingsFile: string,
-  dependencies: { readonly cloud?: DemoCloudClient; readonly clock?: EdgeRuntimeClock } = {},
+  dependencies: { readonly cloud?: EdgeCloudClient; readonly clock?: EdgeRuntimeClock } = {},
 ): Promise<RealEdgeRuntime> {
   const settings = await loadEdgeRuntimeSettings(settingsFile);
   const storageRoot = path.resolve(path.dirname(settingsFile), settings.cacheDirectory);

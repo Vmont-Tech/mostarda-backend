@@ -1,10 +1,17 @@
-import type { DemoCloudClient, DemoHttpResponse } from "../../e2e-slice/src/edge.ts";
+import type {
+  EdgeAsset,
+  EdgeCloudClient,
+  EdgeManifest,
+} from "./cloud-contracts.ts";
 
-export function createHttpEdgeCloudClient(baseUrl: string): DemoCloudClient {
+export function createHttpEdgeCloudClient(baseUrl: string): EdgeCloudClient {
   const normalizedBaseUrl = normalizeBaseUrl(baseUrl);
   return {
-    get: (path) => request(normalizedBaseUrl, "GET", path),
-    post: (path, payload) => request(normalizedBaseUrl, "POST", path, payload),
+    fetchManifest: async (campaignId) => expectJson<EdgeManifest>(await request(normalizedBaseUrl, "GET", `/v1/edge/campaigns/${encodeURIComponent(campaignId)}/manifest`), "manifest"),
+    fetchAsset: async (assetId) => expectJson<EdgeAsset>(await request(normalizedBaseUrl, "GET", `/v1/edge/assets/${encodeURIComponent(assetId)}`), "asset"),
+    sendTelemetry: async (event) => { await expectAccepted(await request(normalizedBaseUrl, "POST", "/v1/edge/telemetry", event), "telemetry"); },
+    sendEvidence: async (evidence) => { await expectAccepted(await request(normalizedBaseUrl, "POST", "/v1/edge/evidence", evidence), "evidence"); },
+    health: async () => (await request(normalizedBaseUrl, "GET", "/health")).statusCode === 200,
   };
 }
 
@@ -13,7 +20,7 @@ async function request(
   method: "GET" | "POST",
   requestPath: string,
   payload?: unknown,
-): Promise<DemoHttpResponse> {
+): Promise<HttpResponse> {
   if (!requestPath.startsWith("/")) throw new Error("Cloud request path must be absolute");
   const init: RequestInit = {
     method,
@@ -33,10 +40,22 @@ async function request(
   }
   return {
     statusCode: response.status,
-    json<T>(): T {
-      return parsed as T;
-    },
+    body: parsed,
   };
+}
+
+interface HttpResponse {
+  readonly statusCode: number;
+  readonly body: unknown;
+}
+
+function expectJson<T>(response: HttpResponse, name: string): T {
+  if (response.statusCode !== 200) throw new Error(`${name} request failed: ${response.statusCode}`);
+  return response.body as T;
+}
+
+function expectAccepted(response: HttpResponse, name: string): void {
+  if (response.statusCode >= 300) throw new Error(`${name} request failed: ${response.statusCode}`);
 }
 
 function normalizeBaseUrl(value: string): string {

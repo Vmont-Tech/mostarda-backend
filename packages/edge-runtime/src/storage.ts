@@ -1,13 +1,13 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import {
-  type DemoAsset,
-  type DemoEvidence,
-  type DemoManifest,
-  type DemoPlayback,
-  type DemoTelemetryEvent,
-} from "../../e2e-slice/src/contracts.ts";
+import type {
+  EdgeAsset,
+  EdgeEvidence,
+  EdgeManifest,
+  EdgePlayback,
+  EdgeTelemetryEvent,
+} from "./cloud-contracts.ts";
 
 export const EDGE_RUNTIME_STATE_VERSION = 1 as const;
 
@@ -20,12 +20,12 @@ export interface EdgeRuntimeIdentity {
 export interface EdgeRuntimeState {
   readonly schemaVersion: typeof EDGE_RUNTIME_STATE_VERSION;
   readonly identity?: EdgeRuntimeIdentity;
-  readonly manifest?: DemoManifest;
-  readonly asset?: DemoAsset;
-  readonly playback?: DemoPlayback;
+  readonly manifest?: EdgeManifest;
+  readonly asset?: EdgeAsset;
+  readonly playback?: EdgePlayback;
   readonly playbackSequence: number;
-  readonly telemetryQueue: readonly DemoTelemetryEvent[];
-  readonly evidenceQueue: readonly DemoEvidence[];
+  readonly telemetryQueue: readonly EdgeTelemetryEvent[];
+  readonly evidenceQueue: readonly EdgeEvidence[];
 }
 
 function emptyState(): EdgeRuntimeState {

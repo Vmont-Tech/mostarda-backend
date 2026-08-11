@@ -1,21 +1,18 @@
 import {
-  DEMO_CONTRACT_REGISTRY,
-  DEMO_ENVIRONMENT,
-  type DemoAsset,
-  type DemoEvidence,
-  type DemoManifest,
-  type DemoPlayback,
-  type DemoTelemetryEvent,
-  createEvidence,
+  EDGE_CLOUD_CONTRACT_VERSION,
+  createEdgeEvidence,
   sha256,
-} from "../../e2e-slice/src/contracts.ts";
-import { type DemoCloudClient, type DemoHttpResponse } from "../../e2e-slice/src/edge.ts";
+  type EdgeCloudClient,
+  type EdgeEnvironment,
+  type EdgePlayback,
+  type EdgeTelemetryEvent,
+} from "./cloud-contracts.ts";
+import type { EdgeRuntimeSettings } from "./config.ts";
 import {
   JsonEdgeStorage,
   type EdgeRuntimeIdentity,
   type EdgeRuntimeState,
 } from "./storage.ts";
-import type { EdgeRuntimeSettings } from "./config.ts";
 
 export type EdgeHealth =
   | "BOOTING"
@@ -38,9 +35,9 @@ export class SystemEdgeRuntimeClock implements EdgeRuntimeClock {
 
 export interface EdgeRuntimeConfig {
   readonly edgeId: string;
-  readonly environment: "development" | "test" | "production";
+  readonly environment: EdgeEnvironment;
   readonly storage: JsonEdgeStorage;
-  readonly cloud: DemoCloudClient;
+  readonly cloud: EdgeCloudClient;
   /** External settings are validated before they reach the runtime; the HTTP transport remains injected. */
   readonly settings?: EdgeRuntimeSettings;
   readonly clock?: EdgeRuntimeClock;
@@ -71,7 +68,7 @@ export class RealEdgeRuntime {
   #health: EdgeHealth = "BOOTING";
   #started = false;
   #lastSync: string | undefined;
-  #lastPlayback: DemoPlayback | undefined;
+  #lastPlayback: EdgePlayback | undefined;
 
   constructor(config: EdgeRuntimeConfig) {
     if (config.edgeId.trim().length === 0) throw new Error("edge identity is required");
@@ -100,11 +97,11 @@ export class RealEdgeRuntime {
     this.#health = "READY";
     if (identityCreated) {
       this.#enqueue({
-        environment: DEMO_ENVIRONMENT,
-        contractOrigin: DEMO_CONTRACT_REGISTRY.DemoTelemetryEvent.origin,
+        contractVersion: EDGE_CLOUD_CONTRACT_VERSION,
         eventId: `${this.#config.edgeId}:edge.started`,
         type: "edge.started",
         edgeId: this.#config.edgeId,
+        environment: this.#config.environment,
         occurredAt: createdAt,
         payload: { mode: "real-runtime" },
       });
@@ -112,26 +109,26 @@ export class RealEdgeRuntime {
     }
   }
 
-  async sync(): Promise<void> {
+  async sync(campaignId: string): Promise<void> {
+    if (campaignId.trim().length === 0) throw new Error("campaign identity is required for sync");
     await this.#requireStarted();
     this.#health = "SYNCING";
     try {
-      const manifestResponse = await this.#getWithRetry("/v1/demo/manifests/campaign-demo-001");
-      if (manifestResponse.statusCode !== 200) throw new Error(`manifest sync failed: ${manifestResponse.statusCode}`);
-      const manifest = manifestResponse.json<DemoManifest>();
-      const assetResponse = await this.#getWithRetry(`/v1/demo/assets/${manifest.assetId}`);
-      if (assetResponse.statusCode !== 200) throw new Error(`asset sync failed: ${assetResponse.statusCode}`);
-      const asset = assetResponse.json<DemoAsset>();
+      const manifest = await this.#withRetry(() => this.#config.cloud.fetchManifest(campaignId));
+      const asset = await this.#withRetry(() => this.#config.cloud.fetchAsset(manifest.assetId));
       if (sha256(asset.content) !== asset.digest) throw new Error("asset integrity check failed");
       if (asset.creativeId !== manifest.creativeId) throw new Error("asset identity does not match manifest");
+      if (manifest.playbackIdentity.campaignId !== manifest.campaignId || manifest.playbackIdentity.creativeId !== manifest.creativeId) {
+        throw new Error("manifest playback identity does not match manifest");
+      }
       this.#state = { ...this.#state, manifest, asset } as EdgeRuntimeState;
       this.#lastSync = this.#clock.next();
       this.#enqueue({
-        environment: DEMO_ENVIRONMENT,
-        contractOrigin: DEMO_CONTRACT_REGISTRY.DemoTelemetryEvent.origin,
+        contractVersion: EDGE_CLOUD_CONTRACT_VERSION,
         eventId: `${this.#config.edgeId}:manifest.synced:${manifest.version}`,
         type: "manifest.synced",
         edgeId: this.#config.edgeId,
+        environment: this.#config.environment,
         occurredAt: this.#lastSync,
         campaignId: manifest.campaignId,
         creativeId: manifest.creativeId,
@@ -146,7 +143,7 @@ export class RealEdgeRuntime {
     }
   }
 
-  async playCached(): Promise<DemoPlayback> {
+  async playCached(): Promise<EdgePlayback> {
     await this.#requireStarted();
     const state = await this.#load();
     if (state.manifest === undefined || state.asset === undefined) {
@@ -162,22 +159,23 @@ export class RealEdgeRuntime {
     const completedAt = this.#clock.next();
     const sequence = state.playbackSequence + 1;
     const playbackId = `${this.#config.edgeId}:${state.manifest.version}:playback-${sequence}`;
-    const playback: DemoPlayback = {
-      environment: DEMO_ENVIRONMENT,
-      contractOrigin: DEMO_CONTRACT_REGISTRY.DemoPlayback.origin,
+    const playback: EdgePlayback = {
+      contractVersion: EDGE_CLOUD_CONTRACT_VERSION,
       playbackId,
       edgeId: this.#config.edgeId,
+      environment: this.#config.environment,
       campaignId: state.manifest.campaignId,
       creativeId: state.manifest.creativeId,
       manifestVersion: state.manifest.version,
       startedAt,
       completedAt,
-      completed: true,
+      durationSeconds: state.manifest.durationSeconds,
+      status: "COMPLETED",
     };
     const common = {
-      environment: DEMO_ENVIRONMENT,
-      contractOrigin: DEMO_CONTRACT_REGISTRY.DemoTelemetryEvent.origin,
+      contractVersion: EDGE_CLOUD_CONTRACT_VERSION,
       edgeId: this.#config.edgeId,
+      environment: this.#config.environment,
       campaignId: state.manifest.campaignId,
       creativeId: state.manifest.creativeId,
       playbackId,
@@ -193,7 +191,7 @@ export class RealEdgeRuntime {
         { ...common, eventId: `${playbackId}:playback.started`, type: "playback.started", occurredAt: startedAt, payload: { assetId: state.asset.assetId } },
         { ...common, eventId: `${playbackId}:playback.completed`, type: "playback.completed", occurredAt: completedAt, payload: { durationSeconds: state.manifest.durationSeconds } },
       ],
-      evidenceQueue: [...state.evidenceQueue, createEvidence(playback)],
+      evidenceQueue: [...state.evidenceQueue, createEdgeEvidence(playback)],
     };
     this.#lastPlayback = playback;
     await this.#save();
@@ -208,18 +206,19 @@ export class RealEdgeRuntime {
     const evidence = [...state.evidenceQueue];
     if (telemetry.length === 0 && evidence.length === 0) return;
     try {
-      for (const event of telemetry) await this.#postWithRetry("/v1/demo/telemetry", event);
-      for (const record of evidence) await this.#postWithRetry("/v1/demo/evidence", record);
+      for (const event of telemetry) await this.#withRetry(() => this.#config.cloud.sendTelemetry(event));
+      for (const record of evidence) await this.#withRetry(() => this.#config.cloud.sendEvidence(record));
       if (telemetry.length > 0) {
-        await this.#postWithRetry("/v1/demo/telemetry", {
-          environment: DEMO_ENVIRONMENT,
-          contractOrigin: DEMO_CONTRACT_REGISTRY.DemoTelemetryEvent.origin,
-          eventId: `${this.#config.edgeId}:telemetry.sent:${telemetry[0]?.eventId ?? "none"}`,
+        const firstEvent = telemetry[0];
+        await this.#withRetry(() => this.#config.cloud.sendTelemetry({
+          contractVersion: EDGE_CLOUD_CONTRACT_VERSION,
+          eventId: `${this.#config.edgeId}:telemetry.sent:${firstEvent?.eventId ?? "none"}`,
           type: "telemetry.sent",
           edgeId: this.#config.edgeId,
+          environment: this.#config.environment,
           occurredAt: this.#clock.next(),
           payload: { count: telemetry.length },
-        } satisfies DemoTelemetryEvent);
+        } satisfies EdgeTelemetryEvent));
       }
       this.#state = { ...state, telemetryQueue: [], evidenceQueue: [] };
       await this.#save();
@@ -234,8 +233,7 @@ export class RealEdgeRuntime {
     const state = await this.#load();
     let cloudStatus: EdgeRuntimeDiagnostics["cloudStatus"] = "UNKNOWN";
     try {
-      const response = await this.#config.cloud.get("/health");
-      cloudStatus = response.statusCode === 200 ? "AVAILABLE" : "UNAVAILABLE";
+      cloudStatus = (await this.#config.cloud.health()) ? "AVAILABLE" : "UNAVAILABLE";
     } catch {
       cloudStatus = "UNAVAILABLE";
     }
@@ -268,30 +266,17 @@ export class RealEdgeRuntime {
     if (!this.#started) await this.start();
   }
 
-  #enqueue(event: DemoTelemetryEvent): void {
+  #enqueue(event: EdgeTelemetryEvent): void {
     if (this.#state === undefined) throw new Error("runtime state is not loaded");
     this.#state = { ...this.#state, telemetryQueue: [...this.#state.telemetryQueue, event] };
   }
 
-  async #getWithRetry(path: string): Promise<DemoHttpResponse> {
+  async #withRetry<T>(operation: () => Promise<T>): Promise<T> {
     let lastError: unknown;
-    for (let attempt = 0; attempt < (this.#config.maxAttempts ?? this.#config.settings?.telemetryRetry.maxAttempts ?? 1); attempt += 1) {
+    const maxAttempts = this.#config.maxAttempts ?? this.#config.settings?.telemetryRetry.maxAttempts ?? 1;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       try {
-        return await this.#config.cloud.get(path);
-      } catch (error) {
-        lastError = error;
-      }
-    }
-    throw lastError instanceof Error ? lastError : new Error("Cloud request failed");
-  }
-
-  async #postWithRetry(path: string, payload: unknown): Promise<void> {
-    let lastError: unknown;
-    for (let attempt = 0; attempt < (this.#config.maxAttempts ?? this.#config.settings?.telemetryRetry.maxAttempts ?? 1); attempt += 1) {
-      try {
-        const response = await this.#config.cloud.post(path, payload);
-        if (response.statusCode >= 300) throw new Error(`Cloud rejected ${path}: ${response.statusCode}`);
-        return;
+        return await operation();
       } catch (error) {
         lastError = error;
       }
