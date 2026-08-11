@@ -122,7 +122,7 @@ Ordering: por `SettlementId + revision`; direitos são deduplicados por `Settlem
 | Event | Produtor único | Consumidores principais | Payload conceitual | Falha/duplicidade/replay |
 | --- | --- | --- | --- | --- |
 | `SettlementCycleOpened` | Settlement | Settlement scheduler, Analytics | cycle, period, policy versions, revision | Ciclo duplicado retorna original |
-| `SplitCalculated` | Settlement | Auditoria, Financial Platform após autorização | cycle, Evidence refs, cinco shares, gross/net lines, policy versions | Reprocessamento com mesmos inputs converge; divergência abre diagnóstico |
+| `SplitCalculated` | Settlement | Auditoria, Financial Platform após autorização | cycle, Evidence refs, sete shares, componentes/fundos, gross/net lines, policy versions | Reprocessamento com mesmos inputs converge; divergência abre diagnóstico |
 | `SettlementBlocked` | Settlement | Notifications, Operations | cycle/share scope, causa, dependências | Não bloqueia shares não afetadas |
 | `SettlementAuthorized` | Settlement | Financial Platform, Analytics | cycle, calculation hash, autoridade, revision | Duplicata não republica direito |
 | `SplitShareReady` | Settlement | Financial Platform, Analytics | share, beneficiary snapshot, value, calculation revision | Duplicata não publica segundo direito |

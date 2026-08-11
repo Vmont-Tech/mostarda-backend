@@ -132,13 +132,13 @@ Edge/Playback produces authoritative playback facts: `PlaybackEvent` e `Playback
 | `SettlementCycleClosed` | Ciclo fechado para apuração. |
 | `SettlementAuthorized` | Evidences válidas e ancoradas liberam liquidação. |
 | `SettlementBlocked` | Bloqueada por falha de evidência ou ancoragem. |
-| `SplitCalculated` | Memória de cálculo do split gerada. |
+| `SplitCalculated` | Memória de cálculo da `SPLIT-PERFORMANCE-RESIDUAL-V1`, incluindo as sete linhas e os componentes/fundos correspondentes, gerada. |
 | `SettlementExecuted` | Direitos financeiros do ciclo foram calculados e encaminhados ao Financial Platform. |
 | `PartnerCreditRequested` | Crédito de parceiro solicitado a partir de uma SplitShare. |
 | `InvoiceIssued` | Nota fiscal emitida. |
 | `ChargeRegistered` | Cobrança do Advertiser registrada. |
 | `ChargePaid` / `ChargeOverdue` | Estado da cobrança. |
-| `InfluencerFundCreditRequested` | A parcela restrita de 10% sem influenciador elegível foi encaminhada ao Fundo de Desenvolvimento de Influenciadores; não é receita livre. |
+| `InfluencerFundCreditRequested` | Evento do mecanismo separado de `DEC-049`: a parcela histórica de 10% sem influenciador elegível foi encaminhada ao Fundo de Desenvolvimento de Influenciadores; não é o evento de alocação dos componentes não conquistados da `SPLIT-PERFORMANCE-RESIDUAL-V1`. |
 | `SettlementDisputeOpened` / `SettlementDisputeResolved` | Disputa financeira. |
 
 ## Quantum Integration (produtor: Cloud Adapter / Quantum)

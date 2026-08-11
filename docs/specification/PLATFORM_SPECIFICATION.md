@@ -81,19 +81,23 @@ Um Command DEVE alterar somente o Aggregate proprietário. Um Event é fato e N�
 
 Toda decisão financeira DEVE preservar as versões de Pricing, Settlement, Tax e Split aplicáveis. Decisões do Plano de Continuidade DEVEM preservar `ServicePlanPriceVersion` e a versão da política operacional aplicável, sem integrar essas versões à Evidence de mídia. Toda decisão de IA DEVE preservar Model, Prompt, Agent e Policy Version. Eventos e documentos auditáveis DEVEM possuir versão e hash.
 
-### SPEC-INV-006 — Split canônico
+### SPEC-INV-006 — Split comercial por componentes
 
-O valor líquido distribuível DEVE somar exatamente:
+O valor líquido distribuível DEVE somar exatamente 100% por meio de sete linhas:
 
-| Beneficiário | Percentual |
+| Linha | Regra |
 | --- | ---: |
-| Mostarda | 30% |
-| Proprietário da TV | 20% |
-| Proprietário do Local | 20% |
-| Vendedor responsável | 20% |
-| Influenciador | 10% |
+| Proprietário da TV | 20% fixos |
+| Proprietário do Local | 20% fixos |
+| Seller | componentes conquistados, até 20% |
+| Seller Acquisition Fund | componentes de Seller não conquistados, complemento até 20% |
+| Influencer | componentes conquistados, até 10% |
+| Influencer Acquisition Fund | componentes de Influencer não conquistados, complemento até 10% |
+| Mostarda | 30% fixos neste modelo |
 
-Ausência ou inelegibilidade de um recebedor NÃO redistribui sua parcela às demais linhas. A parcela fica `BLOCKED` ou `UNCLAIMED`, exceto a linha de Influenciador: sem influenciador elegível, os 10% têm como beneficiário o Fundo de Desenvolvimento de Influenciadores. O fundo é patrimônio restrito, nunca receita livre da Mostarda. Alteração do split exige decisão arquitetural aprovada e nova versão de política.
+Seller possui quatro componentes independentes de 5%. Influencer possui componentes independentes de 3%, 2%, 2% e 3%. Cada componente não conquistado pertence ao fundo correspondente; nenhum fundo possui cap de saldo, transferência automática para a Mostarda ou regra de utilização nesta política. A política executável é `SPLIT-PERFORMANCE-RESIDUAL-V1`. Os cenários A/B/C são apenas fixtures de conformidade, nunca defaults de Campaign.
+
+`DEC-049` e o `InfluencerDevelopmentFund` permanecem mecanismo separado e não são supersedidos por esta regra. Qualquer interação entre os dois mecanismos deve ser publicada por decisão própria. Alteração do split exige nova versão de política.
 
 ## 5. Arquitetura de contextos
 
@@ -291,7 +295,7 @@ QR pertence ao Cloud e contém somente token opaco; NUNCA contém destino final 
 
 ### SPEC-SETTLE-001 — Responsabilidade
 
-Settlement consolida Evidence Records elegíveis, calcula valor líquido distribuível, aplica `SplitPolicyVersion` e cria cinco direitos financeiros. Ele NÃO executa pagamento, NÃO mantém Wallet e NÃO instrui Asaas.
+Settlement consolida Evidence Records elegíveis, calcula valor líquido distribuível, aplica `SplitPolicyVersion` e cria sete direitos financeiros. Ele NÃO executa pagamento, NÃO mantém Wallet e NÃO instrui Asaas.
 
 Settlement existe para transformar prova elegível em direitos determinísticos e reproduzíveis. Pagamento é uma operação externa, assíncrona e sujeita a indisponibilidade, timeout, devolução e reconciliação. Unir cálculo e pagamento faria uma falha do provider alterar o lifecycle do cálculo, dificultaria replay e prenderia o domínio a um executor financeiro. A alternativa “calcular e pagar cada SplitShare no mesmo Aggregate” foi descartada. Settlement termina quando os direitos foram estabelecidos; Financial Platform decide como materializá-los e movimentá-los.
 
@@ -411,9 +415,9 @@ Hardware Continuity governa subscription, benefício, manutenção, TV temporár
 
 Registro inicial cria `OWNERSHIP_DECLARED` com assinatura, serial, imagens, declaração, documento disponível, logs, hash e QuantumAnchor. Quantum prova integridade e anterioridade, não verdade material. Troca permanente coordena dois títulos: TV original para Mostarda e equivalente para parceiro, preservando contrato, entrega, aceite e histórico append-only.
 
-### SPEC-CONT-004 — Fundo de influenciadores
+### SPEC-CONT-004 — Fundos relacionados a aquisição
 
-Sem influenciador elegível, a linha de 10% pertence ao Fundo de Desenvolvimento de Influenciadores. Toda despesa exige finalidade autorizada, mais de 50% do equity total e pelo menos dois votos favoráveis distintos, com snapshot societário imutável. Financial executa; o comitê decide.
+Componentes de Influencer não conquistados são direitos do `Influencer Acquisition Fund` conforme `SPLIT-PERFORMANCE-RESIDUAL-V1`. A política não define saldo, cap, governança, despesa ou campanha de utilização. O `InfluencerDevelopmentFund` de `DEC-049` permanece mecanismo separado; sua governança continua exigindo finalidade autorizada, mais de 50% do equity total e pelo menos dois votos favoráveis distintos, com snapshot societário imutável. Financial executa; o comitê decide.
 
 ## 13. TV Network e Edge operacional
 

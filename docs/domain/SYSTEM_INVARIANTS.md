@@ -6,8 +6,8 @@ Estas regras são não negociáveis. Toda decisão, contrato, implementação, m
 2. Nenhuma Evidence é alterada após `VALID`; correções são eventos compensatórios append-only.
 3. Edge nunca calcula preço, dinheiro, split, cobertura ou liquidação.
 4. Quantum nunca conhece Campaign, anunciante, pessoa, preço ou Edge; recebe somente `Canonical Evidence Package`/hash e ancora somente hash.
-5. Split canônico soma exatamente 100%: 30% Mostarda, 20% Dono da TV, 20% Dono do Local, 20% Vendedor responsável e 10% Influenciador.
-6. Uma parcela de split tem ciclo próprio; indisponibilidade de um recebedor não bloqueia nem redistribui as demais.
+5. `SPLIT-PERFORMANCE-RESIDUAL-V1` soma exatamente 100%: TV 20%, Espaço 20%, Seller mais Seller Acquisition Fund 20%, Influencer mais Influencer Acquisition Fund 10% e Mostarda 30%.
+6. Cada componente variável conquistado vai ao participante e cada componente não conquistado vai ao fundo correspondente; TV e Espaço permanecem linhas fixas e uma indisponibilidade de recebedor não altera as demais linhas.
 7. QR nunca contém destino final ou URL de anunciante: contém somente token opaco, resolvido pelo Cloud.
 8. Todo evento possui contexto proprietário, identificador, timestamp e versão de schema.
 9. Toda decisão financeira preserva `PricingPolicyVersion`, `SettlementPolicyVersion`, `TaxPolicyVersion` e `SplitPolicyVersion` aplicáveis.

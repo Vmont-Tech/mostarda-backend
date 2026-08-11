@@ -238,11 +238,11 @@ Settlement ──C:OpenSettlementCycle──> [OPEN]
   │ C:CalculateSettlement
   ▼
 [CALCULATING] ──E:SplitCalculated
-  │              ├─ 30% Mostarda
   │              ├─ 20% TV owner
   │              ├─ 20% Venue owner
-  │              ├─ 20% seller
-  │              └─ 10% influencer
+  │              ├─ seller + Seller Acquisition Fund = 20%
+  │              ├─ influencer + Influencer Acquisition Fund = 10%
+  │              └─ 30% Mostarda
   │ C:AuthorizeSettlement
   ▼
 [AUTHORIZED] ──E:SettlementAuthorized

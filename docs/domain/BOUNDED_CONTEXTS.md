@@ -68,8 +68,8 @@ Legenda de proprietário técnico: **Cloud** (backend Mostarda), **Edge** (softw
 
 ## 7. Settlement
 
-- **Responsabilidade:** liquidação — consolidar Evidences válidas em ciclos, calcular o split canônico 30/20/20/20/10 e criar direitos financeiros.
-- **Pertence:** ciclo de liquidação, memória de cálculo do split, impostos e retenções explícitas, disputas financeiras e notas fiscais. O Fundo de Desenvolvimento de Influenciadores recebe a parcela restrita quando não houver influenciador elegível; continuidade de hardware é outro contexto.
+- **Responsabilidade:** liquidação — consolidar Evidences válidas em ciclos, aplicar a `SplitPolicyVersion` por componentes e criar direitos financeiros.
+- **Pertence:** ciclo de liquidação, memória de cálculo do split, componentes de Seller/Influencer, direitos dos fundos de aquisição, impostos e retenções explícitas, disputas financeiras e notas fiscais. Saldos e utilização dos fundos são mecanismos financeiros separados; continuidade de hardware é outro contexto.
 - **NÃO pertence:** validade da Evidence (Evidence Ledger), preço (Pricing Engine), ledger/carteira/saque (Financial Platform), rails de pagamento (Asaas), qualquer trilha de valor em blockchain.
 - **Conversa com:** Evidence Ledger, Quantum Integration (confirmação de ancoragem), Financial Platform, TV Network, Influencer Network, User Identity, Notifications e Analytics.
 - **Proprietário:** Cloud.

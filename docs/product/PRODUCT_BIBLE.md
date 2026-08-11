@@ -61,17 +61,19 @@ A divisão de cada exibição respeita o modelo canônico vigente:
 
 | Participante        | Faixa típica |
 | ------------------- | ------------ |
-| Dono da TV          | 20%       |
-| Dono do espaço      | 20%       |
-| Vendedor            | 20%        |
-| Influenciador       | 10%        |
-| Mostarda (plataforma) | 30%     |
+| Dono da TV          | 20% fixos |
+| Dono do espaço      | 20% fixos |
+| Vendedor            | componentes conquistados, até 20% |
+| Fundo de aquisição do Seller | componentes de Seller não conquistados |
+| Influenciador       | componentes conquistados, até 10% |
+| Fundo de aquisição do Influencer | componentes de Influencer não conquistados |
+| Mostarda (plataforma) | 30% fixos neste modelo |
 
 
 Regras:
 
 - A soma **sempre** fecha 100% do valor líquido cobrado do anunciante.
-- Se um papel não participa daquela exibição, sua parcela permanece `BLOCKED` ou `UNCLAIMED` e não é redistribuída às demais linhas. Exceção normativa: sem Influenciador elegível, os 10% pertencem ao Fundo de Desenvolvimento de Influenciadores.
+- Cada componente conquistado remunera o participante e cada componente não conquistado remunera o fundo de aquisição correspondente. Os cenários de 0%, parcial e teto são fixtures de teste, não presets de Campaign. `DEC-049` e o Fundo de Desenvolvimento de Influenciadores permanecem mecanismo separado.
 - O split é calculado a partir da **evidência**, nunca a partir do orçamento planejado.
 - Alteração dos percentuais exige nova versão de política e decisão arquitetural aprovada.
 

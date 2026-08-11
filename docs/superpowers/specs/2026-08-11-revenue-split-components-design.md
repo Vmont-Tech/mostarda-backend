@@ -18,7 +18,7 @@ Every campaign distribution totals 100%:
 - Seller Acquisition Fund: every seller component not earned (remainder to 20%).
 - Influencer: four independently earned components of 3%, 2%, 2%, and 3% (maximum 10%).
 - Influencer Acquisition Fund: every influencer component not earned (remainder to 10%).
-- Mostarda: residual, with a protected minimum of 30%.
+- Mostarda: fixed 30% in this policy; it is the residual after the fixed and variable pools are allocated.
 
 The two acquisition funds are distribution recipients in this policy. Their balances,
 spending authorization, campaign creation, and governance remain outside this slice.
@@ -53,7 +53,7 @@ Mostarda residual while the funds receive the unearned portions.
 - Seller Acquisition Fund plus Seller earned share is exactly 20%.
 - Influencer earned share is between 0% and 10%.
 - Influencer Acquisition Fund plus Influencer earned share is exactly 10%.
-- Mostarda is at least 30%.
+- Mostarda is exactly 30%.
 - All seven shares sum exactly to 100%.
 - Creative production does not reduce the influencer commercial cap.
 

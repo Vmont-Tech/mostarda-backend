@@ -158,7 +158,7 @@ export interface SplitAllocation {
 
 - [ ] **Step 2: Implement deterministic component calculation**
 
-Seller components must contribute `500` each; influencer components must contribute `300`, `200`, `200`, and `300`. The unearned remainder goes to the corresponding fund. Mostarda is computed as the residual after all seven lines and must be at least `3000`.
+Seller components must contribute `500` each; influencer components must contribute `300`, `200`, `200`, and `300`. The unearned remainder goes to the corresponding fund. Mostarda is the fixed `3000` residual after the fixed and variable pools are allocated.
 
 ```ts
 export function calculateSplit(input: SplitPolicyInput): SplitAllocation {

@@ -6,7 +6,7 @@ Status: `ACCEPTED`
 
 Este documento especifica como a Mostarda agrega operadores regionais sem alterar a unidade comercial de 15 segundos, o split canônico ou a autoridade dos bounded contexts existentes. O modelo reduz a barreira de entrada por um plano Freemium e cria incentivo verificável para migração ao modelo completo.
 
-As proporções de grade regulam **tempo de exibição**. O split `30/20/20/20/10` regula **dinheiro de uma exibição monetizada**. Uma proporção nunca recalcula a outra.
+As proporções de grade regulam **tempo de exibição**. A `SPLIT-PERFORMANCE-RESIDUAL-V1` regula **dinheiro de uma exibição monetizada** por componentes conquistados, fundos correspondentes e residual fixo de 30% da Mostarda. Uma proporção nunca recalcula a outra.
 
 ## 2. Modos de participação
 
@@ -27,7 +27,7 @@ As proporções de grade regulam **tempo de exibição**. O split `30/20/20/20/1
 - Plano Mostarda de Continuidade Operacional obrigatório;
 - participantes reais podem ocupar seus papéis e receber diretamente;
 - uma mesma identidade econômica pode ocupar papéis distintos somente quando cada atribuição for legítima, autorizada e versionada;
-- ausência de influenciador elegível destina os 10% ao Fundo de Desenvolvimento de Influenciadores.
+- componentes de Influencer não conquistados são destinados ao `Influencer Acquisition Fund` pela `SPLIT-PERFORMANCE-RESIDUAL-V1`; o Fundo de Desenvolvimento de Influenciadores de `DEC-049` permanece separado.
 
 Mudança de modo produz nova vigência. Nunca reclassifica Slots, Evidence Records, SplitShares ou direitos históricos.
 
@@ -239,9 +239,11 @@ O piloto usa `R$ 24,90` por TV/mês sob `ServicePlanPriceVersion`. Revisões val
 
 O plano oferece diagnóstico, suporte, manutenção, logística, TV temporária Mostarda, reparo, substituição equivalente e coparticipação somente após limites versionados.
 
-## 14. Fundo de influenciadores
+## 14. Fundos relacionados a Influencer
 
-Se houver influenciador elegível, os 10% pertencem a ele. Sem influenciador elegível, os 10% pertencem ao Fundo de Desenvolvimento de Influenciadores, patrimônio restrito e não receita livre da Mostarda.
+Componentes de Influencer conquistados pertencem ao Influencer. Componentes não conquistados pertencem ao `Influencer Acquisition Fund`, sem cap de saldo e sem transferência automática para a Mostarda. A política não define utilização, governança ou campanhas de aquisição.
+
+O Fundo de Desenvolvimento de Influenciadores de `DEC-049` permanece patrimônio restrito e mecanismo separado. Sua governança e utilização continuam regidas por sua própria decisão.
 
 Usos permitidos incluem aquisição, onboarding, capacitação, produção, campanhas, eventos, parcerias e infraestrutura compartilhada, inclusive estúdio.
 
@@ -263,6 +265,6 @@ Toda despesa exige mais de 50% do equity total e ao menos dois votos favoráveis
 
 **Inválido:** usar dado declarado por humano como prova de fluxo ou playback.
 
-**Inválido:** direcionar os 10% sem influenciador à receita livre da Mostarda.
+**Inválido:** direcionar componentes não conquistados dos fundos de aquisição à receita livre da Mostarda.
 
 **Inválido:** tratar mensalidade de continuidade como prêmio, apólice ou indenização securitária.
