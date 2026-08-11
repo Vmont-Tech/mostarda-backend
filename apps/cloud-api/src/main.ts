@@ -26,6 +26,7 @@ const server = buildServer({
         },
   logger: true,
   readinessTimeoutMs,
+  demoMode: process.env.MOSTARDA_DEMO_MODE === "1",
 });
 
 await server.listen({ host, port });
