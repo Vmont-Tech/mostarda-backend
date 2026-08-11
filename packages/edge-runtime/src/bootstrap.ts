@@ -18,7 +18,7 @@ export async function createEdgeRuntimeFromSettings(
     storage: new JsonEdgeStorage(storageRoot),
     cloud: dependencies.cloud ?? createHttpEdgeCloudClient(settings.cloudEndpoint),
     settings,
-    clock: dependencies.clock,
+    ...(dependencies.clock === undefined ? {} : { clock: dependencies.clock }),
     maxAttempts: settings.telemetryRetry.maxAttempts,
   });
 }
