@@ -1,15 +1,20 @@
 import Fastify, { type FastifyInstance } from "fastify";
+import { DemoCloudStore } from "../../../packages/e2e-slice/src/cloud.ts";
+import { demoPlayerHtml, demoPlayerScript } from "./player-assets.ts";
 
 export interface ServerOptions {
   readonly eventStoreProbe?: (signal: AbortSignal) => Promise<boolean>;
   readonly readinessTimeoutMs?: number;
   readonly logger?: boolean;
+  readonly demoMode?: boolean;
+  readonly demoStore?: DemoCloudStore;
 }
 
 export function buildServer(options: ServerOptions = {}): FastifyInstance {
   const server = Fastify({
     logger: options.logger ?? false,
   });
+  const demoStore = options.demoStore ?? new DemoCloudStore();
   const eventStoreProbe = options.eventStoreProbe ?? (async () => false);
   const readinessTimeoutMs = options.readinessTimeoutMs ?? 1000;
   let activeProbe: Promise<boolean> | null = null;
@@ -36,6 +41,48 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
       status: "ok",
     }),
   );
+
+  if (options.demoMode === true) {
+    server.get("/player", async (_request, reply) =>
+      reply.type("text/html; charset=utf-8").send(demoPlayerHtml),
+    );
+    server.get("/player/player.js", async (_request, reply) =>
+      reply.type("text/javascript; charset=utf-8").send(demoPlayerScript),
+    );
+    server.get("/v1/demo/campaigns/demo", async () => demoStore.campaign());
+    server.get("/v1/demo/manifests/:campaignId", async (request, reply) => {
+      const { campaignId } = request.params as { campaignId: string };
+      const manifest = demoStore.manifest(campaignId);
+      return manifest === undefined
+        ? reply.code(404).send({ error: "campaign_not_found" })
+        : reply.send(manifest);
+    });
+    server.get("/v1/demo/assets/:assetId", async (request, reply) => {
+      const { assetId } = request.params as { assetId: string };
+      const asset = demoStore.asset(assetId);
+      return asset === undefined
+        ? reply.code(404).send({ error: "asset_not_found" })
+        : reply.send(asset);
+    });
+    server.post("/v1/demo/telemetry", async (request, reply) => {
+      try {
+        demoStore.acceptTelemetry(request.body);
+        return reply.code(202).send({ accepted: true });
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "telemetry_rejected" });
+      }
+    });
+    server.post("/v1/demo/evidence", async (request, reply) => {
+      try {
+        demoStore.acceptEvidence(request.body);
+        return reply.code(202).send({ accepted: true });
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "evidence_rejected" });
+      }
+    });
+    server.get("/v1/demo/telemetry", async () => ({ events: demoStore.telemetryEvents() }));
+    server.get("/v1/demo/evidence", async () => ({ evidence: demoStore.evidenceRecords() }));
+  }
 
   const readinessSchema = {
     type: "object",
