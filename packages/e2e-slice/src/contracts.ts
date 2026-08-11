@@ -8,6 +8,47 @@ export const DEMO_MANIFEST_VERSION = "manifest-v1";
 export const DEMO_EDGE_ID = "edge-demo-001";
 export const DEMO_PLAYBACK_ID = "playback-demo-001";
 export const DEMO_START_TIME = "2026-08-11T12:00:00.000Z";
+export const DEMO_OFFLINE_STORAGE_MODE = "in-memory offline simulation" as const;
+
+export type DemoContractOrigin =
+  | "EXISTING_CONTRACT"
+  | "ADAPTER"
+  | "DEMO_ONLY";
+
+export interface DemoContractDefinition {
+  readonly origin: DemoContractOrigin;
+  readonly rationale: string;
+}
+
+// Audit: no exact executable Campaign/Manifest/Playback/Evidence contract exists
+// on main yet. The entries below make that boundary explicit instead of hiding
+// the demo types behind a second canonical architecture.
+export const DEMO_CONTRACT_REGISTRY = Object.freeze({
+  DemoCampaign: {
+    origin: "DEMO_ONLY",
+    rationale: "Deterministic fixture; no existing campaign implementation is reused.",
+  },
+  DemoManifest: {
+    origin: "DEMO_ONLY",
+    rationale: "Development delivery shape; not the capability manifest contract.",
+  },
+  DemoAsset: {
+    origin: "DEMO_ONLY",
+    rationale: "Deterministic local creative fixture.",
+  },
+  DemoPlayback: {
+    origin: "ADAPTER",
+    rationale: "Maps the Player specification's playback result into the simulation.",
+  },
+  DemoTelemetryEvent: {
+    origin: "ADAPTER",
+    rationale: "Adapts the existing Telemetry identity/version vocabulary to a demo event envelope.",
+  },
+  DemoEvidence: {
+    origin: "ADAPTER",
+    rationale: "Adapts playback execution observation for the Evidence Ledger handoff; it is not Evidence authority.",
+  },
+} as const satisfies Record<string, DemoContractDefinition>);
 
 export type DemoEventType =
   | "edge.started"
@@ -18,6 +59,7 @@ export type DemoEventType =
   | "telemetry.sent";
 
 export interface DemoCampaign {
+  readonly contractOrigin: typeof DEMO_CONTRACT_REGISTRY.DemoCampaign.origin;
   readonly environment: typeof DEMO_ENVIRONMENT;
   readonly campaignId: string;
   readonly creativeId: string;
@@ -25,6 +67,7 @@ export interface DemoCampaign {
 }
 
 export interface DemoManifest {
+  readonly contractOrigin: typeof DEMO_CONTRACT_REGISTRY.DemoManifest.origin;
   readonly environment: typeof DEMO_ENVIRONMENT;
   readonly campaignId: string;
   readonly creativeId: string;
@@ -38,6 +81,7 @@ export interface DemoManifest {
 }
 
 export interface DemoAsset {
+  readonly contractOrigin: typeof DEMO_CONTRACT_REGISTRY.DemoAsset.origin;
   readonly environment: typeof DEMO_ENVIRONMENT;
   readonly assetId: string;
   readonly creativeId: string;
@@ -47,6 +91,7 @@ export interface DemoAsset {
 }
 
 export interface DemoPlayback {
+  readonly contractOrigin: typeof DEMO_CONTRACT_REGISTRY.DemoPlayback.origin;
   readonly environment: typeof DEMO_ENVIRONMENT;
   readonly playbackId: string;
   readonly edgeId: string;
@@ -59,6 +104,7 @@ export interface DemoPlayback {
 }
 
 export interface DemoTelemetryEvent {
+  readonly contractOrigin: typeof DEMO_CONTRACT_REGISTRY.DemoTelemetryEvent.origin;
   readonly environment: typeof DEMO_ENVIRONMENT;
   readonly eventId: string;
   readonly type: DemoEventType;
@@ -72,6 +118,7 @@ export interface DemoTelemetryEvent {
 }
 
 export interface DemoEvidence {
+  readonly contractOrigin: typeof DEMO_CONTRACT_REGISTRY.DemoEvidence.origin;
   readonly environment: typeof DEMO_ENVIRONMENT;
   readonly evidenceId: string;
   readonly evidenceKind: "PLAYBACK_EXECUTION_OBSERVATION";
@@ -103,9 +150,10 @@ export function sha256(value: string): string {
 
 export function createDemoAsset(): DemoAsset {
   const content =
-    '<main data-mostarda-creative="creative-demo-001"><h1>Mostarda</h1><p>Mídia inteligente.</p></main>';
+    '<main data-mostarda-creative="creative-demo-001"><h1>Mostarda</h1><p>Mídia diferente.</p></main>';
   return {
     environment: DEMO_ENVIRONMENT,
+    contractOrigin: DEMO_CONTRACT_REGISTRY.DemoAsset.origin,
     assetId: DEMO_ASSET_ID,
     creativeId: DEMO_CREATIVE_ID,
     mediaType: "text/html",
@@ -117,6 +165,7 @@ export function createDemoAsset(): DemoAsset {
 export function createDemoManifest(): DemoManifest {
   return {
     environment: DEMO_ENVIRONMENT,
+    contractOrigin: DEMO_CONTRACT_REGISTRY.DemoManifest.origin,
     campaignId: DEMO_CAMPAIGN_ID,
     creativeId: DEMO_CREATIVE_ID,
     version: DEMO_MANIFEST_VERSION,
@@ -132,6 +181,7 @@ export function createDemoManifest(): DemoManifest {
 export function createDemoCampaign(): DemoCampaign {
   return {
     environment: DEMO_ENVIRONMENT,
+    contractOrigin: DEMO_CONTRACT_REGISTRY.DemoCampaign.origin,
     campaignId: DEMO_CAMPAIGN_ID,
     creativeId: DEMO_CREATIVE_ID,
     status: "ACTIVE",
@@ -141,6 +191,7 @@ export function createDemoCampaign(): DemoCampaign {
 export function createEvidence(playback: DemoPlayback): DemoEvidence {
   const unsigned = {
     environment: DEMO_ENVIRONMENT,
+    contractOrigin: DEMO_CONTRACT_REGISTRY.DemoEvidence.origin,
     evidenceKind: "PLAYBACK_EXECUTION_OBSERVATION" as const,
     status: "PLAYBACK_COMPLETED" as const,
     campaignId: playback.campaignId,

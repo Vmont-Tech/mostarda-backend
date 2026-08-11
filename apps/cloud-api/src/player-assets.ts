@@ -27,7 +27,7 @@ const json = async (url, options) => {
 };
 
 const send = (eventId, type, manifest, playbackId, payload) => json('/v1/demo/telemetry', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
-  environment: 'DEVELOPMENT_SIMULATION', eventId, type, edgeId: 'browser-demo', occurredAt: new Date().toISOString(),
+  environment: 'DEVELOPMENT_SIMULATION', contractOrigin: 'ADAPTER', eventId, type, edgeId: 'browser-demo', occurredAt: new Date().toISOString(),
   campaignId: manifest.campaignId, creativeId: manifest.creativeId, playbackId, manifestVersion: manifest.version, payload
 }) });
 

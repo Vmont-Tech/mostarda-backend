@@ -5,6 +5,7 @@ import {
   type DemoEvidence,
   type DemoTelemetryEvent,
   type DemoPlayback,
+  DEMO_OFFLINE_STORAGE_MODE,
 } from "./contracts.ts";
 import { DemoCloudStore } from "./cloud.ts";
 import { SimulatedEdge, type DemoCloudClient, type DemoHttpResponse } from "./edge.ts";
@@ -31,6 +32,7 @@ export function createFastifyDemoClient(server: FastifyDemoClient["server"]): De
 
 export interface MostardaE2EResult {
   readonly environment: "DEVELOPMENT_SIMULATION";
+  readonly offlineMode: typeof DEMO_OFFLINE_STORAGE_MODE;
   readonly edgeId: string;
   readonly campaignId: string;
   readonly playback: DemoPlayback;
@@ -52,6 +54,7 @@ export async function runMostardaE2E(): Promise<MostardaE2EResult> {
     if (evidence === undefined) throw new Error("E2E did not produce execution evidence");
     return {
       environment: "DEVELOPMENT_SIMULATION",
+      offlineMode: DEMO_OFFLINE_STORAGE_MODE,
       edgeId: DEMO_EDGE_ID,
       campaignId: DEMO_CAMPAIGN_ID,
       playback,

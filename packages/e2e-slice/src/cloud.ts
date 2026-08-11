@@ -29,7 +29,7 @@ function objectValue(value: unknown): Record<string, unknown> {
 
 function parseTelemetry(value: unknown): DemoTelemetryEvent {
   const event = objectValue(value);
-  if (typeof event.eventId !== "string" || typeof event.type !== "string" || !DEMO_EVENT_TYPES.has(event.type) || typeof event.edgeId !== "string" || typeof event.occurredAt !== "string" || event.environment !== "DEVELOPMENT_SIMULATION") {
+  if (event.contractOrigin !== "ADAPTER" || typeof event.eventId !== "string" || typeof event.type !== "string" || !DEMO_EVENT_TYPES.has(event.type) || typeof event.edgeId !== "string" || typeof event.occurredAt !== "string" || event.environment !== "DEVELOPMENT_SIMULATION") {
     throw new Error("invalid demo telemetry event");
   }
   return event as unknown as DemoTelemetryEvent;
@@ -37,7 +37,7 @@ function parseTelemetry(value: unknown): DemoTelemetryEvent {
 
 function parseEvidence(value: unknown): DemoEvidence {
   const evidence = objectValue(value);
-  if (evidence.environment !== "DEVELOPMENT_SIMULATION" || evidence.evidenceKind !== "PLAYBACK_EXECUTION_OBSERVATION" || evidence.status !== "PLAYBACK_COMPLETED" || evidence.audienceClaim !== false || typeof evidence.evidenceId !== "string" || typeof evidence.evidenceHash !== "string") {
+  if (evidence.contractOrigin !== "ADAPTER" || evidence.environment !== "DEVELOPMENT_SIMULATION" || evidence.evidenceKind !== "PLAYBACK_EXECUTION_OBSERVATION" || evidence.status !== "PLAYBACK_COMPLETED" || evidence.audienceClaim !== false || typeof evidence.evidenceId !== "string" || typeof evidence.evidenceHash !== "string") {
     throw new Error("invalid demo evidence");
   }
   const unsigned = { ...evidence };

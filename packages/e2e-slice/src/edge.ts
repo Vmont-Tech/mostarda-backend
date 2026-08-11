@@ -1,6 +1,7 @@
 import {
   DEMO_ENVIRONMENT,
   DEMO_EDGE_ID,
+  DEMO_CONTRACT_REGISTRY,
   type DemoAsset,
   type DemoEvidence,
   type DemoManifest,
@@ -22,6 +23,7 @@ export interface DemoCloudClient {
 }
 
 export interface EdgeLocalState {
+  readonly storageMode: "in-memory offline simulation";
   readonly manifestCached: boolean;
   readonly assetCached: boolean;
   readonly queuedTelemetry: number;
@@ -47,6 +49,7 @@ export class SimulatedEdge {
   async start(): Promise<void> {
     this.#enqueue({
       environment: DEMO_ENVIRONMENT,
+      contractOrigin: DEMO_CONTRACT_REGISTRY.DemoTelemetryEvent.origin,
       eventId: `${this.#edgeId}:edge.started`,
       type: "edge.started",
       edgeId: this.#edgeId,
@@ -67,6 +70,7 @@ export class SimulatedEdge {
     this.#asset = asset;
     this.#enqueue({
       environment: DEMO_ENVIRONMENT,
+      contractOrigin: DEMO_CONTRACT_REGISTRY.DemoTelemetryEvent.origin,
       eventId: `${this.#edgeId}:manifest.synced`,
       type: "manifest.synced",
       edgeId: this.#edgeId,
@@ -109,6 +113,7 @@ export class SimulatedEdge {
     if (pending.length > 0) {
       await this.#cloud.post("/v1/demo/telemetry", {
         environment: DEMO_ENVIRONMENT,
+        contractOrigin: DEMO_CONTRACT_REGISTRY.DemoTelemetryEvent.origin,
         eventId: `${this.#edgeId}:telemetry.sent:${pending[0]?.eventId ?? "none"}`,
         type: "telemetry.sent",
         edgeId: this.#edgeId,
@@ -122,6 +127,7 @@ export class SimulatedEdge {
 
   localState(): EdgeLocalState {
     return {
+      storageMode: "in-memory offline simulation",
       manifestCached: this.#manifest !== undefined,
       assetCached: this.#asset !== undefined,
       queuedTelemetry: this.#telemetry.length,

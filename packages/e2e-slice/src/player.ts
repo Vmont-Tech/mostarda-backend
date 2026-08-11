@@ -1,5 +1,6 @@
 import {
   DEMO_ENVIRONMENT,
+  DEMO_CONTRACT_REGISTRY,
   type DemoAsset,
   type DemoManifest,
   type DemoPlayback,
@@ -53,6 +54,7 @@ export class DeterministicPlayer {
     const playbackId = `${DEMO_PLAYBACK_ID}-${manifest.version}`;
     const common = {
       environment: DEMO_ENVIRONMENT,
+      contractOrigin: DEMO_CONTRACT_REGISTRY.DemoTelemetryEvent.origin,
       edgeId: this.edgeId,
       occurredAt: startedAt,
       campaignId: manifest.campaignId,
@@ -62,6 +64,7 @@ export class DeterministicPlayer {
     };
     const playback: DemoPlayback = {
       environment: DEMO_ENVIRONMENT,
+      contractOrigin: DEMO_CONTRACT_REGISTRY.DemoPlayback.origin,
       playbackId,
       edgeId: this.edgeId,
       campaignId: manifest.campaignId,

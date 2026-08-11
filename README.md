@@ -64,4 +64,6 @@ Depois abra `http://127.0.0.1:3333/player` (ou a porta configurada). A página �
 - o Cloud recebe telemetria idempotente e uma `PLAYBACK_EXECUTION_OBSERVATION` imutável;
 - se o Cloud fica indisponível depois do cache, o Edge continua reproduzindo e sincroniza a fila quando a conexão retorna.
 
-O slice não persiste em PostgreSQL nem em infraestrutura distribuída: o adaptador em memória é deliberadamente limitado à demonstração local. O caminho de contratos permanece substituível por adaptadores reais sem exigir mudança no contrato de campanha, manifesto, Player, telemetria ou evidência.
+O slice não persiste em PostgreSQL nem em infraestrutura distribuída: seu modo offline é explicitamente uma **in-memory offline simulation**, deliberadamente limitado à demonstração local. O caminho de contratos permanece substituível por adaptadores reais sem exigir mudança no contrato de campanha, manifesto, Player, telemetria ou evidência.
+
+`DeterministicPlayer` é usado apenas pelo teste E2E para produzir relógio, IDs e resultados determinísticos. O `Browser Player`, servido em `/player`, é o artefato visual executável no navegador. Eles ainda não são a mesma implementação; compartilham apenas os contratos do slice.

@@ -4,6 +4,7 @@ import test from "node:test";
 import { buildServer } from "../../apps/cloud-api/src/server.ts";
 import {
   DEMO_CAMPAIGN_ID,
+  DEMO_CONTRACT_REGISTRY,
   DEMO_EDGE_ID,
   DemoCloudStore,
   SimulatedEdge,
@@ -14,6 +15,7 @@ test("walking skeleton completes Cloud → Edge → Player → Telemetry → Evi
   const result = await runMostardaE2E();
 
   assert.equal(result.environment, "DEVELOPMENT_SIMULATION");
+  assert.equal(result.offlineMode, "in-memory offline simulation");
   assert.equal(result.edgeId, DEMO_EDGE_ID);
   assert.equal(result.campaignId, DEMO_CAMPAIGN_ID);
   assert.equal(result.playback.completed, true);
@@ -40,6 +42,7 @@ test("cached content continues playing while Cloud is unavailable", async () => 
     await edge.sync();
     assert.equal(edge.localState().manifestCached, true);
     assert.equal(edge.localState().assetCached, true);
+    assert.equal(edge.localState().storageMode, "in-memory offline simulation");
 
     edge.setCloudAvailability(false);
     const playback = await edge.playCached();
@@ -76,12 +79,21 @@ test("demo API exposes only the deterministic campaign contract and idempotent t
   try {
     const campaign = await server.inject({ method: "GET", url: "/v1/demo/campaigns/demo" });
     const player = await server.inject({ method: "GET", url: "/player" });
+    const playerScript = await server.inject({ method: "GET", url: "/player/player.js" });
+    const manifest = await server.inject({ method: "GET", url: `/v1/demo/manifests/${DEMO_CAMPAIGN_ID}` });
+    const asset = await server.inject({ method: "GET", url: "/v1/demo/assets/asset-demo-001" });
     assert.equal(campaign.statusCode, 200);
     assert.equal(campaign.json().environment, "DEVELOPMENT_SIMULATION");
+    assert.equal(playerScript.statusCode, 200);
+    assert.equal(manifest.statusCode, 200);
+    assert.equal(asset.statusCode, 200);
     assert.match(player.body, /Mostarda Player/);
+    assert.match(playerScript.body, /playback\.completed/);
+    assert.equal(manifest.json().creativeId, asset.json().creativeId);
 
     const event = {
       environment: "DEVELOPMENT_SIMULATION",
+      contractOrigin: DEMO_CONTRACT_REGISTRY.DemoTelemetryEvent.origin,
       eventId: "demo:event:1",
       type: "playback.started",
       edgeId: DEMO_EDGE_ID,
@@ -107,6 +119,7 @@ test("Cloud rejects tampered execution evidence", async () => {
       url: "/v1/demo/evidence",
       payload: {
         environment: "DEVELOPMENT_SIMULATION",
+        contractOrigin: DEMO_CONTRACT_REGISTRY.DemoEvidence.origin,
         evidenceId: "evidence-tampered",
         evidenceKind: "PLAYBACK_EXECUTION_OBSERVATION",
         status: "PLAYBACK_COMPLETED",
@@ -126,4 +139,18 @@ test("Cloud rejects tampered execution evidence", async () => {
   } finally {
     await server.close();
   }
+});
+
+test("each demo contract declares its relationship to the existing architecture", () => {
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(DEMO_CONTRACT_REGISTRY).map(([name, definition]) => [name, definition.origin])),
+    {
+      DemoCampaign: "DEMO_ONLY",
+      DemoManifest: "DEMO_ONLY",
+      DemoAsset: "DEMO_ONLY",
+      DemoPlayback: "ADAPTER",
+      DemoTelemetryEvent: "ADAPTER",
+      DemoEvidence: "ADAPTER",
+    },
+  );
 });
