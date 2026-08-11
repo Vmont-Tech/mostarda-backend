@@ -279,7 +279,7 @@
         "reason": "MISSING_FACTS:memory.ram.total.physical",
         "existingFactIds": [],
         "evidenceReferences": [],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       },
@@ -294,7 +294,7 @@
         "reason": "MISSING_FACTS:storage.usable.physical",
         "existingFactIds": [],
         "evidenceReferences": [],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       },
@@ -310,7 +310,7 @@
         "reason": "MISSING_FACTS:memory.ram.total.physical,storage.usable.physical",
         "existingFactIds": [],
         "evidenceReferences": [],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       },
@@ -330,7 +330,7 @@
         "evidenceReferences": [
           "user-provided-images:mxq-system-and-network"
         ],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       },
@@ -346,7 +346,7 @@
         "reason": "MISSING_FACTS:boot.bootloader,boot.mode",
         "existingFactIds": [],
         "evidenceReferences": [],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       },
@@ -361,7 +361,7 @@
         "reason": "MISSING_FACTS:recovery.validation",
         "existingFactIds": [],
         "evidenceReferences": [],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       },
@@ -376,7 +376,7 @@
         "reason": "MISSING_FACTS:ota.validation",
         "existingFactIds": [],
         "evidenceReferences": [],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       },
@@ -392,7 +392,7 @@
         "reason": "MISSING_FACTS:identity.edge_installation_id_capability,identity.device_key_capability",
         "existingFactIds": [],
         "evidenceReferences": [],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       },
@@ -407,7 +407,7 @@
         "reason": "MISSING_FACTS:player.web_engine.validation",
         "existingFactIds": [],
         "evidenceReferences": [],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       },
@@ -422,7 +422,7 @@
         "reason": "MISSING_FACTS:codecs.validation",
         "existingFactIds": [],
         "evidenceReferences": [],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       },
@@ -437,7 +437,7 @@
         "reason": "MISSING_FACTS:thermal.validation",
         "existingFactIds": [],
         "evidenceReferences": [],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       },
@@ -452,7 +452,7 @@
         "reason": "MISSING_FACTS:offline.playback.validation",
         "existingFactIds": [],
         "evidenceReferences": [],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       },
@@ -467,7 +467,7 @@
         "reason": "MISSING_FACTS:ota.rollback.validation",
         "existingFactIds": [],
         "evidenceReferences": [],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       },
@@ -482,7 +482,7 @@
         "reason": "MISSING_FACTS:stability.long_run.validation",
         "existingFactIds": [],
         "evidenceReferences": [],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       },
@@ -497,7 +497,7 @@
         "reason": "MISSING_FACTS:hardware.profile.lifecycle",
         "existingFactIds": [],
         "evidenceReferences": [],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       },
@@ -517,7 +517,7 @@
         "evidenceReferences": [
           "user-provided-images:mxq-system-and-network"
         ],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       },
@@ -532,7 +532,7 @@
         "reason": "MISSING_FACTS:soc.model",
         "existingFactIds": [],
         "evidenceReferences": [],
-        "availableMethods": [
+        "applicableMethods": [
           "READ_ONLY_ADB"
         ]
       }
@@ -1339,7 +1339,7 @@
       "reason": "VALIDATION_ARTIFACT_ONLY"
     },
     "integrity": {
-      "validationRecordHash": "e4e42a3c8869e94f691973f5f4a9c34b3c9a4195802aac171b23c5708a5d1a60",
+      "validationRecordHash": "1640fe8cd54e972c75622237e8fa2c90bcc63da3035046a9b18ef5738898b5d5",
       "hashAlgorithm": "SHA-256",
       "canonicalizationVersion": "canonical-json-v1",
       "signature": null,

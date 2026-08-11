@@ -39,7 +39,7 @@ export type ValidationFinding = {
   readonly reason: string;
   readonly existingFactIds: readonly string[];
   readonly evidenceReferences: readonly string[];
-  readonly availableMethods: readonly ValidationMethod["id"][];
+  readonly applicableMethods: readonly ValidationMethod["id"][];
 };
 
 export type HardwareValidationRecord = {
@@ -173,7 +173,7 @@ function findingFor(requirement: CompatibilityRequirementResult, discovery: Seal
     reason: requirement.reason,
     existingFactIds: facts.map((fact) => fact.factId).sort(),
     evidenceReferences: evidenceReferences(facts),
-    availableMethods: ["READ_ONLY_ADB"],
+    applicableMethods: ["READ_ONLY_ADB"],
   };
 }
 
@@ -204,6 +204,7 @@ export function createHardwareValidationRecord(input: HardwareValidationInput): 
   const findings = compatibility.requirements
     .filter((requirement) => requirement.factTypes.length > 0 && requirement.status !== "SATISFIED")
     .map((requirement) => findingFor(requirement, input.discovery));
+  const sourceFacts = structuredClone(input.discovery.facts);
 
   const record: HardwareValidationRecord = {
     schemaVersion: HARDWARE_VALIDATION_SCHEMA_VERSION,
@@ -245,7 +246,7 @@ export function createHardwareValidationRecord(input: HardwareValidationInput): 
       },
     ],
     findings,
-    sourceFacts: input.discovery.facts,
+    sourceFacts,
     promotion: {
       targetLifecycle: "PRODUCTION",
       status: "BLOCKED",

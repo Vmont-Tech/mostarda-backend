@@ -59,7 +59,7 @@ test("preserves every source fact and does not promote declared or inferred obse
   assert.equal(record.findings.find((finding) => finding.factTypes.includes("storage.usable.physical"))?.status, "UNKNOWN");
 });
 
-test("enumerates unresolved compatibility requirements with provenance and available non-invasive methods", () => {
+test("enumerates unresolved compatibility requirements with provenance and applicable non-invasive methods", () => {
   const discovery = loadDiscovery();
   const record = create();
 
@@ -69,7 +69,7 @@ test("enumerates unresolved compatibility requirements with provenance and avail
   for (const finding of record.findings) {
     assert.equal(finding.status, "UNKNOWN");
     assert.equal(finding.validationState, "UNRESOLVED");
-    assert.ok(finding.availableMethods.includes("READ_ONLY_ADB"));
+    assert.ok(finding.applicableMethods.includes("READ_ONLY_ADB"));
     assert.ok(Array.isArray(finding.existingFactIds));
     assert.ok(Array.isArray(finding.evidenceReferences));
   }
@@ -142,6 +142,28 @@ test("does not expose installation, provisioning, or hardware authorization in t
   assert.equal(record.compatibility.state, "UNKNOWN");
   assert.equal(record.compatibility.automaticProvisioning, "BLOCKED");
   assert.deepEqual(record.profileReference.installationProfileReferences, []);
+});
+
+test("freezes only the validation result and never freezes or mutates its inputs", () => {
+  const discovery = loadDiscovery();
+  const profile = loadProfile();
+  const beforeFacts = structuredClone(discovery.facts);
+  const beforeProfileHash = profile.integrity.profileHash;
+
+  assert.equal(Object.isFrozen(discovery), false);
+  assert.equal(Object.isFrozen(discovery.facts), false);
+  const record = createHardwareValidationRecord({
+    discovery,
+    profile,
+    validatedAt: "2026-08-10T20:45:54.567Z",
+  });
+
+  assert.equal(Object.isFrozen(record), true);
+  assert.equal(Object.isFrozen(record.sourceFacts), true);
+  assert.equal(Object.isFrozen(discovery), false);
+  assert.equal(Object.isFrozen(discovery.facts), false);
+  assert.deepEqual(discovery.facts, beforeFacts);
+  assert.equal(profile.integrity.profileHash, beforeProfileHash);
 });
 
 test("committed validation artifact is reproduced byte-for-byte", () => {
