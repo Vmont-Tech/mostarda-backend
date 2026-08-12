@@ -10,3 +10,10 @@ This package currently contains two deliberately separate pieces:
 are adapters/representations for this slice only. They are not the production PartnerLedger,
 financial persistence, Wallet, Withdrawal, payout or Asaas integration. The slice consumes the
 policy; it does not redefine or modify it.
+
+`persistent-settlement.ts` defines the persistence port for this materialization boundary.
+`PostgresSettlementStore` implements that port in `@mostarda/persistence-postgres` using
+migration `007_settlement_financial_slice.sql`. It persists SettlementCycle, FinancialRights,
+JournalTransaction/JournalLines and PartnerLedger entries with append-only and idempotency
+constraints. PostgreSQL integration tests run only when `DATABASE_URL` is available; otherwise
+the conditional tests remain explicitly skipped.

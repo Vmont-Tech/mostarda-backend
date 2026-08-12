@@ -35,7 +35,11 @@ try {
       import.meta.url,
     ),
   );
-  process.stdout.write("Applied migrations 001 through 006\n");
+  await applySqlMigration(
+    pool,
+    new URL("../migrations/007_settlement_financial_slice.sql", import.meta.url),
+  );
+  process.stdout.write("Applied migrations 001 through 007\n");
 } finally {
   await pool.end();
 }

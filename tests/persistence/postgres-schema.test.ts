@@ -16,6 +16,29 @@ const projectionInvalidationHistoryMigrationUrl = new URL(
   "../../migrations/006_projection_invalidation_history.sql",
   import.meta.url,
 );
+const settlementMigrationUrl = new URL(
+  "../../migrations/007_settlement_financial_slice.sql",
+  import.meta.url,
+);
+
+test("settlement migration defines append-only materialization and idempotency constraints", async () => {
+  const sql = await readFile(settlementMigrationUrl, "utf8");
+
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS settlement_cycles/);
+  assert.match(sql, /UNIQUE \(campaign_id, evidence_id\)/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS financial_rights/);
+  assert.match(sql, /split_share_id TEXT NOT NULL UNIQUE/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS journal_transactions/);
+  assert.match(sql, /debit_total NUMERIC\(20,4\) NOT NULL/);
+  assert.match(sql, /credit_total NUMERIC\(20,4\) NOT NULL/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS partner_ledger_entries/);
+  assert.match(sql, /financial_right_id TEXT NOT NULL UNIQUE/);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION prevent_settlement_mutation/);
+  assert.match(sql, /BEFORE UPDATE OR DELETE ON settlement_cycles/);
+  assert.match(sql, /CHECK \(gross_amount >= 0\)/);
+  assert.match(sql, /DEFERRABLE INITIALLY DEFERRED/);
+  assert.match(sql, /CREATE TRIGGER partner_ledger_entries_append_only/);
+});
 
 test("event store migration enforces append-only identity and revision constraints", async () => {
   const sql = await readFile(migrationUrl, "utf8");
