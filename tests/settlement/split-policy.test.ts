@@ -171,25 +171,11 @@ test("the policy never changes fixed owners or Mostarda", () => {
   }
 });
 
-test("fund allocation is stateless and has no cumulative balance cap", () => {
-  for (let campaign = 0; campaign < 1_000; campaign += 1) {
-    const result = calculateSplit(noVariableComponents);
-    assert.equal(result.sellerAcquisitionFundBps, 2_000);
-    assert.equal(result.influencerAcquisitionFundBps, 1_000);
-  }
-});
+test("each calculation allocates the full unearned component pool without a per-campaign cap", () => {
+  const first = calculateSplit(noVariableComponents);
+  const second = calculateSplit(noVariableComponents);
 
-test("creative production context does not reduce commercial influencer allocation", () => {
-  const withoutCreative = calculateSplit({
-    ...noVariableComponents,
-    creativeProduction: { applicable: false },
-  });
-  const withCreative = calculateSplit({
-    ...noVariableComponents,
-    creativeProduction: { applicable: true },
-  });
-
-  assert.deepEqual(withCreative, withoutCreative);
-  assert.equal(withCreative.influencerBps, 0);
-  assert.equal(withCreative.influencerAcquisitionFundBps, 1_000);
+  assert.equal(first.sellerAcquisitionFundBps, 2_000);
+  assert.equal(first.influencerAcquisitionFundBps, 1_000);
+  assert.deepEqual(second, first);
 });

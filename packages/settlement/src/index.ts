@@ -22,7 +22,6 @@ export const INFLUENCER_COMPONENTS = Object.freeze([
 ] as const);
 
 export interface SplitPolicyInput {
-  readonly creativeProduction?: { readonly applicable: boolean };
   readonly seller: {
     readonly acquisition: boolean;
     readonly activationPayment: boolean;
@@ -106,9 +105,6 @@ function validateInput(input: SplitPolicyInput): void {
   }
   for (const key of influencerKeys) {
     assertBoolean(`influencer.${key}`, influencer[key]);
-  }
-  if (input.creativeProduction !== undefined) {
-    assertBoolean("creativeProduction.applicable", input.creativeProduction.applicable);
   }
 }
 
