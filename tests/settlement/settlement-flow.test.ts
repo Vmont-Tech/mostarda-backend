@@ -126,6 +126,21 @@ test("rejects a divergent reprocessing of the same Evidence identity", () => {
   );
 });
 
+test("allocates a fractional gross remainder by deterministic largest remainder order", () => {
+  const result = run({ grossAmount: "100.0001" });
+  const amount = (line: string) => result.rights.find((right) => right.line === line)!.amount;
+
+  assert.equal(amount("TV_OWNER"), "20.0000");
+  assert.equal(amount("SPACE_OWNER"), "20.0000");
+  assert.equal(amount("SELLER"), "5.0000");
+  assert.equal(amount("SELLER_ACQUISITION_FUND"), "15.0000");
+  assert.equal(amount("INFLUENCER"), "3.0000");
+  assert.equal(amount("INFLUENCER_ACQUISITION_FUND"), "7.0000");
+  assert.equal(amount("MOSTARDA"), "30.0001");
+  assert.equal(result.journalTransaction.debitTotal, "100.0001");
+  assert.equal(result.journalTransaction.creditTotal, "100.0001");
+});
+
 test("journal is balanced and ledger remains append-only", () => {
   const store = new SettlementMemoryStore();
   const result = settleEvidence(partialInput(), store);

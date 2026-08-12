@@ -4,6 +4,10 @@ import {
   type SplitPolicyInput,
 } from "./index.ts";
 
+// This module is deliberately an in-memory walking skeleton. SettlementMemoryStore,
+// destination account IDs, and the emitted ledger records are adapters/representations
+// for this slice; they are not the production PartnerLedger implementation.
+
 export type EvidenceStatus = "VALID" | "INVALID";
 export type EvidenceAnchorStatus = "CONFIRMED" | "PENDING" | "MISSING";
 
