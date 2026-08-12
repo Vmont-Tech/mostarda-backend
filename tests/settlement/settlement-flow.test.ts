@@ -2,12 +2,32 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  allocateGrossByLargestRemainder,
   SettlementEligibilityError,
   SettlementMemoryStore,
   settleEvidence,
   type SettlementEvidence,
   type SettlementInput,
 } from "../../packages/settlement/src/financial-slice.ts";
+
+test("breaks equal Hamilton-Hare remainders by stable identity, not input order", () => {
+  const targets = [
+    { key: "RIGHT-B", basisPoints: 3333 },
+    { key: "RIGHT-A", basisPoints: 3333 },
+    { key: "RIGHT-C", basisPoints: 3334 },
+  ];
+  const forward = allocateGrossByLargestRemainder("1.0002", targets);
+  const reversed = allocateGrossByLargestRemainder("1.0002", [...targets].reverse());
+  const amountsByKey = (allocation: readonly { key: string; amount: string }[]) =>
+    new Map(allocation.map(({ key, amount }) => [key, amount]));
+
+  assert.deepEqual(amountsByKey(forward), amountsByKey(reversed));
+  assert.deepEqual(amountsByKey(forward), new Map([
+    ["RIGHT-A", "0.3334"],
+    ["RIGHT-B", "0.3333"],
+    ["RIGHT-C", "0.3335"],
+  ]));
+});
 
 const partialInput = (): SettlementInput => ({
   campaignId: "C001",

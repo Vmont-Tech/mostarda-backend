@@ -145,6 +145,17 @@ export class SettlementMemoryStore {
 
 type AllocationAmountKey = Exclude<keyof ReturnType<typeof calculateSplit>, "policyVersion">;
 
+export interface LargestRemainderTarget {
+  /** Canonical beneficiary/right identity used for deterministic tie-breaking. */
+  readonly key: string;
+  readonly basisPoints: number;
+}
+
+export interface LargestRemainderAllocation {
+  readonly key: string;
+  readonly amount: string;
+}
+
 const LINES: readonly (readonly [FinancialRightLine, keyof SettlementInput["destinations"], AllocationAmountKey])[] = [
   ["TV_OWNER", "tvOwnerId", "tvOwnerBps"],
   ["SPACE_OWNER", "spaceOwnerId", "spaceOwnerBps"],
@@ -177,7 +188,10 @@ export function settleEvidence(input: SettlementInput, store: SettlementMemorySt
     status: "CLOSED",
   });
 
-  const amounts = allocateMoney(grossUnits, LINES.map(([, , bpsKey]) => allocation[bpsKey]));
+  const amounts = allocateMoney(grossUnits, LINES.map(([line, , bpsKey]) => ({
+    key: line,
+    basisPoints: allocation[bpsKey],
+  })));
   const rights = LINES.map(([line, destinationKey], index) => {
     const splitShareId = `${cycleId}:${line}`;
     return Object.freeze({
@@ -244,16 +258,44 @@ function formatMoney(units: bigint): string {
   return `${units / 10_000n}.${(units % 10_000n).toString().padStart(4, "0")}`;
 }
 
-function allocateMoney(grossUnits: bigint, basisPoints: readonly number[]): bigint[] {
+/**
+ * Allocates a gross BRL amount with Hamilton-Hare largest remainders.
+ * Equal remainders are ordered by the canonical target key, never by input position.
+ */
+export function allocateGrossByLargestRemainder(
+  grossAmount: string,
+  targets: readonly LargestRemainderTarget[],
+): readonly LargestRemainderAllocation[] {
+  const amounts = allocateMoney(parseMoney(grossAmount), targets);
+  return Object.freeze(targets.map((target, index) => Object.freeze({
+    key: target.key,
+    amount: formatMoney(amounts[index]!),
+  })));
+}
+
+function allocateMoney(grossUnits: bigint, targets: readonly LargestRemainderTarget[]): bigint[] {
+  if (targets.length === 0) throw new Error("At least one allocation target is required.");
+  const seenKeys = new Set<string>();
+  for (const target of targets) {
+    if (target.key.length === 0 || seenKeys.has(target.key)) {
+      throw new Error("Allocation target keys must be non-empty and unique.");
+    }
+    if (!Number.isInteger(target.basisPoints) || target.basisPoints < 0) {
+      throw new Error("Allocation target basis points must be non-negative integers.");
+    }
+    seenKeys.add(target.key);
+  }
   const denominator = 10_000n;
-  const portions = basisPoints.map((bps, index) => {
-    const numerator = grossUnits * BigInt(bps);
-    return { index, base: numerator / denominator, remainder: numerator % denominator };
+  const portions = targets.map((target, index) => {
+    const numerator = grossUnits * BigInt(target.basisPoints);
+    return { index, key: target.key, base: numerator / denominator, remainder: numerator % denominator };
   });
   const allocated = portions.reduce((sum, portion) => sum + portion.base, 0n);
   const remaining = grossUnits - allocated;
   const ordered = [...portions].sort((left, right) =>
-    right.remainder === left.remainder ? left.index - right.index : right.remainder > left.remainder ? 1 : -1,
+    right.remainder === left.remainder
+      ? left.key < right.key ? -1 : left.key > right.key ? 1 : 0
+      : right.remainder > left.remainder ? 1 : -1,
   );
   const amounts = portions.map((portion) => portion.base);
   for (let index = 0n; index < remaining; index += 1n) {
