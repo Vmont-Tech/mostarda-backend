@@ -140,7 +140,7 @@ O Builder não “completa” fatos por suposição. Ele correlaciona snapshots 
 | Pricing | preço calculado, preço final, fatores, floor/ceiling, policy/algorithm version |
 | CampaignBudget | reserva/consumo correlacionado e valor autorizado |
 | Tax Policy | linhas, bases, retenções e versão aplicável |
-| Split Policy | cinco papéis, percentuais canônicos e versão |
+| Split Policy | sete linhas, componentes conquistados/não conquistados, fundos correspondentes, residual e versão |
 | Continuity Service | não integra a prova de playback nem sua elegibilidade financeira; fatos de manutenção permanecem no contexto proprietário |
 | Telemetry | sinais permitidos, confiança e proveniência; nunca substitui playback |
 
@@ -159,7 +159,7 @@ EvidenceRecord registra, sem calcular por conta própria:
 - descontos/override autorizados, ator, motivo e policy version;
 - impostos, retenções e bases conhecidas;
 - valor bruto e valor líquido de referência;
-- cinco percentuais do split;
+- componentes conquistados, componentes destinados aos fundos correspondentes e residual da Mostarda;
 - `SplitPolicyVersion`;
 - valores esperados por papel quando a precisão e o arredondamento estiverem aprovados;
 - `PricingPolicyVersion`;
@@ -431,7 +431,7 @@ Para responder “por que paguei R$3,27?”, a trilha deve permitir reconstruir:
 7. override/desconto, se houver.
 8. preço final e consumido.
 9. impostos e retenções conhecidos.
-10. split policy e cinco percentuais.
+10. split policy, sete linhas e estado de cada componente.
 11. hash/pacote canônico.
 12. QuantumAnchor.
 13. Settlement e movimentos compensatórios posteriores.

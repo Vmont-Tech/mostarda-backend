@@ -20,7 +20,7 @@ Este registro conecta regras vigentes, ADRs e supersessões. O status `ACCEPTED`
 
 | ID | Decisão vigente | Origem principal | Status |
 | --- | --- | --- | --- |
-| `DEC-001` | Split fixo 30/20/20/20/10, sem redistribuição automática | Revenue Architecture + System Invariants | ACCEPTED |
+| `DEC-001` | Split fixo 30/20/20/20/10, sem redistribuição automática | Revenue Architecture + System Invariants | SUPERSEDED por `DEC-066` somente para o cálculo do split comercial; histórico preservado |
 | `DEC-002` | Edge produz fatos; EvidenceRecord nasce no Cloud | Evidence Pipeline | ACCEPTED |
 | `DEC-003` | Quantum recebe pacote/hash canônico e nunca dinheiro | ADR-004 + Institutional Domain | ACCEPTED |
 | `DEC-004` | Settlement cria direitos; Financial Platform movimenta saldos/saques | ADR-007 | ACCEPTED |
@@ -85,6 +85,7 @@ Este registro conecta regras vigentes, ADRs e supersessões. O status `ACCEPTED`
 | `DEC-063` | Telemetry Context é o owner exclusivo das accepted observations, do Telemetry Ledger append-only e de AudienceProjection interna; immutable civil-minute buckets seguem normalmente em five-minute batches, a projeção usa rolling fifteen-minute window e only new PricingQuotes may consume; QR and NFC bypass Edge; optional collectors degrade explicitly; applied quotes, holds, reserved/sold Slots e preços permanecem imutáveis; Edge/Playback produz `PlaybackEvent`/`PlaybackSignature` e Evidence Ledger alone materializes EvidenceRecord, nunca Telemetry/Audience | Edge Telemetry Architecture + Platform Specification | ACCEPTED |
 | `DEC-064` | Producer owns opaque canonical version identity and syntax; each consumer exclusively owns its immutable scoped `CompatibilityMatrix` and compatibility decisions; Configuration Service distributes only; evaluation is closed by default and distinguishes a produced four-state decision from operational non-evaluation | Contract Compatibility + Platform Specification + TBS | ACCEPTED |
 | `DEC-065` | `OPAQUE_TOKEN_V1` fixes the initial version-identity lexical representation, binary exact case-sensitive comparison and representation-only validation; semantics, ordering, normalization, existence and compatibility remain excluded | Contract Compatibility + producer-owned version contracts + Platform Specification + TBS | ACCEPTED |
+| `DEC-066` | `SPLIT-PERFORMANCE-RESIDUAL-V1` fixa TV e Espaço em 20%, remunera Seller e Influencer por componentes conquistados, destina componentes não conquistados aos fundos de aquisição correspondentes e mantém Mostarda em 30%; soma das sete linhas = 100% | Revenue Architecture + System Invariants + Settlement SplitPolicy | ACCEPTED para o split comercial; não altera `DEC-049` nem o `InfluencerDevelopmentFund` |
 
 ## Conflitos conhecidos a sincronizar
 
@@ -109,5 +110,6 @@ Este registro conecta regras vigentes, ADRs e supersessões. O status `ACCEPTED`
 | `SYNC-016` | Financial Commands | Command de PaymentLedger descreve efeito em CampaignBudget | RESOLVED por `DEC-043`: Payment, PaymentLedger e CampaignBudget recebem Commands distintos, ligados por Events |
 | `SYNC-017` | WithdrawalBatch docs | Open/Close/Seal/Execute possuem semânticas conflitantes | `SPEC-FIN-004`: `OPEN → SEALED → SUBMITTED → RECONCILING → CLOSED`, com resultado por Withdrawal |
 | `SYNC-018` | Player/Playback e Evidence/Anchor state machines | Lifecycles/owners estão sobrepostos | `OPEN-028/034` |
+| `SYNC-019` | `SPLIT-PERFORMANCE-RESIDUAL-V1` e `DEC-049` possuem mecanismos financeiros distintos que mencionam fundos relacionados a Influencer | A política comercial não define saldo, governança ou utilização do `InfluencerDevelopmentFund`; qualquer interação entre os dois mecanismos exige decisão própria | ABERTO; nenhuma regra é inferida |
 
 Itens marcados `RESOLVED` foram sincronizados a partir das respostas consolidadas do fundador. Os demais `SYNC-*` continuam bloqueantes até correção e validação.

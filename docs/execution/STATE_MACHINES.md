@@ -156,7 +156,7 @@ Estados: `PENDING`, `READY`, `BLOCKED`, `UNCLAIMED`, `CREDITED`.
 
 | De → Para | Ator e Command | Event | Gates/pré-condições | Timeout, retry e falha | Compensação/recuperação |
 | --- | --- | --- | --- | --- | --- |
-| inexistente → `PENDING` | Settlement calculation | `SplitCalculated` | Uma das cinco linhas canônicas; valor e papel preservados | Duplicata pelo direito não cria linha | — |
+| inexistente → `PENDING` | Settlement calculation | `SplitCalculated` | Uma das sete linhas da `SPLIT-PERFORMANCE-RESIDUAL-V1`; valor, componente/fundo e papel preservados | Duplicata pelo direito não cria linha | — |
 | `PENDING` → `READY` | Settlement, `MarkSplitShareReady` | `SplitShareReady` | Beneficiário elegível e cálculo autorizado | Falha de outra share não afeta | Publicar direito |
 | `PENDING/READY` → `BLOCKED` | Settlement, `BlockSplitShare` | `SplitShareBlocked` | Causa individual | Sem desbloqueio automático | Nova decisão pode retornar a PENDING/READY |
 | `BLOCKED` → `PENDING/READY` | Settlement, `UnblockSplitShare` | `SplitShareUnblocked` | Causa removida e elegibilidade reavaliada | Retry pela decisão; sem auto-unblock | — |

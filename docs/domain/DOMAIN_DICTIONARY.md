@@ -44,7 +44,7 @@ Fluxo contínuo de dados operacionais emitidos pelo **Edge**: heartbeat, saúde 
 Mecanismo que define o **valor cobrado** por Slot com base em demanda, contexto (horário, localização), performance histórica do inventário e recomendação de IA. Aplicado no momento da alocação do Slot.
 
 ## Split Payment
-Divisão automática do valor líquido distribuível de uma Evidence entre participantes elegíveis, após taxas, impostos e retenções explícitas. A política canônica é **30% Mostarda, 20% Dono da TV, 20% Dono do Espaço, 20% Vendedor responsável e 10% Influenciador**. Quando não há influenciador elegível, os 10% constituem patrimônio restrito do Fundo de Desenvolvimento de Influenciadores; não se tornam receita livre nem um sexto destinatário. A execução financeira ocorre pelo Financial Platform via **Asaas**.
+Divisão automática do valor líquido distribuível de uma Evidence entre participantes e fundos de aquisição, após taxas, impostos e retenções explícitas. `SPLIT-PERFORMANCE-RESIDUAL-V1` fixa TV e Espaço em 20%, remunera Seller até 20% e Influencer até 10% conforme componentes conquistados, envia componentes não conquistados aos fundos correspondentes e mantém Mostarda em 30%. A execução financeira ocorre pelo Financial Platform via **Asaas**; saldos e utilização dos fundos não são definidos por esta política.
 
 ## Settlement
 Processo de liquidação financeira que consolida Evidences válidas em ciclos e dispara os **Split Payments** via **Asaas**. Nunca ocorre sem Evidence íntegra.
@@ -74,7 +74,10 @@ Adesão versionada de uma TV ao Plano Mostarda de Continuidade Operacional. É s
 Caso de diagnóstico, reparo, TV temporária ou troca permanente, com benefício, custo e histórico auditáveis.
 
 ## Influencer Development Fund
-Patrimônio restrito que recebe a linha de 10% quando não existe influenciador elegível.
+Patrimônio restrito do mecanismo de `DEC-049`; permanece separado do `Influencer Acquisition Fund` da `SPLIT-PERFORMANCE-RESIDUAL-V1`.
+
+## Influencer Acquisition Fund
+Direito de distribuição que recebe cada componente comercial de Influencer não conquistado. Não possui cap de saldo ou regra de utilização nesta política.
 
 ## Split Policy Version
 Identificador imutável da regra de distribuição aplicada a uma Evidence e a uma linha de Settlement.

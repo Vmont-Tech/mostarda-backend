@@ -47,7 +47,8 @@
 | TV e `TV ID` | **Cloud** (TV Network) | todos | Toda TV pertence a um parceiro. |
 | Venue | **Cloud** (TV Network) | Pricing Engine, Campaign Management | |
 | Continuidade de hardware | **Hardware Continuity** | TV Network, Financial, Quantum, Governance | serviço; não seguro |
-| Fundo de influenciadores | **InfluencerDevelopmentFund** | Settlement, Financial, comitê | patrimônio restrito |
+| Fundo de Desenvolvimento de Influenciadores (`DEC-049`) | **InfluencerDevelopmentFund** | Settlement, Financial, comitê | patrimônio restrito; mecanismo separado |
+| Fundos de aquisição do split | **Settlement** (direitos de distribuição) | Financial Platform, conforme decisão futura | componentes não conquistados; saldo, ledger e utilização fora desta política |
 | Influencer e contrato de participação | **Cloud** (Influencer Network) | Settlement, Campaign Management | |
 | Conta comercial, pipeline, carteira do Vendedor | **Cloud** (CRM) | Settlement, Analytics | |
 | Identidade, papéis e permissões | **Cloud** (User Identity) | todos | |

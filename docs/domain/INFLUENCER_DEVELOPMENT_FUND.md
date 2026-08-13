@@ -4,12 +4,23 @@ Status: `ACCEPTED`
 
 ## 1. Propósito
 
-O fundo transforma a parcela canônica de 10% sem influenciador elegível em patrimônio restrito para desenvolver o ecossistema de influenciadores. Não é receita livre, orçamento geral de marketing ou parcela redistribuída aos outros quatro beneficiários.
+Este documento preserva o mecanismo histórico de `DEC-049`: ele transforma a parcela
+canônica de 10% sem influenciador elegível em patrimônio restrito para desenvolver o
+ecossistema de influenciadores. Não é receita livre, orçamento geral de marketing ou
+parcela redistribuída aos outros quatro beneficiários. Essa regra não é a alocação
+vigente dos componentes da `SPLIT-PERFORMANCE-RESIDUAL-V1`.
+
+Este Aggregate é separado do `Influencer Acquisition Fund` introduzido por
+`SPLIT-PERFORMANCE-RESIDUAL-V1`. A política comercial destina ao fundo de aquisição
+somente os componentes de Influencer não conquistados; ela não altera o saldo, a
+governança ou a utilização deste Fundo de Desenvolvimento. Qualquer interação entre
+os dois mecanismos exige decisão financeira própria.
 
 ## 2. Formação
 
 - Evidence monetizada com influenciador elegível cria SplitShare para ele.
-- Evidence monetizada sem influenciador elegível cria SplitShare para o fundo.
+- Evidence monetizada sem influenciador elegível cria SplitShare para este fundo
+  somente quando o mecanismo separado de `DEC-049` for aplicado.
 - A soma canônica permanece 100%.
 - O beneficiário da linha é determinado e congelado pelo Settlement conforme `InfluencerEligibilityPolicyVersion`.
 - Decisão histórica nunca muda por elegibilidade posterior.

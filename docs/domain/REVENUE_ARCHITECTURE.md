@@ -2,22 +2,24 @@
 
 Este é o contrato econômico oficial. Nenhuma implementação pode trocar percentuais, escolher outro destinatário ou liquidar fora destas regras sem um novo ADR aprovado.
 
-## Split canônico e imutável por padrão
+## Split comercial por componentes
 
-Para cada valor líquido elegível de uma Evidence, aplica-se exatamente:
+Para cada valor líquido elegível de uma Evidence, aplica-se `SPLIT-PERFORMANCE-RESIDUAL-V1`:
 
-| Beneficiário | Percentual |
+| Linha | Regra |
 | --- | ---: |
-| Mostarda | **30%** |
-| Proprietário da TV | **20%** |
-| Proprietário do Local | **20%** |
-| Vendedor responsável pela campanha | **20%** |
-| Influenciador | **10%** |
+| Proprietário da TV | **20% fixos** |
+| Proprietário do Local | **20% fixos** |
+| Seller | componentes conquistados, até **20%** |
+| Seller Acquisition Fund | componentes de Seller não conquistados, complemento até **20%** |
+| Influencer | componentes conquistados, até **10%** |
+| Influencer Acquisition Fund | componentes de Influencer não conquistados, complemento até **10%** |
+| Mostarda | **30% fixos neste modelo** |
 | Total | **100%** |
 
-Não há percentual configurável por padrão, arredondamento que mude o total ou destinatário implícito. A política é versionada (`SplitPolicyVersion`), mas uma nova versão só pode existir por decisão arquitetural aprovada; a versão canônica inicial é `SPLIT-30-20-20-20-10`. A Evidence guarda a versão e todas as cinco linhas de split.
+Seller possui aquisição, ativação/pagamento, renovação e volume/meta, cada um de 5%. Influencer possui entrada de 3%, ativação de 2%, performance/engajamento de 2% e recorrência/resultado de 3%. Componente conquistado remunera o participante; componente não conquistado remunera o fundo correspondente. Os fundos acumulam sem limite de saldo e sua utilização futura não é definida por esta política. A Evidence guarda a versão, cada componente, as sete linhas e a proveniência da elegibilidade.
 
-Sem influenciador elegível, a linha de 10% tem como beneficiário o `InfluencerDevelopmentFund`. Isso não redistribui percentual nem cria receita livre da Mostarda; especializa o destinatário da quinta linha conforme `DEC-049`.
+Os cenários A/B/C são testes matemáticos, não presets ou defaults de Campaign. Produção criativa do Influencer não reduz o teto comercial de 10% e não recebe percentual definido neste documento.
 
 Cada `SplitShare` possui ciclo próprio e status `READY`, `BLOCKED`, `UNCLAIMED`, `PAID` ou `FAILED`. Ausência, remoção ou inelegibilidade de um beneficiário torna **somente sua parcela** `UNCLAIMED` ou `BLOCKED`; as demais parcelas `READY` continuam liquidáveis. Uma parcela nunca é redistribuída silenciosamente, e o `Settlement` nunca é bloqueado como um todo por um único recebedor.
 
@@ -26,7 +28,7 @@ Cada `SplitShare` possui ciclo próprio e status `READY`, `BLOCKED`, `UNCLAIMED`
 1. O Pricing Engine calcula e congela o `PricingQuote` ao alocar o Slot: preço calculado, fatores, `PricingPolicyVersion` e versão de algoritmo.
 2. A Evidence append-only registra preço calculado, preço final, preço efetivamente cobrado, impostos, descontos autorizados, moeda, precisão, split aplicado, percentuais, `SplitPolicyVersion`, `PricingPolicyVersion`, `SettlementPolicyVersion`, `TaxPolicyVersion`, TV, Slot, Campaign, playback, telemetria, hash, documento associado e Quantum Anchor.
 3. Somente Evidence `VALID`, não revertida, sem disputa e com ancoragem confirmada torna-se elegível.
-4. O Settlement forma o valor bruto elegível, registra impostos e retenções como linhas explícitas; obtém o valor líquido distribuível, aplica os cinco percentuais e cria direitos financeiros. Na ausência de influenciador elegível, a respectiva parcela é direito restrito do Fundo de Desenvolvimento de Influenciadores. Nenhum custo é escondido dentro de uma `SplitShare`.
+4. O Settlement forma o valor bruto elegível, registra impostos e retenções como linhas explícitas; obtém o valor líquido distribuível, aplica os componentes e cria sete direitos financeiros. Fundos de aquisição recebem somente os componentes não conquistados que lhes correspondem. Nenhum custo é escondido dentro de uma `SplitShare`.
 5. Financial Platform transforma cada direito em `PartnerLedgerCredit`; Partner Wallet e Withdrawal Policy governam a saída. Asaas cobra e transfere somente quando instruído pelo Financial Platform.
 
 Todo cálculo preserva os valores antes/depois de cada retenção, regra e versão utilizada. Reexecuções são idempotentes por `SettlementCycle + EvidenceId + SplitPolicyVersion`.
