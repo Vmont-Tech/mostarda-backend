@@ -55,7 +55,7 @@ interface LedgerRow {
  * keeps this infrastructure package independent from the Settlement domain
  * package; the caller supplies the domain result shape at compile time.
  */
-export class PostgresSettlementStore<TSettlement extends object = Record<string, unknown>> {
+export class PostgresSettlementStore<TSettlement extends object> {
   readonly #pool: Pool;
 
   public constructor(pool: Pool) {
@@ -77,7 +77,10 @@ export class PostgresSettlementStore<TSettlement extends object = Record<string,
     return row === undefined ? undefined : this.#loadResult(this.#pool, row);
   }
 
-  public async save(result: TSettlement): Promise<TSettlement> {
+  public async save(
+    result: TSettlement,
+    validateExisting?: (existing: TSettlement, candidate: TSettlement) => void,
+  ): Promise<TSettlement> {
     const value = result as any;
     const client = await this.#pool.connect();
     try {
@@ -114,6 +117,7 @@ export class PostgresSettlementStore<TSettlement extends object = Record<string,
           throw new Error("Settlement cycle conflict: same EvidenceId has divergent gross amount.");
         }
         const replay = await this.#loadResult(client, row);
+        validateExisting?.(replay, result);
         await client.query("COMMIT");
         return replay;
       }

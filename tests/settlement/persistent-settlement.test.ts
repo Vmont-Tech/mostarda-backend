@@ -57,11 +57,15 @@ class MemoryPersistentStore implements PersistentSettlementStore {
       : undefined;
   }
 
-  public async save(result: SettlementResult): Promise<SettlementResult> {
+  public async save(
+    result: SettlementResult,
+    validateExisting?: (existing: SettlementResult, candidate: SettlementResult) => void,
+  ): Promise<SettlementResult> {
     if (this.#result !== undefined) {
       if (this.#result.settlementCycle.grossAmount !== result.settlementCycle.grossAmount) {
         throw new Error("Settlement cycle conflict: same EvidenceId has divergent gross amount.");
       }
+      validateExisting?.(this.#result, result);
       return this.#result;
     }
     this.#result = result;
