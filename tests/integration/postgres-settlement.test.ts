@@ -56,6 +56,181 @@ function storeOf(modules: any, pool: any): any {
   return new modules.PostgresSettlementStore(pool);
 }
 
+const directRightAmounts = ["20.0000", "20.0000", "5.0000", "15.0000", "3.0000", "7.0000", "30.0000"] as const;
+
+type DirectMaterializationOptions = {
+  readonly rightIndexes?: readonly number[];
+  readonly lineIndexes?: readonly number[];
+  readonly ledgerIndexes?: readonly number[];
+};
+
+async function insertDirectMaterialization(
+  client: any,
+  label: string,
+  options: DirectMaterializationOptions = {},
+): Promise<void> {
+  const rights = options.rightIndexes ?? [0, 1, 2, 3, 4, 5, 6];
+  const lines = options.lineIndexes ?? rights;
+  const ledgers = options.ledgerIndexes ?? rights;
+  const cycleId = `structural-cycle-${runId}-${label}`;
+  const evidenceId = `structural-evidence-${runId}-${label}`;
+  const campaignId = `structural-campaign-${runId}-${label}`;
+  const journalId = `structural-journal-${runId}-${label}`;
+
+  await client.query(
+    `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
+     VALUES ($1, $2, $3, 100.0000, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'CLOSED')`,
+    [cycleId, campaignId, evidenceId],
+  );
+  for (const index of rights) {
+    await client.query(
+      `INSERT INTO financial_rights (financial_right_id, split_share_id, settlement_cycle_id, line, destination_id, amount, evidence_id, split_policy_version, status)
+       VALUES ($1, $2, $3, $4, $5, $6::numeric, $7, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'READY')`,
+      [`structural-right-${runId}-${label}-${index}`, `structural-share-${runId}-${label}-${index}`, cycleId,
+        `RIGHT_${index}`, `DESTINATION_${index}`, directRightAmounts[index], evidenceId],
+    );
+  }
+  await client.query(
+    `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
+     VALUES ($1, $2, $3, 100.0000, 100.0000)`,
+    [journalId, cycleId, evidenceId],
+  );
+
+  const linkedCredit = lines.reduce((total, index) => total + Number(directRightAmounts[index]), 0);
+  const values: string[] = ["($1, $2, 0, 'CAMPAIGN', 'DEBIT', 100.0000, NULL)"];
+  const params: unknown[] = [`structural-debit-${runId}-${label}`, journalId];
+  for (const [lineOrder, index] of lines.entries()) {
+    const base = params.length + 1;
+    values.push(`($${base}, $2, ${lineOrder + 1}, $${base + 1}, 'CREDIT', $${base + 2}::numeric, $${base + 3})`);
+    params.push(
+      `structural-line-${runId}-${label}-${lineOrder}`,
+      `DESTINATION_${index}`,
+      directRightAmounts[index],
+      `structural-right-${runId}-${label}-${index}`,
+    );
+  }
+  const remainder = (100 - linkedCredit).toFixed(4);
+  if (remainder !== "0.0000") {
+    const base = params.length + 1;
+    values.push(`($${base}, $2, ${lines.length + 1}, 'UNLINKED', 'CREDIT', $${base + 1}::numeric, NULL)`);
+    params.push(`structural-unlinked-${runId}-${label}`, remainder);
+  }
+  await client.query(
+    `INSERT INTO journal_lines (journal_line_id, transaction_id, line_order, account_id, direction, amount, financial_right_id)
+     VALUES ${values.join(",\n")}`,
+    params,
+  );
+
+  for (const index of ledgers) {
+    await client.query(
+      `INSERT INTO partner_ledger_entries (ledger_entry_id, financial_right_id, split_share_id, settlement_cycle_id, evidence_id, destination_id, amount, journal_transaction_id, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::numeric, $8, 'PENDING')`,
+      [`structural-ledger-${runId}-${label}-${index}`, `structural-right-${runId}-${label}-${index}`,
+        `structural-share-${runId}-${label}-${index}`, cycleId, evidenceId, `DESTINATION_${index}`,
+        directRightAmounts[index], journalId],
+    );
+  }
+}
+
+async function assertDirectMaterializationRejected(
+  pool: any,
+  label: string,
+  options: DirectMaterializationOptions,
+): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await insertDirectMaterialization(client, label, options);
+    await assert.rejects(() => client.query("COMMIT"), /JournalLine|FinancialRight|Ledger|seven|complete|materializ|right|journal/i);
+  } finally {
+    await client.query("ROLLBACK").catch(() => undefined);
+    client.release();
+  }
+}
+
+test(
+  "PostgreSQL rejects a JournalTransaction without JournalLines",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    try {
+      await prepare(pool);
+      await assertDirectMaterializationRejected(pool, "journal-without-lines", { lineIndexes: [], ledgerIndexes: [] });
+    } finally {
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "PostgreSQL rejects a materialized Settlement with fewer than seven FinancialRights",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    try {
+      await prepare(pool);
+      await assertDirectMaterializationRejected(pool, "six-rights", {
+        rightIndexes: [0, 1, 2, 3, 4, 5],
+        lineIndexes: [0, 1, 2, 3, 4, 5],
+        ledgerIndexes: [0, 1, 2, 3, 4, 5],
+      });
+    } finally {
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "PostgreSQL rejects a FinancialRight without exactly one credit JournalLine",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    try {
+      await prepare(pool);
+      await assertDirectMaterializationRejected(pool, "missing-right-line", {
+        lineIndexes: [0, 1, 2, 3, 4, 5],
+      });
+    } finally {
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "PostgreSQL rejects a FinancialRight duplicated across JournalLines",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    try {
+      await prepare(pool);
+      await assertDirectMaterializationRejected(pool, "duplicate-right-line", {
+        lineIndexes: [0, 0, 2, 3, 4, 5, 6],
+      });
+    } finally {
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "PostgreSQL rejects a FinancialRight without exactly one PartnerLedgerEntry",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    try {
+      await prepare(pool);
+      await assertDirectMaterializationRejected(pool, "missing-ledger", { ledgerIndexes: [0, 1, 2, 3, 4, 5] });
+    } finally {
+      await pool.end();
+    }
+  },
+);
+
 test(
   "PostgreSQL persists and replays the complete Settlement financial slice",
   { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
@@ -282,7 +457,7 @@ test(
     const { Pool } = await import("pg");
     const pool = new Pool({ connectionString: databaseUrl });
     try {
-      await prepare(pool);
+      const modules = await prepare(pool);
 
       const grossCycle = input("gross-invariant");
       await pool.query(
@@ -301,25 +476,12 @@ test(
         [`gross-unbalanced-wrong-${runId}`, `gross-cycle-${runId}`, grossCycle.evidence.evidenceId],
       ), /gross|balance|check|violates|semantic/i);
 
-      const mismatch = input("line-invariant");
-      const mismatchCycle = `line-cycle-${runId}`;
-      const mismatchJournal = `line-journal-${runId}`;
-      const mismatchRight = `line-right-${runId}`;
-      await pool.query(
-        `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
-         VALUES ($1, $2, $3, 100.0000, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'CLOSED')`,
-        [mismatchCycle, mismatch.campaignId, mismatch.evidence.evidenceId],
+      const mismatch = await modules.settleEvidencePersisted(
+        input("line-invariant"),
+        storeOf(modules, pool),
       );
-      await pool.query(
-        `INSERT INTO financial_rights (financial_right_id, split_share_id, settlement_cycle_id, line, destination_id, amount, evidence_id, split_policy_version, status)
-         VALUES ($1, $2, $3, 'SELLER', 'SELLER', 20.0000, $4, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'READY')`,
-        [mismatchRight, `line-share-${runId}`, mismatchCycle, mismatch.evidence.evidenceId],
-      );
-      await pool.query(
-        `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
-         VALUES ($1, $2, $3, 100.0000, 100.0000)`,
-        [mismatchJournal, mismatchCycle, mismatch.evidence.evidenceId],
-      );
+      const mismatchJournal = mismatch.journalTransaction.transactionId;
+      const mismatchRight = mismatch.rights[0]!.financialRightId;
       const debitWithRightClient = await pool.connect();
       try {
         await debitWithRightClient.query("BEGIN");
@@ -353,41 +515,19 @@ test(
         mismatchClient.release();
       }
 
-      const accepted = input("line-invariant-accepted");
-      const acceptedCycle = `line-cycle-accepted-${runId}`;
-      const acceptedJournal = `line-journal-accepted-${runId}`;
-      const acceptedRight = `line-right-accepted-${runId}`;
-      await pool.query(
-        `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
-         VALUES ($1, $2, $3, 100.0000, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'CLOSED')`,
-        [acceptedCycle, accepted.campaignId, accepted.evidence.evidenceId],
+      const accepted = await modules.settleEvidencePersisted(
+        input("line-invariant-accepted"),
+        storeOf(modules, pool),
       );
-      await pool.query(
-        `INSERT INTO financial_rights (financial_right_id, split_share_id, settlement_cycle_id, line, destination_id, amount, evidence_id, split_policy_version, status)
-         VALUES ($1, $2, $3, 'SELLER', 'SELLER', 20.0000, $4, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'READY')`,
-        [acceptedRight, `line-share-accepted-${runId}`, acceptedCycle, accepted.evidence.evidenceId],
+      const acceptedLines = await pool.query(
+        `SELECT count(*)::int AS count
+           FROM journal_lines
+          WHERE transaction_id = $1
+            AND financial_right_id IS NOT NULL
+            AND direction = 'CREDIT'`,
+        [accepted.journalTransaction.transactionId],
       );
-      await pool.query(
-        `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
-         VALUES ($1, $2, $3, 100.0000, 100.0000)`,
-        [acceptedJournal, acceptedCycle, accepted.evidence.evidenceId],
-      );
-      const acceptedClient = await pool.connect();
-      try {
-        await acceptedClient.query("BEGIN");
-        await acceptedClient.query(
-          `INSERT INTO journal_lines (journal_line_id, transaction_id, line_order, account_id, direction, amount, financial_right_id)
-           VALUES ($1, $2, 0, 'CAMPAIGN', 'DEBIT', 100.0000, NULL),
-                  ($3, $2, 1, 'SELLER', 'CREDIT', 20.0000, $4),
-                  ($5, $2, 2, 'OTHER', 'CREDIT', 80.0000, NULL)`,
-          [`line-debit-accepted-${runId}`, acceptedJournal, `line-credit-accepted-${runId}`, acceptedRight, `line-credit-extra-accepted-${runId}`],
-        );
-        await acceptedClient.query("SET CONSTRAINTS journal_transaction_lines_balanced IMMEDIATE");
-        await acceptedClient.query("COMMIT");
-      } finally {
-        acceptedClient.release();
-      }
-      assert.equal((await pool.query("SELECT count(*)::int AS count FROM journal_lines WHERE transaction_id = $1", [acceptedJournal])).rows[0].count, 3);
+      assert.equal(acceptedLines.rows[0].count, 7);
     } finally {
       await pool.end();
     }

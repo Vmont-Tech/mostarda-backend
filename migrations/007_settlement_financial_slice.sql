@@ -240,6 +240,82 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION validate_settlement_materialization_complete()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    cycle_id TEXT;
+    journal_count BIGINT;
+    right_count BIGINT;
+    linked_line_count BIGINT;
+    distinct_linked_right_count BIGINT;
+    credit_linked_line_count BIGINT;
+    ledger_count BIGINT;
+    distinct_ledger_right_count BIGINT;
+BEGIN
+    IF TG_TABLE_NAME = 'journal_lines' THEN
+        SELECT settlement_cycle_id
+          INTO cycle_id
+          FROM journal_transactions
+         WHERE transaction_id = COALESCE(NEW.transaction_id, OLD.transaction_id);
+    ELSE
+        cycle_id := COALESCE(NEW.settlement_cycle_id, OLD.settlement_cycle_id);
+    END IF;
+
+    IF cycle_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT count(*)
+      INTO journal_count
+      FROM journal_transactions
+     WHERE settlement_cycle_id = cycle_id;
+    IF journal_count = 0 THEN
+        RETURN NEW;
+    END IF;
+    IF journal_count <> 1 THEN
+        RAISE EXCEPTION 'SettlementCycle must have exactly one JournalTransaction'
+            USING ERRCODE = '23514';
+    END IF;
+
+    SELECT count(*)
+      INTO right_count
+      FROM financial_rights
+     WHERE settlement_cycle_id = cycle_id;
+    IF right_count <> 7 THEN
+        RAISE EXCEPTION 'materialized SettlementCycle must have exactly seven FinancialRights'
+            USING ERRCODE = '23514';
+    END IF;
+
+    SELECT count(*), count(DISTINCT line.financial_right_id),
+           count(*) FILTER (WHERE line.direction = 'CREDIT')
+      INTO linked_line_count, distinct_linked_right_count, credit_linked_line_count
+      FROM journal_lines AS line
+      JOIN journal_transactions AS journal
+        ON journal.transaction_id = line.transaction_id
+     WHERE journal.settlement_cycle_id = cycle_id
+       AND line.financial_right_id IS NOT NULL;
+    IF linked_line_count <> right_count
+       OR distinct_linked_right_count <> right_count
+       OR credit_linked_line_count <> right_count THEN
+        RAISE EXCEPTION 'each FinancialRight must have exactly one CREDIT JournalLine'
+            USING ERRCODE = '23514';
+    END IF;
+
+    SELECT count(*), count(DISTINCT entry.financial_right_id)
+      INTO ledger_count, distinct_ledger_right_count
+      FROM partner_ledger_entries AS entry
+     WHERE entry.settlement_cycle_id = cycle_id;
+    IF ledger_count <> right_count
+       OR distinct_ledger_right_count <> right_count THEN
+        RAISE EXCEPTION 'each FinancialRight must have exactly one PartnerLedgerEntry'
+            USING ERRCODE = '23514';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
 DROP TRIGGER IF EXISTS journal_transaction_lines_balanced ON journal_lines;
 CREATE CONSTRAINT TRIGGER journal_transaction_lines_balanced
 AFTER INSERT OR UPDATE OR DELETE ON journal_lines
@@ -265,6 +341,30 @@ DROP TRIGGER IF EXISTS partner_ledger_semantic_identity ON partner_ledger_entrie
 CREATE TRIGGER partner_ledger_semantic_identity
 BEFORE INSERT OR UPDATE ON partner_ledger_entries
 FOR EACH ROW EXECUTE FUNCTION validate_partner_ledger_consistency();
+
+DROP TRIGGER IF EXISTS settlement_materialization_complete_journal ON journal_transactions;
+CREATE CONSTRAINT TRIGGER settlement_materialization_complete_journal
+AFTER INSERT ON journal_transactions
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION validate_settlement_materialization_complete();
+
+DROP TRIGGER IF EXISTS settlement_materialization_complete_right ON financial_rights;
+CREATE CONSTRAINT TRIGGER settlement_materialization_complete_right
+AFTER INSERT ON financial_rights
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION validate_settlement_materialization_complete();
+
+DROP TRIGGER IF EXISTS settlement_materialization_complete_line ON journal_lines;
+CREATE CONSTRAINT TRIGGER settlement_materialization_complete_line
+AFTER INSERT ON journal_lines
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION validate_settlement_materialization_complete();
+
+DROP TRIGGER IF EXISTS settlement_materialization_complete_ledger ON partner_ledger_entries;
+CREATE CONSTRAINT TRIGGER settlement_materialization_complete_ledger
+AFTER INSERT ON partner_ledger_entries
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION validate_settlement_materialization_complete();
 
 DROP TRIGGER IF EXISTS settlement_cycles_append_only ON settlement_cycles;
 CREATE TRIGGER settlement_cycles_append_only
