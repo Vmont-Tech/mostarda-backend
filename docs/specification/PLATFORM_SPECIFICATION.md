@@ -295,7 +295,7 @@ QR pertence ao Cloud e contém somente token opaco; NUNCA contém destino final 
 
 ### SPEC-SETTLE-001 — Responsabilidade
 
-Settlement consolida Evidence Records elegíveis, calcula valor líquido distribuível, aplica `SplitPolicyVersion` e cria sete direitos financeiros. Ele NÃO executa pagamento, NÃO mantém Wallet e NÃO instrui Asaas.
+Settlement consolida Evidence Records elegíveis, calcula valor líquido distribuível, aplica `SplitPolicyVersion` e produz sete resultados `SplitShare`; somente resultados quantizados positivos são materializados como direitos financeiros. Ele NÃO executa pagamento, NÃO mantém Wallet e NÃO instrui Asaas.
 
 Settlement existe para transformar prova elegível em direitos determinísticos e reproduzíveis. Pagamento é uma operação externa, assíncrona e sujeita a indisponibilidade, timeout, devolução e reconciliação. Unir cálculo e pagamento faria uma falha do provider alterar o lifecycle do cálculo, dificultaria replay e prenderia o domínio a um executor financeiro. A alternativa “calcular e pagar cada SplitShare no mesmo Aggregate” foi descartada. Settlement termina quando os direitos foram estabelecidos; Financial Platform decide como materializá-los e movimentá-los.
 

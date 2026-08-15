@@ -58,6 +58,16 @@ Alternativa rejeitada: Settlement calcular e transferir no mesmo lifecycle. Essa
 
 Regra normativa: `SplitShare.CREDITED` significa que o direito foi materializado no `PartnerLedger`; não significa que o Partner recebeu uma transferência.
 
+### 3.1 B-002 — Resultado do split versus lancamento
+
+As sete posicoes da politica sao preservadas como sete resultados `SplitShare`.
+`FinancialRight` e uma materializacao posterior e existe somente para parcela
+quantizada maior que `0.0000`.
+
+Resultado zero nao gera Journal ou PartnerLedger, nao e redistribuido e permanece
+disponivel para replay e auditoria como parte do resultado deterministico. Gross
+zero e rejeitado antes da abertura do Settlement financeiro.
+
 ## 4. Escopo
 
 Financial Platform é owner de:

@@ -143,7 +143,7 @@ Passos 4A e 4B não têm ordem normativa fixa enquanto `OPEN-011` estiver aberto
 
 ## 6. Liquidação e crédito de parceiro
 
-**Objetivo:** converter Evidences elegíveis em sete direitos da `SPLIT-PERFORMANCE-RESIDUAL-V1` e materializar cada direito no Partner Ledger.
+**Objetivo:** converter Evidences elegíveis em sete resultados `SplitShare` da `SPLIT-PERFORMANCE-RESIDUAL-V1` e materializar no Partner Ledger somente os direitos derivados de resultados quantizados positivos.
 
 **Correlação:** SettlementCycle + EvidenceId + SplitPolicyVersion; crédito por SplitShareId.  
 **Participantes:** Evidence eligibility projection, Settlement/SplitShare e Financial Platform/PartnerLedger.

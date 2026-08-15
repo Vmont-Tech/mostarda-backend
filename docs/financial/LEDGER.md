@@ -139,6 +139,16 @@ O modelo contábil definitivo é de dupla entrada multilinhas conforme [FINANCIA
 11. Ledger não aceita direito sem owner de origem.
 12. Replay não cria cópia.
 
+### 8.1 Resultados zero do Settlement
+
+`SplitShare` e o resultado normativo da distribuicao. Um `SplitShare` com valor
+`0.0000` pode existir para preservar as sete linhas e a reexecucao deterministica,
+mas nao e um lancamento do Ledger.
+
+Somente um resultado quantizado estritamente positivo pode originar
+`FinancialRight`, `JournalLine` ou `PartnerLedgerEntry`. A proibicao de valor zero
+para lancamentos permanece integralmente vigente.
+
 Precisão e arredondamento seguem BRL `DECIMAL(18,4)`, Half-Even para operação individual e Hamilton-Hare para split 1:N.
 
 ## 9. Aceitação de PaymentLedgerEntry

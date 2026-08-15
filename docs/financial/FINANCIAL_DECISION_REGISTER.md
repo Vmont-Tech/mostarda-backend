@@ -148,6 +148,21 @@ A soma dos créditos é igual ao débito. Parcela `BLOCKED` ou `UNCLAIMED` não 
 
 ## 7. Chargeback, Evidence reversal e Governance
 
+### FIN-DEC-011 — B-002: resultados do split e materializacao financeira
+
+`DEC-068` aprova a semantica de zero para `SPLIT-PERFORMANCE-RESIDUAL-V1`.
+
+- As sete posicoes da politica sao sete resultados deterministas (`SplitShare`), nao sete lancamentos financeiros obrigatorios.
+- `grossAmount = 0.0000` e rejeitado antes da criacao de `SettlementCycle` financeiro, `FinancialRight`, `JournalLine` ou `PartnerLedgerEntry`.
+- Um resultado com basis points zero continua existindo como `SplitShare`, mas nao cria `FinancialRight` nem lancamento.
+- Um resultado matematicamente positivo que quantiza para `0.0000` continua existindo como `SplitShare`, mas nao cria `FinancialRight` nem lancamento.
+- Nenhum valor zero e redistribuido depois da quantizacao Hamilton-Hare e nenhum residual e criado para Mostarda.
+- Somente resultados quantizados estritamente maiores que `0.0000` sao materializados como `FinancialRight`, credito Journal e `PartnerLedgerEntry`.
+- A soma das sete parcelas quantizadas permanece exatamente igual ao gross. Para qualquer Settlement aceito, a soma dos direitos positivos materializados tambem e exatamente igual ao gross.
+- Replay preserva as sete linhas, seus valores quantizados e quais linhas foram ou nao materializadas.
+
+Esta decisao nao altera percentuais, a politica comercial, Wallet, Withdrawal, Asaas, chargeback ou recovery.
+
 ### FIN-DEC-007 — Fatos versus julgamento
 
 Financial registra chargeback, reversão, saldo e liquidez. Apenas Governance publica julgamento oficial. `EvidenceReversed` sem `ResponsibilityDecisionPublished`:

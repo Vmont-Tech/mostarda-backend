@@ -86,6 +86,7 @@ Este registro conecta regras vigentes, ADRs e supersessões. O status `ACCEPTED`
 | `DEC-064` | Producer owns opaque canonical version identity and syntax; each consumer exclusively owns its immutable scoped `CompatibilityMatrix` and compatibility decisions; Configuration Service distributes only; evaluation is closed by default and distinguishes a produced four-state decision from operational non-evaluation | Contract Compatibility + Platform Specification + TBS | ACCEPTED |
 | `DEC-065` | `OPAQUE_TOKEN_V1` fixes the initial version-identity lexical representation, binary exact case-sensitive comparison and representation-only validation; semantics, ordering, normalization, existence and compatibility remain excluded | Contract Compatibility + producer-owned version contracts + Platform Specification + TBS | ACCEPTED |
 | `DEC-066` | `SPLIT-PERFORMANCE-RESIDUAL-V1` fixa TV e Espaço em 20%, remunera Seller e Influencer por componentes conquistados, destina componentes não conquistados aos fundos de aquisição correspondentes e mantém Mostarda em 30%; soma das sete linhas = 100% | Revenue Architecture + System Invariants + Settlement SplitPolicy | ACCEPTED para o split comercial; não altera `DEC-049` nem o `InfluencerDevelopmentFund` |
+| `DEC-068` | B-002: as sete linhas sao resultados `SplitShare`; gross zero e rejeitado; somente parcelas quantizadas positivas geram direitos e lancamentos; zeros nao sao redistribuidos | Financial Decision Register + Ledger + Settlement | ACCEPTED para a materializacao financeira |
 
 ## Conflitos conhecidos a sincronizar
 

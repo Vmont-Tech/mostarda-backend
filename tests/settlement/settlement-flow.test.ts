@@ -81,12 +81,13 @@ const partialInput = (): SettlementInput => ({
 const run = (overrides: Partial<SettlementInput> = {}) =>
   settleEvidence({ ...partialInput(), ...overrides }, new SettlementMemoryStore());
 
-test("settles valid E001 into seven rights, a balanced journal, and ledger entries", () => {
+test("settles valid E001 into seven split results, positive rights, a balanced journal, and ledger entries", () => {
   const result = run();
 
   assert.equal(result.settlementCycle.campaignId, "C001");
   assert.equal(result.settlementCycle.evidenceId, "E001");
   assert.equal(result.settlementCycle.grossAmount, "100.0000");
+  assert.equal(result.splitShares.length, 7);
   assert.equal(result.rights.length, 7);
   assert.deepEqual(
     result.rights.map((right) => [right.line, right.amount]),
@@ -104,6 +105,59 @@ test("settles valid E001 into seven rights, a balanced journal, and ledger entri
   assert.equal(result.journalTransaction.creditTotal, "100.0000");
   assert.equal(result.journalTransaction.lines.length, 8);
   assert.equal(result.ledgerEntries.length, 7);
+});
+
+test("rejects gross zero before creating any financial materialization", () => {
+  const store = new SettlementMemoryStore();
+  assert.throws(
+    () => settleEvidence({ ...partialInput(), grossAmount: "0.0000" }, store),
+    (error: unknown) => error instanceof SettlementEligibilityError && /greater than zero/.test(error.message),
+  );
+  assert.equal(store.cycles().length, 0);
+  assert.equal(store.rights().length, 0);
+  assert.equal(store.ledgerEntries().length, 0);
+});
+
+test("preserves seven split results but materializes only positive seller and influencer lines", () => {
+  const noSeller = run({
+    seller: { acquisition: false, activationPayment: false, renewal: false, volume: false },
+    influencer: { entry: true, activation: true, performanceEngagement: true, recurrenceResult: true },
+  });
+  assert.equal(noSeller.splitShares.length, 7);
+  assert.equal(noSeller.splitShares.find((share) => share.line === "SELLER")?.amount, "0.0000");
+  assert.equal(noSeller.rights.some((right) => right.line === "SELLER"), false);
+  assert.equal(noSeller.journalTransaction.lines.some((line) => line.amount === "0.0000"), false);
+  assert.equal(noSeller.ledgerEntries.some((entry) => entry.amount === "0.0000"), false);
+
+  const noSellerFund = run({
+    seller: { acquisition: true, activationPayment: true, renewal: true, volume: true },
+  });
+  assert.equal(noSellerFund.splitShares.find((share) => share.line === "SELLER_ACQUISITION_FUND")?.amount, "0.0000");
+  assert.equal(noSellerFund.rights.some((right) => right.line === "SELLER_ACQUISITION_FUND"), false);
+
+  const noInfluencer = run({
+    influencer: { entry: false, activation: false, performanceEngagement: false, recurrenceResult: false },
+  });
+  assert.equal(noInfluencer.splitShares.find((share) => share.line === "INFLUENCER")?.amount, "0.0000");
+  assert.equal(noInfluencer.rights.some((right) => right.line === "INFLUENCER"), false);
+
+  const noInfluencerFund = run({
+    influencer: { entry: true, activation: true, performanceEngagement: true, recurrenceResult: true },
+  });
+  assert.equal(noInfluencerFund.splitShares.find((share) => share.line === "INFLUENCER_ACQUISITION_FUND")?.amount, "0.0000");
+  assert.equal(noInfluencerFund.rights.some((right) => right.line === "INFLUENCER_ACQUISITION_FUND"), false);
+});
+
+test("preserves a quantized zero SplitShare without creating a zero financial posting", () => {
+  const result = run({ grossAmount: "0.0001" });
+  assert.equal(result.splitShares.length, 7);
+  assert.ok(result.splitShares.some((share) => share.amount === "0.0000"));
+  assert.ok(result.rights.length < result.splitShares.length);
+  assert.equal(result.journalTransaction.lines.some((line) => line.amount === "0.0000"), false);
+  assert.equal(result.ledgerEntries.some((entry) => entry.amount === "0.0000"), false);
+  assert.equal(result.journalTransaction.debitTotal, "0.0001");
+  assert.equal(result.journalTransaction.creditTotal, "0.0001");
+  assert.equal(result.ledgerEntries.reduce((sum, entry) => sum + BigInt(entry.amount.replace(".", "")), 0n), 1n);
 });
 
 test("rejects evidence that is invalid, unanchored, or reverted", () => {
@@ -205,12 +259,14 @@ test("allocation invariants hold for every component combination", () => {
         recurrenceResult: (mask & 128) !== 0,
       },
     });
-    const amount = (line: string) => result.rights.find((right) => right.line === line)!.amount;
+    const amount = (line: string) => result.splitShares.find((share) => share.line === line)!.amount;
     assert.equal(amount("TV_OWNER"), "20.0000");
     assert.equal(amount("SPACE_OWNER"), "20.0000");
     assert.equal(addMoney(amount("SELLER"), amount("SELLER_ACQUISITION_FUND")), "20.0000");
     assert.equal(addMoney(amount("INFLUENCER"), amount("INFLUENCER_ACQUISITION_FUND")), "10.0000");
     assert.equal(amount("MOSTARDA"), "30.0000");
+    assert.equal(sumMoney(result.splitShares.map((share) => share.amount)), "100.0000");
+    assert.equal(sumMoney(result.rights.map((right) => right.amount)), "100.0000");
     assert.equal(result.journalTransaction.debitTotal, "100.0000");
   }
 });
@@ -219,4 +275,9 @@ function addMoney(left: string, right: string): string {
   const units = (value: string) => BigInt(value.replace(".", ""));
   const total = units(left) + units(right);
   return `${total / 10_000n}.${(total % 10_000n).toString().padStart(4, "0")}`;
+}
+
+function sumMoney(values: readonly string[]): string {
+  const units = values.reduce((total, value) => total + BigInt(value.replace(".", "")), 0n);
+  return `${units / 10_000n}.${(units % 10_000n).toString().padStart(4, "0")}`;
 }

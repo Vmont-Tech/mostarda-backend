@@ -74,6 +74,7 @@ class MemoryPersistentStore implements PersistentSettlementStore {
 test("materializes a valid Evidence result through a persistent store port", async () => {
   const result = await settleEvidencePersisted(input(), new MemoryPersistentStore());
 
+  assert.equal(result.splitShares.length, 7);
   assert.equal(result.rights.length, 7);
   assert.equal(result.rights.find((right) => right.line === "MOSTARDA")?.amount, "30.0000");
   assert.equal(result.journalTransaction.debitTotal, "100.0000");
@@ -87,6 +88,7 @@ test("replaying the same Evidence returns the persisted result without a second 
   const replay = await settleEvidencePersisted(input(), store);
 
   assert.strictEqual(replay, first);
+  assert.equal(replay.splitShares.length, 7);
   assert.equal(replay.ledgerEntries.length, 7);
 });
 

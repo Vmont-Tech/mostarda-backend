@@ -52,6 +52,18 @@ export type FinancialRightLine =
   | "INFLUENCER_ACQUISITION_FUND"
   | "MOSTARDA";
 
+/** The seven deterministic results produced by SplitPolicy. */
+export interface SplitShare {
+  readonly splitShareId: string;
+  readonly line: FinancialRightLine;
+  readonly destinationId: string;
+  readonly basisPoints: number;
+  readonly amount: string;
+  readonly evidenceId: string;
+  readonly settlementCycleId: string;
+  readonly splitPolicyVersion: typeof SPLIT_POLICY_VERSION;
+}
+
 export interface FinancialRight {
   readonly financialRightId: string;
   readonly splitShareId: string;
@@ -95,6 +107,7 @@ export interface LedgerEntry {
 
 export interface SettlementResult {
   readonly settlementCycle: SettlementCycle;
+  readonly splitShares: readonly SplitShare[];
   readonly rights: readonly FinancialRight[];
   readonly journalTransaction: JournalTransaction;
   readonly ledgerEntries: readonly LedgerEntry[];
@@ -169,6 +182,9 @@ const LINES: readonly (readonly [FinancialRightLine, keyof SettlementInput["dest
 export function settleEvidence(input: SettlementInput, store: SettlementMemoryStore): SettlementResult {
   validateEvidence(input);
   const grossUnits = parseMoney(input.grossAmount);
+  if (grossUnits === 0n) {
+    throw new SettlementEligibilityError("Gross settlement amount must be greater than zero.");
+  }
   const existing = store.findByEvidence(input.campaignId, input.evidence.evidenceId);
   if (existing) {
     if (existing.settlementCycle.grossAmount !== formatMoney(grossUnits)) {
@@ -192,20 +208,32 @@ export function settleEvidence(input: SettlementInput, store: SettlementMemorySt
     key: line,
     basisPoints: allocation[bpsKey],
   })));
-  const rights = LINES.map(([line, destinationKey], index) => {
+  const splitShares = LINES.map(([line, destinationKey, bpsKey], index) => {
     const splitShareId = `${cycleId}:${line}`;
     return Object.freeze({
-      financialRightId: `right:${splitShareId}`,
       splitShareId,
       line,
       destinationId: input.destinations[destinationKey],
+      basisPoints: allocation[bpsKey],
       amount: formatMoney(amounts[index]!),
       evidenceId: input.evidence.evidenceId,
       settlementCycleId: cycleId,
       splitPolicyVersion: SPLIT_POLICY_VERSION,
-      status: "READY" as const,
     });
   });
+  const rights = splitShares
+    .filter((share) => share.amount !== "0.0000")
+    .map((share) => Object.freeze({
+      financialRightId: `right:${share.splitShareId}`,
+      splitShareId: share.splitShareId,
+      line: share.line,
+      destinationId: share.destinationId,
+      amount: share.amount,
+      evidenceId: share.evidenceId,
+      settlementCycleId: share.settlementCycleId,
+      splitPolicyVersion: share.splitPolicyVersion,
+      status: "READY" as const,
+    }));
   const credits = rights.map((right, index) => Object.freeze({
     journalLineId: `journal-line:${cycleId}:credit:${index}`,
     accountId: right.destinationId,
@@ -236,7 +264,7 @@ export function settleEvidence(input: SettlementInput, store: SettlementMemorySt
     journalTransactionId: journal.transactionId,
     status: "PENDING" as const,
   }));
-  const result = Object.freeze({ settlementCycle: cycle, rights: Object.freeze(rights), journalTransaction: journal, ledgerEntries: Object.freeze(ledgerEntries) });
+  const result = Object.freeze({ settlementCycle: cycle, splitShares: Object.freeze(splitShares), rights: Object.freeze(rights), journalTransaction: journal, ledgerEntries: Object.freeze(ledgerEntries) });
   store.save(result);
   return result;
 }

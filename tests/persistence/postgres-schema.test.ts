@@ -24,6 +24,10 @@ const settlementHardeningMigrationUrl = new URL(
   "../../migrations/008_settlement_integrity_hardening.sql",
   import.meta.url,
 );
+const settlementSplitResultsMigrationUrl = new URL(
+  "../../migrations/009_settlement_split_results.sql",
+  import.meta.url,
+);
 
 test("settlement migration defines append-only materialization and idempotency constraints", async () => {
   const sql = await readFile(settlementMigrationUrl, "utf8");
@@ -64,6 +68,22 @@ test("settlement hardening migration fixes monetary scale and materialization in
   assert.match(sql, /settlement_cycles/);
   assert.match(sql, /DEFERRABLE INITIALLY DEFERRED/);
   assert.match(sql, /settlement_materialization_complete_cycle/);
+});
+
+test("B-002 migration separates seven SplitShare results from positive financial rights", async () => {
+  const sql = await readFile(settlementSplitResultsMigrationUrl, "utf8");
+
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS settlement_split_results/);
+  assert.match(sql, /split_result_cycle_line_unique/);
+  assert.match(sql, /basis_points INTEGER/);
+  assert.match(sql, /settlement_cycle_gross_positive/);
+  assert.match(sql, /financial_right_positive_amount/);
+  assert.match(sql, /journal_line_positive_amount/);
+  assert.match(sql, /partner_ledger_positive_amount/);
+  assert.match(sql, /FinancialRight must reference a SplitShare result/);
+  assert.match(sql, /FinancialRights must match strictly positive SplitShare results/);
+  assert.match(sql, /exactly seven SplitShare results/);
+  assert.match(sql, /settlement_split_results_append_only/);
 });
 
 test("event store migration enforces append-only identity and revision constraints", async () => {

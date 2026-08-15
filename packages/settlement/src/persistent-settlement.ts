@@ -58,6 +58,11 @@ export function assertSettlementReplayEquivalent(
   compareField("evidenceId", existing.settlementCycle.evidenceId, candidate.settlementCycle.evidenceId);
   compareField("status", existing.settlementCycle.status, candidate.settlementCycle.status);
 
+  compareCollection("splitShares", existing.splitShares, candidate.splitShares, (share) => share.splitShareId, [
+    "splitShareId", "line", "destinationId", "basisPoints", "amount",
+    "evidenceId", "settlementCycleId", "splitPolicyVersion",
+  ]);
+
   compareCollection("rights", existing.rights, candidate.rights, (right) => right.splitShareId, [
     "financialRightId", "splitShareId", "line", "destinationId", "amount",
     "evidenceId", "settlementCycleId", "splitPolicyVersion", "status",

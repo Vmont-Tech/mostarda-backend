@@ -34,7 +34,9 @@ complete materialization is present.
 The current walking skeleton materializes the normative fields already present
 in its Settlement contracts: Evidence identity, SettlementCycle identity,
 gross amount, BRL currency at the schema boundary, SplitPolicy version and
-the seven FinancialRights. CausationId, CorrelationId, an authoritative
+the seven SplitShare results. Only quantized-positive results become
+FinancialRights; zero results remain available for deterministic replay and
+audit without creating Journal or PartnerLedger postings. CausationId, CorrelationId, an authoritative
 business instant and the complete production account model are intentionally
 deferred to the next Financial Platform milestone; this slice has no approved
 command/event source from which to derive them and does not fabricate values.
