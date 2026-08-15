@@ -28,6 +28,10 @@ const settlementSplitResultsMigrationUrl = new URL(
   "../../migrations/009_settlement_split_results.sql",
   import.meta.url,
 );
+const settlementB002HardeningMigrationUrl = new URL(
+  "../../migrations/010_b002_split_result_hardening.sql",
+  import.meta.url,
+);
 
 test("settlement migration defines append-only materialization and idempotency constraints", async () => {
   const sql = await readFile(settlementMigrationUrl, "utf8");
@@ -84,6 +88,16 @@ test("B-002 migration separates seven SplitShare results from positive financial
   assert.match(sql, /FinancialRights must match strictly positive SplitShare results/);
   assert.match(sql, /exactly seven SplitShare results/);
   assert.match(sql, /settlement_split_results_append_only/);
+});
+
+test("B-002 hardening binds SplitShare identity and rejects zero-basis-point rights", async () => {
+  const sql = await readFile(settlementB002HardeningMigrationUrl, "utf8");
+
+  assert.match(sql, /validate_split_result_consistency/);
+  assert.match(sql, /settlement_split_result_semantic_identity/);
+  assert.match(sql, /evidence_id.*split_policy_version/);
+  assert.match(sql, /basis_points = 0 AND NEW\.amount <> 0/);
+  assert.match(sql, /FinancialRight cannot reference a zero-basis-point SplitShare/);
 });
 
 test("event store migration enforces append-only identity and revision constraints", async () => {

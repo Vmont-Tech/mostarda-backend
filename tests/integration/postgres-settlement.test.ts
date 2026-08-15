@@ -51,6 +51,7 @@ async function prepare(pool: any): Promise<any> {
   await applySqlMigration(pool, new URL("../../migrations/007_settlement_financial_slice.sql", import.meta.url));
   await applySqlMigration(pool, new URL("../../migrations/008_settlement_integrity_hardening.sql", import.meta.url));
   await applySqlMigration(pool, new URL("../../migrations/009_settlement_split_results.sql", import.meta.url));
+  await applySqlMigration(pool, new URL("../../migrations/010_b002_split_result_hardening.sql", import.meta.url));
   return settlementModules();
 }
 
@@ -488,6 +489,129 @@ test(
           fixture.rights[0]!.destinationId, fixture.journalTransaction.transactionId],
       ), /positive|check|violates|semantic|identity/i);
     } finally {
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "PostgreSQL rejects zero-basis-point financial materialization while preserving zero results",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    const client = await pool.connect();
+    try {
+      await prepare(pool);
+      const cycleId = `b002-zero-bps-cycle-${runId}`;
+      const evidenceId = `b002-zero-bps-evidence-${runId}`;
+      await client.query("BEGIN");
+      await client.query(
+        `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
+         VALUES ($1, $2, $3, 100.0000, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'CLOSED')`,
+        [cycleId, `b002-zero-bps-campaign-${runId}`, evidenceId],
+      );
+
+      const zeroResult = `b002-zero-bps-zero-${runId}`;
+      await client.query(
+        `INSERT INTO settlement_split_results (
+           split_share_id, settlement_cycle_id, line, destination_id,
+           basis_points, amount, evidence_id, split_policy_version
+         ) VALUES ($1, $2, 'TV_OWNER', 'TV_OWNER', 0, 0.0000, $3, 'SPLIT-PERFORMANCE-RESIDUAL-V1')`,
+        [zeroResult, cycleId, evidenceId],
+      );
+
+      await client.query("SAVEPOINT zero_bps_right");
+      await assert.rejects(
+        () => client.query(
+          `INSERT INTO financial_rights (
+             financial_right_id, split_share_id, settlement_cycle_id, line,
+             destination_id, amount, evidence_id, split_policy_version, status
+           ) VALUES ($1, $2, $3, 'TV_OWNER', 'TV_OWNER', 20.0000, $4, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'READY')`,
+          [`b002-zero-bps-right-${runId}`, zeroResult, cycleId, evidenceId],
+        ),
+        /basis|zero|positive|match|violates/i,
+      );
+      await client.query("ROLLBACK TO SAVEPOINT zero_bps_right");
+
+      await client.query("SAVEPOINT zero_bps_positive_split");
+      await assert.rejects(
+        () => client.query(
+          `INSERT INTO settlement_split_results (
+             split_share_id, settlement_cycle_id, line, destination_id,
+             basis_points, amount, evidence_id, split_policy_version
+           ) VALUES ($1, $2, 'SPACE_OWNER', 'SPACE_OWNER', 0, 20.0000, $3, 'SPLIT-PERFORMANCE-RESIDUAL-V1')`,
+          [`b002-zero-bps-positive-${runId}`, cycleId, evidenceId],
+        ),
+        /basis|zero|amount|positive|violates/i,
+      );
+      await client.query("ROLLBACK TO SAVEPOINT zero_bps_positive_split");
+
+      const quantizedResult = `b002-positive-bps-zero-${runId}`;
+      await client.query(
+        `INSERT INTO settlement_split_results (
+           split_share_id, settlement_cycle_id, line, destination_id,
+           basis_points, amount, evidence_id, split_policy_version
+         ) VALUES ($1, $2, 'SELLER', 'SELLER', 500, 0.0000, $3, 'SPLIT-PERFORMANCE-RESIDUAL-V1')`,
+        [quantizedResult, cycleId, evidenceId],
+      );
+      await client.query("SAVEPOINT positive_bps_zero_right");
+      await assert.rejects(
+        () => client.query(
+          `INSERT INTO financial_rights (
+             financial_right_id, split_share_id, settlement_cycle_id, line,
+             destination_id, amount, evidence_id, split_policy_version, status
+           ) VALUES ($1, $2, $3, 'SELLER', 'SELLER', 0.0001, $4, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'READY')`,
+          [`b002-positive-bps-zero-right-${runId}`, quantizedResult, cycleId, evidenceId],
+        ),
+        /amount|match|positive|violates/i,
+      );
+      await client.query("ROLLBACK TO SAVEPOINT positive_bps_zero_right");
+    } finally {
+      await client.query("ROLLBACK").catch(() => undefined);
+      client.release();
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "PostgreSQL rejects SplitShare identity divergent from its SettlementCycle",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    const client = await pool.connect();
+    try {
+      await prepare(pool);
+      for (const [label, evidenceId, policyVersion] of [
+        ["evidence", `WRONG-EVIDENCE-${runId}`, "SPLIT-PERFORMANCE-RESIDUAL-V1"],
+        ["policy", `b002-identity-evidence-${runId}`, "WRONG-POLICY"],
+        ["both", `WRONG-EVIDENCE-BOTH-${runId}`, "WRONG-POLICY-BOTH"],
+      ] as const) {
+        const cycleId = `b002-identity-cycle-${runId}-${label}`;
+        const cycleEvidence = `b002-identity-evidence-${runId}-${label}`;
+        await client.query("BEGIN");
+        await client.query(
+          `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
+           VALUES ($1, $2, $3, 100.0000, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'CLOSED')`,
+          [cycleId, `b002-identity-campaign-${runId}-${label}`, cycleEvidence],
+        );
+        await assert.rejects(
+          () => client.query(
+            `INSERT INTO settlement_split_results (
+               split_share_id, settlement_cycle_id, line, destination_id,
+               basis_points, amount, evidence_id, split_policy_version
+             ) VALUES ($1, $2, 'TV_OWNER', 'TV_OWNER', 0, 0.0000, $3, $4)`,
+            [`b002-identity-share-${runId}-${label}`, cycleId, evidenceId, policyVersion],
+          ),
+          /identity|evidence|policy|cycle|semantic|match|violates/i,
+        );
+        await client.query("ROLLBACK");
+      }
+    } finally {
+      await client.query("ROLLBACK").catch(() => undefined);
+      client.release();
       await pool.end();
     }
   },

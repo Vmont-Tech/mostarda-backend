@@ -148,16 +148,16 @@ test("preserves seven split results but materializes only positive seller and in
   assert.equal(noInfluencerFund.rights.some((right) => right.line === "INFLUENCER_ACQUISITION_FUND"), false);
 });
 
-test("preserves a quantized zero SplitShare without creating a zero financial posting", () => {
-  const result = run({ grossAmount: "0.0001" });
-  assert.equal(result.splitShares.length, 7);
-  assert.ok(result.splitShares.some((share) => share.amount === "0.0000"));
-  assert.ok(result.rights.length < result.splitShares.length);
-  assert.equal(result.journalTransaction.lines.some((line) => line.amount === "0.0000"), false);
-  assert.equal(result.ledgerEntries.some((entry) => entry.amount === "0.0000"), false);
-  assert.equal(result.journalTransaction.debitTotal, "0.0001");
-  assert.equal(result.journalTransaction.creditTotal, "0.0001");
-  assert.equal(result.ledgerEntries.reduce((sum, entry) => sum + BigInt(entry.amount.replace(".", "")), 0n), 1n);
+test("preserves quantized zero SplitShares without creating zero financial postings", () => {
+  for (const grossAmount of ["0.0001", "0.0002", "0.0003", "0.0004", "0.0005", "0.0010", "0.0100", "1.0000", "100.0000"]) {
+    const result = run({ grossAmount, campaignId: `C001-${grossAmount}`, evidence: { ...partialInput().evidence, evidenceId: `E001-${grossAmount}`, campaignId: `C001-${grossAmount}` } });
+    assert.equal(result.splitShares.length, 7, grossAmount);
+    assert.equal(result.journalTransaction.debitTotal, grossAmount, grossAmount);
+    assert.equal(result.journalTransaction.creditTotal, grossAmount, grossAmount);
+    assert.equal(result.journalTransaction.lines.some((line) => line.amount === "0.0000"), false, grossAmount);
+    assert.equal(result.ledgerEntries.some((entry) => entry.amount === "0.0000"), false, grossAmount);
+    assert.equal(result.ledgerEntries.reduce((sum, entry) => sum + BigInt(entry.amount.replace(".", "")), 0n), BigInt(grossAmount.replace(".", "")), grossAmount);
+  }
 });
 
 test("rejects evidence that is invalid, unanchored, or reverted", () => {
