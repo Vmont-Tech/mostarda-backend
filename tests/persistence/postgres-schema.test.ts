@@ -20,6 +20,10 @@ const settlementMigrationUrl = new URL(
   "../../migrations/007_settlement_financial_slice.sql",
   import.meta.url,
 );
+const settlementHardeningMigrationUrl = new URL(
+  "../../migrations/008_settlement_integrity_hardening.sql",
+  import.meta.url,
+);
 
 test("settlement migration defines append-only materialization and idempotency constraints", async () => {
   const sql = await readFile(settlementMigrationUrl, "utf8");
@@ -48,6 +52,18 @@ test("settlement migration defines append-only materialization and idempotency c
   assert.match(sql, /validate_journal_transaction_consistency/);
   assert.match(sql, /validate_journal_line_consistency/);
   assert.match(sql, /validate_partner_ledger_consistency/);
+});
+
+test("settlement hardening migration fixes monetary scale and materialization invariants", async () => {
+  const sql = await readFile(settlementHardeningMigrationUrl, "utf8");
+
+  assert.match(sql, /NUMERIC\(18,4\)/);
+  assert.match(sql, /SUM\(amount\)/);
+  assert.match(sql, /FinancialRights must conserve SettlementCycle gross_amount/);
+  assert.match(sql, /unlinked.*credit|credit.*unlinked/i);
+  assert.match(sql, /settlement_cycles/);
+  assert.match(sql, /DEFERRABLE INITIALLY DEFERRED/);
+  assert.match(sql, /settlement_materialization_complete_cycle/);
 });
 
 test("event store migration enforces append-only identity and revision constraints", async () => {

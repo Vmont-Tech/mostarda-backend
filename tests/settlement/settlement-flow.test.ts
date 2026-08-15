@@ -29,6 +29,22 @@ test("breaks equal Hamilton-Hare remainders by stable identity, not input order"
   ]));
 });
 
+test("rejects a public allocation whose basis points do not cover exactly 100%", () => {
+  const target = { key: "ONLY", basisPoints: 9_999 };
+  assert.throws(
+    () => allocateGrossByLargestRemainder("1.0000", [target]),
+    /exactly 10000 basis points/,
+  );
+  assert.throws(
+    () => allocateGrossByLargestRemainder("1.0000", [{ key: "ONLY", basisPoints: 10_001 }]),
+    /exactly 10000 basis points/,
+  );
+  assert.throws(
+    () => allocateGrossByLargestRemainder("1.0000", [{ key: "NEGATIVE", basisPoints: -1 }, { key: "REST", basisPoints: 10_001 }]),
+    /non-negative integers/,
+  );
+});
+
 const partialInput = (): SettlementInput => ({
   campaignId: "C001",
   grossAmount: "100.0000",
@@ -108,6 +124,8 @@ test("rejects evidence that is invalid, unanchored, or reverted", () => {
 test("rejects negative gross and preserves four decimal precision", () => {
   assert.throws(() => run({ grossAmount: "-0.0001" }), /Gross settlement amount/);
   assert.throws(() => run({ grossAmount: "100.00001" }), /four decimal places/);
+  assert.throws(() => run({ grossAmount: "100000000000000.0000" }), /DECIMAL\(18,4\)/);
+  assert.equal(run({ grossAmount: "99999999999999.9999" }).settlementCycle.grossAmount, "99999999999999.9999");
   assert.equal(run({ grossAmount: "100.1234" }).settlementCycle.grossAmount, "100.1234");
 });
 

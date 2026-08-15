@@ -49,6 +49,7 @@ async function settlementModules(): Promise<any> {
 async function prepare(pool: any): Promise<any> {
   const { applySqlMigration } = await import("../../packages/persistence-postgres/src/index.ts");
   await applySqlMigration(pool, new URL("../../migrations/007_settlement_financial_slice.sql", import.meta.url));
+  await applySqlMigration(pool, new URL("../../migrations/008_settlement_integrity_hardening.sql", import.meta.url));
   return settlementModules();
 }
 
@@ -71,6 +72,7 @@ type DirectMaterializationOptions = {
   readonly rightIndexes?: readonly number[];
   readonly lineIndexes?: readonly number[];
   readonly ledgerIndexes?: readonly number[];
+  readonly rightAmountOverrides?: Readonly<Record<number, string>>;
 };
 
 async function insertDirectMaterialization(
@@ -81,6 +83,7 @@ async function insertDirectMaterialization(
   const rights = options.rightIndexes ?? [0, 1, 2, 3, 4, 5, 6];
   const lines = options.lineIndexes ?? rights;
   const ledgers = options.ledgerIndexes ?? rights;
+  const amountFor = (index: number) => options.rightAmountOverrides?.[index] ?? directRightAmounts[index]!;
   const cycleId = `structural-cycle-${runId}-${label}`;
   const evidenceId = `structural-evidence-${runId}-${label}`;
   const campaignId = `structural-campaign-${runId}-${label}`;
@@ -96,7 +99,7 @@ async function insertDirectMaterialization(
       `INSERT INTO financial_rights (financial_right_id, split_share_id, settlement_cycle_id, line, destination_id, amount, evidence_id, split_policy_version, status)
        VALUES ($1, $2, $3, $4, $5, $6::numeric, $7, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'READY')`,
       [`structural-right-${runId}-${label}-${index}`, `structural-share-${runId}-${label}-${index}`, cycleId,
-        directRightLines[index], `DESTINATION_${index}`, directRightAmounts[index], evidenceId],
+        directRightLines[index], `DESTINATION_${index}`, amountFor(index), evidenceId],
     );
   }
   await client.query(
@@ -105,7 +108,7 @@ async function insertDirectMaterialization(
     [journalId, cycleId, evidenceId],
   );
 
-  const linkedCredit = lines.reduce((total, index) => total + Number(directRightAmounts[index]), 0);
+  const linkedCredit = lines.reduce((total, index) => total + Number(amountFor(index)), 0);
   const values: string[] = ["($1, $2, 0, 'CAMPAIGN', 'DEBIT', 100.0000, NULL)"];
   const params: unknown[] = [`structural-debit-${runId}-${label}`, journalId];
   for (const [lineOrder, index] of lines.entries()) {
@@ -114,7 +117,7 @@ async function insertDirectMaterialization(
     params.push(
       `structural-line-${runId}-${label}-${lineOrder}`,
       `DESTINATION_${index}`,
-      directRightAmounts[index],
+      amountFor(index),
       `structural-right-${runId}-${label}-${index}`,
     );
   }
@@ -136,7 +139,7 @@ async function insertDirectMaterialization(
        VALUES ($1, $2, $3, $4, $5, $6, $7::numeric, $8, 'PENDING')`,
       [`structural-ledger-${runId}-${label}-${index}`, `structural-right-${runId}-${label}-${index}`,
         `structural-share-${runId}-${label}-${index}`, cycleId, evidenceId, `DESTINATION_${index}`,
-        directRightAmounts[index], journalId],
+        amountFor(index), journalId],
     );
   }
 }
@@ -541,16 +544,23 @@ test(
          VALUES ($1, $2, 'missing-cycle', 'SELLER', 'SELLER', 1.0000, 'EVIDENCE', 'POLICY', 'READY')`,
         [`orphan-right-${runId}`, `orphan-share-${runId}`],
       ), /foreign key|semantic|unknown|violates/i);
-      await pool.query(
-        `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
-         VALUES ($1, $2, $3, 1.0000, 'POLICY', 'CLOSED')`,
-        [`unbalanced-cycle-${runId}`, `UNBALANCED-${runId}`, `UNBALANCED-EVIDENCE-${runId}`],
-      );
-      await assert.rejects(() => pool.query(
-        `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
-         VALUES ($1, $2, $3, 1.0000, 2.0000)`,
-        [`unbalanced-journal-${runId}`, `unbalanced-cycle-${runId}`, `UNBALANCED-EVIDENCE-${runId}`],
-      ), /check constraint|semantic|gross|violates/i);
+      const invalidClient = await pool.connect();
+      try {
+        await invalidClient.query("BEGIN");
+        await invalidClient.query(
+          `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
+           VALUES ($1, $2, $3, 1.0000, 'POLICY', 'CLOSED')`,
+          [`unbalanced-cycle-${runId}`, `UNBALANCED-${runId}`, `UNBALANCED-EVIDENCE-${runId}`],
+        );
+        await assert.rejects(() => invalidClient.query(
+          `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
+           VALUES ($1, $2, $3, 1.0000, 2.0000)`,
+          [`unbalanced-journal-${runId}`, `unbalanced-cycle-${runId}`, `UNBALANCED-EVIDENCE-${runId}`],
+        ), /check constraint|semantic|gross|violates/i);
+        await invalidClient.query("ROLLBACK");
+      } finally {
+        invalidClient.release();
+      }
     } finally {
       await pool.end();
     }
@@ -567,21 +577,23 @@ test(
       const modules = await prepare(pool);
 
       const grossCycle = input("gross-invariant");
-      await pool.query(
-        `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
-         VALUES ($1, $2, $3, 100.0000, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'CLOSED')`,
-        [`gross-cycle-${runId}`, grossCycle.campaignId, grossCycle.evidence.evidenceId],
-      );
-      await assert.rejects(() => pool.query(
-        `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
-         VALUES ($1, $2, $3, 1.0000, 1.0000)`,
-        [`gross-balanced-wrong-${runId}`, `gross-cycle-${runId}`, grossCycle.evidence.evidenceId],
-      ), /gross|SettlementCycle|semantic|violates/i);
-      await assert.rejects(() => pool.query(
-        `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
-         VALUES ($1, $2, $3, 1.0000, 2.0000)`,
-        [`gross-unbalanced-wrong-${runId}`, `gross-cycle-${runId}`, grossCycle.evidence.evidenceId],
-      ), /gross|balance|check|violates|semantic/i);
+      const grossClient = await pool.connect();
+      try {
+        await grossClient.query("BEGIN");
+        await grossClient.query(
+          `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
+           VALUES ($1, $2, $3, 100.0000, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'CLOSED')`,
+          [`gross-cycle-${runId}`, grossCycle.campaignId, grossCycle.evidence.evidenceId],
+        );
+        await assert.rejects(() => grossClient.query(
+          `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
+           VALUES ($1, $2, $3, 1.0000, 1.0000)`,
+          [`gross-balanced-wrong-${runId}`, `gross-cycle-${runId}`, grossCycle.evidence.evidenceId],
+        ), /gross|SettlementCycle|semantic|violates/i);
+        await grossClient.query("ROLLBACK");
+      } finally {
+        grossClient.release();
+      }
 
       const mismatch = await modules.settleEvidencePersisted(
         input("line-invariant"),
@@ -635,6 +647,131 @@ test(
         [accepted.journalTransaction.transactionId],
       );
       assert.equal(acceptedLines.rows[0].count, 7);
+    } finally {
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "PostgreSQL rejects direct SQL when FinancialRights do not conserve gross",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    try {
+      await prepare(pool);
+      await assertDirectMaterializationRejected(pool, "direct-conservation-mismatch", {
+        rightAmountOverrides: { 0: "19.0000" },
+      });
+    } finally {
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "PostgreSQL rejects a CLOSED cycle that is not fully materialized",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    try {
+      await prepare(pool);
+      await assert.rejects(
+        () => pool.query(
+          `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
+           VALUES ($1, $2, $3, 100.0000, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'CLOSED')`,
+          [`bare-closed-${runId}`, `bare-campaign-${runId}`, `bare-evidence-${runId}`],
+        ),
+        /materializ|Journal|seven|complete/i,
+      );
+    } finally {
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "PostgreSQL rejects a balanced journal whose rights do not conserve the cycle gross",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    try {
+      const modules = await prepare(pool);
+      const fixture = settleEvidence(input("conservation-source"), new SettlementMemoryStore());
+      const tampered = structuredClone(fixture) as SettlementResult;
+      (tampered.rights[0] as any).amount = "19.0000";
+      (tampered.journalTransaction.lines[1] as any).amount = "19.0000";
+      (tampered.ledgerEntries[0] as any).amount = "19.0000";
+      (tampered.journalTransaction.lines[2] as any).financialRightId = undefined;
+      (tampered.journalTransaction.lines[2] as any).accountId = "UNLINKED";
+      (tampered.journalTransaction.lines[2] as any).amount = "21.0000";
+      await assert.rejects(() => storeOf(modules, pool).save(tampered), /gross|conserv|replay|materializ|JournalLine|semantic|credit/i);
+    } finally {
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "PostgreSQL rejects an unlinked CREDIT even when the Journal remains balanced",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    try {
+      const modules = await prepare(pool);
+      const fixture = settleEvidence(input("unlinked-credit"), new SettlementMemoryStore());
+      const tampered = structuredClone(fixture) as SettlementResult;
+      (tampered.journalTransaction.lines[1] as any).financialRightId = undefined;
+      (tampered.journalTransaction.lines[1] as any).accountId = "UNLINKED";
+      await assert.rejects(() => storeOf(modules, pool).save(tampered), /credit|FinancialRight|materializ|linked/i);
+    } finally {
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "PostgreSQL uses DECIMAL(18,4) for the Settlement monetary columns",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    try {
+      const modules = await prepare(pool);
+      const columns = await pool.query<{ table_name: string; column_name: string; numeric_precision: number; numeric_scale: number }>(
+        `SELECT table_name, column_name, numeric_precision, numeric_scale
+           FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND (table_name, column_name) IN (
+              ('settlement_cycles', 'gross_amount'),
+              ('financial_rights', 'amount'),
+              ('journal_transactions', 'debit_total'),
+              ('journal_transactions', 'credit_total'),
+              ('journal_lines', 'amount'),
+              ('partner_ledger_entries', 'amount')
+            )
+          ORDER BY table_name, column_name`,
+      );
+      assert.equal(columns.rows.length, 6);
+      for (const column of columns.rows) {
+        assert.equal(column.numeric_precision, 18, `${column.table_name}.${column.column_name}`);
+        assert.equal(column.numeric_scale, 4, `${column.table_name}.${column.column_name}`);
+      }
+
+      const maxInput = { ...input("decimal-max"), grossAmount: "99999999999999.9999" };
+      const maxResult = await modules.settleEvidencePersisted(maxInput, storeOf(modules, pool));
+      assert.equal(maxResult.settlementCycle.grossAmount, "99999999999999.9999");
+      await assert.rejects(
+        () => modules.settleEvidencePersisted(
+          { ...input("decimal-overflow"), grossAmount: "100000000000000.0000" },
+          storeOf(modules, pool),
+        ),
+        /DECIMAL\(18,4\)|numeric field overflow|Gross settlement amount/,
+      );
     } finally {
       await pool.end();
     }

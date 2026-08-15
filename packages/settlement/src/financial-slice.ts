@@ -251,7 +251,11 @@ function validateEvidence(input: SettlementInput): void {
 function parseMoney(value: string): bigint {
   if (!/^\d+(?:\.\d{1,4})?$/.test(value)) throw new TypeError("Gross settlement amount must use BRL with four decimal places.");
   const [whole, fractional = ""] = value.split(".");
-  return BigInt(whole!) * 10_000n + BigInt(fractional.padEnd(4, "0"));
+  const units = BigInt(whole!) * 10_000n + BigInt(fractional.padEnd(4, "0"));
+  if (units > 999_999_999_999_999_999n) {
+    throw new RangeError("Gross settlement amount must fit DECIMAL(18,4).");
+  }
+  return units;
 }
 
 function formatMoney(units: bigint): string {
@@ -284,6 +288,10 @@ function allocateMoney(grossUnits: bigint, targets: readonly LargestRemainderTar
       throw new Error("Allocation target basis points must be non-negative integers.");
     }
     seenKeys.add(target.key);
+  }
+  const basisPointsTotal = targets.reduce((sum, target) => sum + target.basisPoints, 0);
+  if (basisPointsTotal !== 10_000) {
+    throw new Error("Allocation target basis points must total exactly 10000 basis points.");
   }
   const denominator = 10_000n;
   const portions = targets.map((target, index) => {

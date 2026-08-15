@@ -13,7 +13,10 @@ policy; it does not redefine or modify it.
 
 `persistent-settlement.ts` defines the persistence port for this materialization boundary.
 `PostgresSettlementStore` implements that port in `@mostarda/persistence-postgres` using
-migration `007_settlement_financial_slice.sql`. It persists SettlementCycle, FinancialRights,
+the historical `007_settlement_financial_slice.sql` plus the corrective
+`008_settlement_integrity_hardening.sql`. The corrective migration fixes persisted
+monetary columns at `DECIMAL(18,4)` and closes the database-level materialization
+invariants. It persists SettlementCycle, FinancialRights,
 JournalTransaction/JournalLines and PartnerLedger entries with append-only and idempotency
 constraints. PostgreSQL integration tests run only when `DATABASE_URL` is available; otherwise
 the conditional tests remain explicitly skipped.
@@ -22,9 +25,11 @@ the conditional tests remain explicitly skipped.
 
 The persistent adapter performs a complete structural replay comparison inside
 the adapter; `save` has no optional validation hook or callback. PostgreSQL enforces
-one JournalTransaction per SettlementCycle, semantic identity between parent
-and child rows, transactional rollback, and append-only behavior including
-`TRUNCATE` through database triggers.
+one JournalTransaction per SettlementCycle, conservation of the gross across rights,
+Journal and PartnerLedger, exactly one linked CREDIT line per right, semantic identity
+between parent and child rows, transactional rollback, and append-only behavior including
+`TRUNCATE` through database triggers. A `CLOSED` cycle cannot be committed before its
+complete materialization is present.
 
 The current walking skeleton materializes the normative fields already present
 in its Settlement contracts: Evidence identity, SettlementCycle identity,
