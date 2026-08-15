@@ -40,6 +40,10 @@ CREATE TABLE IF NOT EXISTS journal_transactions (
     CONSTRAINT journal_transaction_balanced CHECK (debit_total = credit_total)
 );
 
+-- A SettlementCycle has exactly one materialized JournalTransaction.
+CREATE UNIQUE INDEX IF NOT EXISTS journal_transaction_cycle_unique
+    ON journal_transactions (settlement_cycle_id);
+
 CREATE TABLE IF NOT EXISTS journal_lines (
     journal_line_id TEXT PRIMARY KEY CHECK (journal_line_id <> ''),
     transaction_id TEXT NOT NULL REFERENCES journal_transactions(transaction_id),
@@ -106,35 +110,198 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION validate_financial_right_consistency()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    cycle_evidence TEXT;
+    cycle_policy TEXT;
+BEGIN
+    SELECT evidence_id, split_policy_version
+      INTO cycle_evidence, cycle_policy
+      FROM settlement_cycles
+     WHERE settlement_cycle_id = NEW.settlement_cycle_id;
+    IF cycle_evidence IS NULL THEN
+        RAISE EXCEPTION 'financial right references an unknown SettlementCycle'
+            USING ERRCODE = '23503';
+    END IF;
+    IF NEW.evidence_id IS DISTINCT FROM cycle_evidence
+       OR NEW.split_policy_version IS DISTINCT FROM cycle_policy THEN
+        RAISE EXCEPTION 'financial right semantic identity does not match SettlementCycle'
+            USING ERRCODE = '23514';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION validate_journal_transaction_consistency()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    cycle_evidence TEXT;
+BEGIN
+    SELECT evidence_id
+      INTO cycle_evidence
+      FROM settlement_cycles
+     WHERE settlement_cycle_id = NEW.settlement_cycle_id;
+    IF cycle_evidence IS NULL THEN
+        RAISE EXCEPTION 'JournalTransaction references an unknown SettlementCycle'
+            USING ERRCODE = '23503';
+    END IF;
+    IF NEW.evidence_id IS DISTINCT FROM cycle_evidence THEN
+        RAISE EXCEPTION 'JournalTransaction semantic identity does not match SettlementCycle'
+            USING ERRCODE = '23514';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION validate_journal_line_consistency()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    transaction_cycle TEXT;
+    right_cycle TEXT;
+BEGIN
+    IF NEW.financial_right_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+    SELECT settlement_cycle_id
+      INTO transaction_cycle
+      FROM journal_transactions
+     WHERE transaction_id = NEW.transaction_id;
+    SELECT settlement_cycle_id
+      INTO right_cycle
+      FROM financial_rights
+     WHERE financial_right_id = NEW.financial_right_id;
+    IF transaction_cycle IS NULL OR right_cycle IS NULL THEN
+        RAISE EXCEPTION 'JournalLine references an unknown transaction or FinancialRight'
+            USING ERRCODE = '23503';
+    END IF;
+    IF transaction_cycle IS DISTINCT FROM right_cycle THEN
+        RAISE EXCEPTION 'JournalLine FinancialRight belongs to a different SettlementCycle'
+            USING ERRCODE = '23514';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION validate_partner_ledger_consistency()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    right_cycle TEXT;
+    right_evidence TEXT;
+    right_destination TEXT;
+    right_amount NUMERIC(20,4);
+    right_split_share TEXT;
+    journal_cycle TEXT;
+    journal_evidence TEXT;
+BEGIN
+    SELECT settlement_cycle_id, evidence_id, destination_id, amount, split_share_id
+      INTO right_cycle, right_evidence, right_destination, right_amount, right_split_share
+      FROM financial_rights
+     WHERE financial_right_id = NEW.financial_right_id;
+    SELECT settlement_cycle_id, evidence_id
+      INTO journal_cycle, journal_evidence
+      FROM journal_transactions
+     WHERE transaction_id = NEW.journal_transaction_id;
+    IF right_cycle IS NULL OR journal_cycle IS NULL THEN
+        RAISE EXCEPTION 'PartnerLedger references an unknown FinancialRight or JournalTransaction'
+            USING ERRCODE = '23503';
+    END IF;
+    IF NEW.split_share_id IS DISTINCT FROM right_split_share
+       OR NEW.settlement_cycle_id IS DISTINCT FROM right_cycle
+       OR NEW.evidence_id IS DISTINCT FROM right_evidence
+       OR NEW.destination_id IS DISTINCT FROM right_destination
+       OR NEW.amount IS DISTINCT FROM right_amount
+       OR NEW.settlement_cycle_id IS DISTINCT FROM journal_cycle
+       OR NEW.evidence_id IS DISTINCT FROM journal_evidence THEN
+        RAISE EXCEPTION 'PartnerLedger semantic identity does not match its FinancialRight and JournalTransaction'
+            USING ERRCODE = '23514';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
 DROP TRIGGER IF EXISTS journal_transaction_lines_balanced ON journal_lines;
 CREATE CONSTRAINT TRIGGER journal_transaction_lines_balanced
 AFTER INSERT OR UPDATE OR DELETE ON journal_lines
 DEFERRABLE INITIALLY DEFERRED
 FOR EACH ROW EXECUTE FUNCTION validate_journal_transaction_lines();
 
+DROP TRIGGER IF EXISTS financial_right_semantic_identity ON financial_rights;
+CREATE TRIGGER financial_right_semantic_identity
+BEFORE INSERT OR UPDATE ON financial_rights
+FOR EACH ROW EXECUTE FUNCTION validate_financial_right_consistency();
+
+DROP TRIGGER IF EXISTS journal_transaction_semantic_identity ON journal_transactions;
+CREATE TRIGGER journal_transaction_semantic_identity
+BEFORE INSERT OR UPDATE ON journal_transactions
+FOR EACH ROW EXECUTE FUNCTION validate_journal_transaction_consistency();
+
+DROP TRIGGER IF EXISTS journal_line_semantic_identity ON journal_lines;
+CREATE TRIGGER journal_line_semantic_identity
+BEFORE INSERT OR UPDATE ON journal_lines
+FOR EACH ROW EXECUTE FUNCTION validate_journal_line_consistency();
+
+DROP TRIGGER IF EXISTS partner_ledger_semantic_identity ON partner_ledger_entries;
+CREATE TRIGGER partner_ledger_semantic_identity
+BEFORE INSERT OR UPDATE ON partner_ledger_entries
+FOR EACH ROW EXECUTE FUNCTION validate_partner_ledger_consistency();
+
 DROP TRIGGER IF EXISTS settlement_cycles_append_only ON settlement_cycles;
 CREATE TRIGGER settlement_cycles_append_only
 BEFORE UPDATE OR DELETE ON settlement_cycles
 FOR EACH ROW EXECUTE FUNCTION prevent_settlement_mutation();
+
+DROP TRIGGER IF EXISTS settlement_cycles_append_only_truncate ON settlement_cycles;
+CREATE TRIGGER settlement_cycles_append_only_truncate
+BEFORE TRUNCATE ON settlement_cycles
+FOR EACH STATEMENT EXECUTE FUNCTION prevent_settlement_mutation();
 
 DROP TRIGGER IF EXISTS financial_rights_append_only ON financial_rights;
 CREATE TRIGGER financial_rights_append_only
 BEFORE UPDATE OR DELETE ON financial_rights
 FOR EACH ROW EXECUTE FUNCTION prevent_settlement_mutation();
 
+DROP TRIGGER IF EXISTS financial_rights_append_only_truncate ON financial_rights;
+CREATE TRIGGER financial_rights_append_only_truncate
+BEFORE TRUNCATE ON financial_rights
+FOR EACH STATEMENT EXECUTE FUNCTION prevent_settlement_mutation();
+
 DROP TRIGGER IF EXISTS journal_transactions_append_only ON journal_transactions;
 CREATE TRIGGER journal_transactions_append_only
 BEFORE UPDATE OR DELETE ON journal_transactions
 FOR EACH ROW EXECUTE FUNCTION prevent_settlement_mutation();
+
+DROP TRIGGER IF EXISTS journal_transactions_append_only_truncate ON journal_transactions;
+CREATE TRIGGER journal_transactions_append_only_truncate
+BEFORE TRUNCATE ON journal_transactions
+FOR EACH STATEMENT EXECUTE FUNCTION prevent_settlement_mutation();
 
 DROP TRIGGER IF EXISTS journal_lines_append_only ON journal_lines;
 CREATE TRIGGER journal_lines_append_only
 BEFORE UPDATE OR DELETE ON journal_lines
 FOR EACH ROW EXECUTE FUNCTION prevent_settlement_mutation();
 
+DROP TRIGGER IF EXISTS journal_lines_append_only_truncate ON journal_lines;
+CREATE TRIGGER journal_lines_append_only_truncate
+BEFORE TRUNCATE ON journal_lines
+FOR EACH STATEMENT EXECUTE FUNCTION prevent_settlement_mutation();
+
 DROP TRIGGER IF EXISTS partner_ledger_entries_append_only ON partner_ledger_entries;
 CREATE TRIGGER partner_ledger_entries_append_only
 BEFORE UPDATE OR DELETE ON partner_ledger_entries
 FOR EACH ROW EXECUTE FUNCTION prevent_settlement_mutation();
+
+DROP TRIGGER IF EXISTS partner_ledger_entries_append_only_truncate ON partner_ledger_entries;
+CREATE TRIGGER partner_ledger_entries_append_only_truncate
+BEFORE TRUNCATE ON partner_ledger_entries
+FOR EACH STATEMENT EXECUTE FUNCTION prevent_settlement_mutation();
 
 COMMIT;

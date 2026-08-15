@@ -3,15 +3,16 @@ import test from "node:test";
 
 import {
   SettlementEligibilityError,
-  type SettlementInput,
   type SettlementResult,
 } from "../../packages/settlement/src/financial-slice.ts";
 import {
   settleEvidencePersisted,
+  assertSettlementReplayEquivalent,
+  type PersistentSettlementInput,
   type PersistentSettlementStore,
 } from "../../packages/settlement/src/persistent-settlement.ts";
 
-const input = (): SettlementInput => ({
+const input = (): PersistentSettlementInput => ({
   campaignId: "C001",
   grossAmount: "100.0000",
   evidence: {
@@ -20,6 +21,7 @@ const input = (): SettlementInput => ({
     status: "VALID",
     anchorStatus: "CONFIRMED",
     reverted: false,
+    disputed: false,
   },
   seller: {
     acquisition: true,
@@ -59,13 +61,9 @@ class MemoryPersistentStore implements PersistentSettlementStore {
 
   public async save(
     result: SettlementResult,
-    validateExisting?: (existing: SettlementResult, candidate: SettlementResult) => void,
   ): Promise<SettlementResult> {
     if (this.#result !== undefined) {
-      if (this.#result.settlementCycle.grossAmount !== result.settlementCycle.grossAmount) {
-        throw new Error("Settlement cycle conflict: same EvidenceId has divergent gross amount.");
-      }
-      validateExisting?.(this.#result, result);
+      assertSettlementReplayEquivalent(this.#result, result);
       return this.#result;
     }
     this.#result = result;
@@ -107,4 +105,33 @@ test("invalid Evidence is rejected before the persistence port is called", async
     (error: unknown) => error instanceof SettlementEligibilityError,
   );
   assert.equal(saveCalls, 0);
+});
+
+test("disputed Evidence is rejected before any financial materialization", async () => {
+  let saveCalls = 0;
+  const store: PersistentSettlementStore = {
+    findByEvidence: async () => undefined,
+    save: async (result) => { saveCalls += 1; return result; },
+  };
+
+  await assert.rejects(
+    () => settleEvidencePersisted({ ...input(), evidence: { ...input().evidence, disputed: true } }, store),
+    (error: unknown) => error instanceof SettlementEligibilityError,
+  );
+  assert.equal(saveCalls, 0);
+});
+
+test("persistent Settlement rejects reverted or unanchored Evidence at its boundary", async () => {
+  for (const evidence of [
+    { ...input().evidence, reverted: true },
+    { ...input().evidence, anchorStatus: "PENDING" as const },
+  ]) {
+    await assert.rejects(
+      () => settleEvidencePersisted({ ...input(), evidence }, {
+        findByEvidence: async () => undefined,
+        save: async (result) => result,
+      }),
+      (error: unknown) => error instanceof SettlementEligibilityError,
+    );
+  }
 });

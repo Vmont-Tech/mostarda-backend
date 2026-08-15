@@ -57,7 +57,6 @@ interface LedgerRow {
  */
 export class PostgresSettlementStore<TSettlement extends object> {
   readonly #pool: Pool;
-
   public constructor(pool: Pool) {
     this.#pool = pool;
   }
@@ -79,7 +78,6 @@ export class PostgresSettlementStore<TSettlement extends object> {
 
   public async save(
     result: TSettlement,
-    validateExisting?: (existing: TSettlement, candidate: TSettlement) => void,
   ): Promise<TSettlement> {
     const value = result as any;
     const client = await this.#pool.connect();
@@ -113,11 +111,8 @@ export class PostgresSettlementStore<TSettlement extends object> {
         );
         const row = existing.rows[0];
         if (row === undefined) throw new Error("Persisted Settlement disappeared after conflict.");
-        if (row.gross_amount !== value.settlementCycle.grossAmount) {
-          throw new Error("Settlement cycle conflict: same EvidenceId has divergent gross amount.");
-        }
         const replay = await this.#loadResult(client, row);
-        validateExisting?.(replay, result);
+        assertPersistedReplayEquivalent(replay, result);
         await client.query("COMMIT");
         return replay;
       }
@@ -200,8 +195,14 @@ export class PostgresSettlementStore<TSettlement extends object> {
         WHERE settlement_cycle_id = $1`,
       [cycle.settlement_cycle_id],
     );
-    const journalRow = journal.rows[0];
-    if (journalRow === undefined) throw new Error("Persisted Settlement is missing JournalTransaction.");
+    if (journal.rows.length !== 1) {
+      throw new Error(
+        journal.rows.length === 0
+          ? "Persisted Settlement is missing JournalTransaction."
+          : "Persisted Settlement has multiple JournalTransactions.",
+      );
+    }
+    const journalRow = journal.rows[0]!;
     const lines = await client.query<JournalLineRow>(
       `SELECT journal_line_id, account_id, direction, amount::text,
               financial_right_id, line_order
@@ -211,12 +212,22 @@ export class PostgresSettlementStore<TSettlement extends object> {
       [journalRow.transaction_id],
     );
     const ledger = await client.query<LedgerRow>(
-      `SELECT ledger_entry_id, financial_right_id, split_share_id,
-              evidence_id, settlement_cycle_id, destination_id, amount::text,
-              journal_transaction_id, status
-         FROM partner_ledger_entries
-        WHERE settlement_cycle_id = $1
-        ORDER BY split_share_id`,
+      `SELECT entry.ledger_entry_id, entry.financial_right_id, entry.split_share_id,
+              entry.evidence_id, entry.settlement_cycle_id, entry.destination_id,
+              entry.amount::text, entry.journal_transaction_id, entry.status
+         FROM partner_ledger_entries AS entry
+         JOIN financial_rights AS fr ON fr.financial_right_id = entry.financial_right_id
+        WHERE entry.settlement_cycle_id = $1
+        ORDER BY CASE fr.line
+          WHEN 'TV_OWNER' THEN 0
+          WHEN 'SPACE_OWNER' THEN 1
+          WHEN 'SELLER' THEN 2
+          WHEN 'SELLER_ACQUISITION_FUND' THEN 3
+          WHEN 'INFLUENCER' THEN 4
+          WHEN 'INFLUENCER_ACQUISITION_FUND' THEN 5
+          WHEN 'MOSTARDA' THEN 6
+          ELSE 7
+        END, entry.split_share_id`,
       [cycle.settlement_cycle_id],
     );
     return Object.freeze({
@@ -266,4 +277,30 @@ export class PostgresSettlementStore<TSettlement extends object> {
       }))),
     }) as TSettlement;
   }
+}
+
+/**
+ * The adapter always compares the complete persisted materialization. It is
+ * intentionally structural and domain-neutral, so no caller can bypass replay
+ * validation by omitting a per-call callback.
+ */
+function assertPersistedReplayEquivalent<TSettlement extends object>(
+  existing: TSettlement,
+  candidate: TSettlement,
+): void {
+  if (JSON.stringify(canonicalize(existing)) !== JSON.stringify(canonicalize(candidate))) {
+    throw new Error("Settlement replay conflict: persisted materialization is divergent.");
+  }
+}
+
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, entry]) => [key, canonicalize(entry)]),
+    );
+  }
+  return value;
 }

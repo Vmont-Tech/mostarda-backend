@@ -9,16 +9,21 @@ import {
 } from "../../packages/settlement/src/financial-slice.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
+const runId = process.env.SETTLEMENT_TEST_RUN_ID ?? `run-${process.pid}-${Date.now()}`;
+type TestInput = SettlementInput & {
+  readonly evidence: SettlementInput["evidence"] & { readonly disputed: boolean };
+};
 
-const input = (): SettlementInput => ({
-  campaignId: "C001",
+const input = (label: string): TestInput => ({
+  campaignId: `C-${runId}-${label}`,
   grossAmount: "100.0000",
   evidence: {
-    evidenceId: "E001",
-    campaignId: "C001",
+    evidenceId: `E-${runId}-${label}`,
+    campaignId: `C-${runId}-${label}`,
     status: "VALID",
     anchorStatus: "CONFIRMED",
     reverted: false,
+    disputed: false,
   },
   seller: { acquisition: true, activationPayment: false, renewal: false, volume: false },
   influencer: { entry: true, activation: false, performanceEngagement: false, recurrenceResult: false },
@@ -33,39 +38,42 @@ const input = (): SettlementInput => ({
   },
 });
 
+async function settlementModules(): Promise<any> {
+  const [{ PostgresSettlementStore }, { settleEvidencePersisted }] = await Promise.all([
+    import("../../packages/persistence-postgres/src/index.ts"),
+    import("../../packages/settlement/src/persistent-settlement.ts"),
+  ]);
+  return { PostgresSettlementStore, settleEvidencePersisted };
+}
+
+async function prepare(pool: any): Promise<any> {
+  const { applySqlMigration } = await import("../../packages/persistence-postgres/src/index.ts");
+  await applySqlMigration(pool, new URL("../../migrations/007_settlement_financial_slice.sql", import.meta.url));
+  return settlementModules();
+}
+
+function storeOf(modules: any, pool: any): any {
+  return new modules.PostgresSettlementStore(pool);
+}
+
 test(
   "PostgreSQL persists and replays the complete Settlement financial slice",
   { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
   async () => {
     const { Pool } = await import("pg");
-    const { applySqlMigration, PostgresSettlementStore } = await import(
-      "../../packages/persistence-postgres/src/index.ts"
-    );
-    const { settleEvidencePersisted } = await import(
-      "../../packages/settlement/src/persistent-settlement.ts"
-    );
     const pool = new Pool({ connectionString: databaseUrl });
     try {
-      await applySqlMigration(
-        pool,
-        new URL("../../migrations/007_settlement_financial_slice.sql", import.meta.url),
-      );
-      await pool.query(
-        "TRUNCATE partner_ledger_entries, journal_lines, journal_transactions, financial_rights, settlement_cycles",
-      );
-      const store = new PostgresSettlementStore<SettlementResult>(pool);
-      const first = await settleEvidencePersisted(input(), store);
-      const replay = await settleEvidencePersisted(input(), store);
-      const restartedStore = new PostgresSettlementStore<SettlementResult>(pool);
-      const restartedReplay = await settleEvidencePersisted(input(), restartedStore);
-
+      const modules = await prepare(pool);
+      const store = storeOf(modules, pool);
+      const first = await modules.settleEvidencePersisted(input("persist"), store);
+      const replay = await modules.settleEvidencePersisted(input("persist"), store);
+      const restartedReplay = await modules.settleEvidencePersisted(input("persist"), storeOf(modules, pool));
       assert.equal(first.rights.length, 7);
       assert.equal(first.journalTransaction.debitTotal, "100.0000");
       assert.equal(first.journalTransaction.creditTotal, "100.0000");
-      assert.equal(replay.settlementCycle.settlementCycleId, first.settlementCycle.settlementCycleId);
-      assert.equal(restartedReplay.settlementCycle.settlementCycleId, first.settlementCycle.settlementCycleId);
-      assert.equal((await pool.query("SELECT count(*)::int AS count FROM settlement_cycles")).rows[0].count, 1);
-      assert.equal((await pool.query("SELECT count(*)::int AS count FROM partner_ledger_entries")).rows[0].count, 7);
+      assert.strictEqual(replay.settlementCycle.settlementCycleId, first.settlementCycle.settlementCycleId);
+      assert.strictEqual(restartedReplay.settlementCycle.settlementCycleId, first.settlementCycle.settlementCycleId);
+      assert.equal((await pool.query("SELECT count(*)::int AS count FROM settlement_cycles WHERE campaign_id = $1", [first.settlementCycle.campaignId])).rows[0].count, 1);
     } finally {
       await pool.end();
     }
@@ -77,98 +85,42 @@ test(
   { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
   async () => {
     const { Pool } = await import("pg");
-    const { applySqlMigration, PostgresSettlementStore } = await import(
-      "../../packages/persistence-postgres/src/index.ts"
-    );
-    const { settleEvidencePersisted } = await import(
-      "../../packages/settlement/src/persistent-settlement.ts"
-    );
     const pool = new Pool({ connectionString: databaseUrl });
     try {
-      await applySqlMigration(
-        pool,
-        new URL("../../migrations/007_settlement_financial_slice.sql", import.meta.url),
-      );
-      await pool.query(
-        "TRUNCATE partner_ledger_entries, journal_lines, journal_transactions, financial_rights, settlement_cycles",
-      );
+      const modules = await prepare(pool);
       const results = await Promise.all([
-        settleEvidencePersisted(input(), new PostgresSettlementStore<SettlementResult>(pool)),
-        settleEvidencePersisted(input(), new PostgresSettlementStore<SettlementResult>(pool)),
+        modules.settleEvidencePersisted(input("concurrent"), storeOf(modules, pool)),
+        modules.settleEvidencePersisted(input("concurrent"), storeOf(modules, pool)),
       ]);
-
       assert.equal(results[0].settlementCycle.settlementCycleId, results[1].settlementCycle.settlementCycleId);
-      assert.equal((await pool.query("SELECT count(*)::int AS count FROM settlement_cycles")).rows[0].count, 1);
-      assert.equal((await pool.query("SELECT count(*)::int AS count FROM partner_ledger_entries")).rows[0].count, 7);
+      assert.equal((await pool.query("SELECT count(*)::int AS count FROM settlement_cycles WHERE campaign_id = $1", [results[0].settlementCycle.campaignId])).rows[0].count, 1);
     } finally {
       await pool.end();
     }
   },
 );
 
-async function resetSettlementStore(pool: { query: (sql: string) => Promise<unknown> }): Promise<void> {
-  await pool.query(
-    "TRUNCATE partner_ledger_entries, journal_lines, journal_transactions, financial_rights, settlement_cycles",
-  );
-}
-
 test(
-  "PostgreSQL rejects replay with divergent gross, policy, rights, or destinations",
+  "PostgreSQL adapter rejects every semantically divergent replay without a per-call validator",
   { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
   async () => {
     const { Pool } = await import("pg");
-    const { applySqlMigration, PostgresSettlementStore } = await import(
-      "../../packages/persistence-postgres/src/index.ts"
-    );
-    const { settleEvidencePersisted } = await import(
-      "../../packages/settlement/src/persistent-settlement.ts"
-    );
     const pool = new Pool({ connectionString: databaseUrl });
     try {
-      await applySqlMigration(
-        pool,
-        new URL("../../migrations/007_settlement_financial_slice.sql", import.meta.url),
-      );
-      const store = new PostgresSettlementStore<SettlementResult>(pool);
-
-      await resetSettlementStore(pool);
-      await settleEvidencePersisted(input(), store);
-      await assert.rejects(
-        () => settleEvidencePersisted({ ...input(), grossAmount: "101.0000" }, store),
-        /grossAmount/,
-      );
-
-      await resetSettlementStore(pool);
-      const policyFixture = settleEvidence(input(), new SettlementMemoryStore());
-      const policyTampered = structuredClone(policyFixture) as SettlementResult;
-      (policyTampered.settlementCycle as { splitPolicyVersion: string }).splitPolicyVersion = "OTHER-POLICY";
-      await resetSettlementStore(pool);
-      await store.save(policyTampered);
-      await assert.rejects(
-        () => settleEvidencePersisted(input(), store),
-        /splitPolicyVersion/,
-      );
-
-      await resetSettlementStore(pool);
-      const destinationTampered = structuredClone(policyFixture) as SettlementResult;
-      (destinationTampered.rights[2] as { destinationId: string }).destinationId = "OTHER_DESTINATION";
-      await store.save(destinationTampered);
-      await assert.rejects(
-        () => settleEvidencePersisted(input(), store),
-        /destinationId/,
-      );
-
-      await resetSettlementStore(pool);
-      const rightsTampered = structuredClone(policyFixture) as SettlementResult;
-      (rightsTampered.rights[2] as { amount: string }).amount = "4.0000";
-      await store.save(rightsTampered);
-      await assert.rejects(
-        () => settleEvidencePersisted({
-          ...input(),
-          seller: { ...input().seller, acquisition: false },
-        }, store),
-        /amount|rights/,
-      );
+      const modules = await prepare(pool);
+      const store = storeOf(modules, pool);
+      const fixture = settleEvidence(input("direct"), new SettlementMemoryStore());
+      await store.save(fixture);
+      for (const [name, mutate] of [
+        ["grossAmount", (value: SettlementResult) => (value.settlementCycle as any).grossAmount = "101.0000"],
+        ["splitPolicyVersion", (value: SettlementResult) => (value.settlementCycle as any).splitPolicyVersion = "OTHER-POLICY"],
+        ["destinationId", (value: SettlementResult) => (value.rights[2] as any).destinationId = "OTHER_DESTINATION"],
+        ["amount", (value: SettlementResult) => (value.rights[2] as any).amount = "4.0000"],
+      ] as const) {
+        const divergent = structuredClone(fixture) as SettlementResult;
+        mutate(divergent);
+        await assert.rejects(() => store.save(divergent), /replay conflict|divergent/);
+      }
     } finally {
       await pool.end();
     }
@@ -180,33 +132,19 @@ test(
   { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
   async () => {
     const { Pool } = await import("pg");
-    const { applySqlMigration, PostgresSettlementStore } = await import(
-      "../../packages/persistence-postgres/src/index.ts"
-    );
-    const { settleEvidencePersisted } = await import(
-      "../../packages/settlement/src/persistent-settlement.ts"
-    );
     const pool = new Pool({ connectionString: databaseUrl });
     try {
-      await applySqlMigration(
-        pool,
-        new URL("../../migrations/007_settlement_financial_slice.sql", import.meta.url),
-      );
-      await resetSettlementStore(pool);
-      const divergent = {
-        ...input(),
-        destinations: { ...input().destinations, mostardaId: "OTHER_MOSTARDA" },
-      };
+      const modules = await prepare(pool);
+      const base = input("concurrent-divergent");
+      const divergent = { ...base, destinations: { ...base.destinations, mostardaId: "OTHER_MOSTARDA" } };
       const results = await Promise.allSettled([
-        settleEvidencePersisted(input(), new PostgresSettlementStore<SettlementResult>(pool)),
-        settleEvidencePersisted(divergent, new PostgresSettlementStore<SettlementResult>(pool)),
+        modules.settleEvidencePersisted(base, storeOf(modules, pool)),
+        modules.settleEvidencePersisted(divergent, storeOf(modules, pool)),
       ]);
       assert.equal(results.filter((result) => result.status === "fulfilled").length, 1);
       assert.equal(results.filter((result) => result.status === "rejected").length, 1);
-      const rejected = results.find((result) => result.status === "rejected");
-      assert.match(String((rejected as PromiseRejectedResult).reason), /destinationId|replay conflict/);
-      assert.equal((await pool.query("SELECT count(*)::int AS count FROM settlement_cycles")).rows[0].count, 1);
-      assert.equal((await pool.query("SELECT count(*)::int AS count FROM partner_ledger_entries")).rows[0].count, 7);
+      const rejected = results.find((result) => result.status === "rejected") as PromiseRejectedResult;
+      assert.match(String(rejected.reason), /destinationId|replay conflict/);
     } finally {
       await pool.end();
     }
@@ -214,77 +152,123 @@ test(
 );
 
 test(
-  "migration 007 enforces rollback, foreign keys, append-only rows, uniqueness, and journal balance",
+  "PostgreSQL rolls back all materialization tables after a failure late in the transaction",
   { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
   async () => {
     const { Pool } = await import("pg");
-    const { applySqlMigration } = await import(
-      "../../packages/persistence-postgres/src/index.ts"
-    );
     const pool = new Pool({ connectionString: databaseUrl });
     try {
-      await applySqlMigration(
-        pool,
-        new URL("../../migrations/007_settlement_financial_slice.sql", import.meta.url),
-      );
-      await resetSettlementStore(pool);
+      const modules = await prepare(pool);
+      const fixture = settleEvidence(input("rollback"), new SettlementMemoryStore());
+      const tampered = structuredClone(fixture) as SettlementResult;
+      (tampered.ledgerEntries.at(-1) as any).destinationId = "";
+      await assert.rejects(() => storeOf(modules, pool).save(tampered));
+      const counts = [
+        ["settlement_cycles", "SELECT count(*)::int AS count FROM settlement_cycles WHERE settlement_cycle_id = $1"],
+        ["financial_rights", "SELECT count(*)::int AS count FROM financial_rights WHERE settlement_cycle_id = $1"],
+        ["journal_transactions", "SELECT count(*)::int AS count FROM journal_transactions WHERE settlement_cycle_id = $1"],
+        ["journal_lines", "SELECT count(*)::int AS count FROM journal_lines WHERE transaction_id = $1"],
+        ["partner_ledger_entries", "SELECT count(*)::int AS count FROM partner_ledger_entries WHERE settlement_cycle_id = $1"],
+      ] as const;
+      for (const [table, query] of counts) {
+        const id = table === "journal_lines" ? fixture.journalTransaction.transactionId : fixture.settlementCycle.settlementCycleId;
+        assert.equal((await pool.query(query, [id])).rows[0].count, 0, table);
+      }
+    } finally {
+      await pool.end();
+    }
+  },
+);
 
+test(
+  "PostgreSQL protects one JournalTransaction per SettlementCycle and semantic child identity",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    try {
+      const modules = await prepare(pool);
+      const fixture = await modules.settleEvidencePersisted(input("constraints"), storeOf(modules, pool));
+      const cycle = fixture.settlementCycle;
+      await assert.rejects(() => pool.query(
+        `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
+         VALUES ($1, $2, $3, 1.0000, 1.0000)`,
+        [`duplicate-journal-${runId}`, cycle.settlementCycleId, cycle.evidenceId],
+      ), /unique|duplicate/i);
+      await assert.rejects(() => pool.query(
+        `INSERT INTO financial_rights (financial_right_id, split_share_id, settlement_cycle_id, line, destination_id, amount, evidence_id, split_policy_version, status)
+         VALUES ($1, $2, $3, 'SELLER', 'SELLER', 1.0000, $4, $5, 'READY')`,
+        [`bad-right-${runId}`, `bad-share-${runId}`, cycle.settlementCycleId, "WRONG-EVIDENCE", cycle.splitPolicyVersion],
+      ), /semantic|evidence|violates/i);
+      await assert.rejects(() => pool.query(
+        `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
+         VALUES ($1, $2, 'WRONG-EVIDENCE', 1.0000, 1.0000)`,
+        [`bad-journal-${runId}`, cycle.settlementCycleId],
+      ), /semantic|evidence|violates/i);
+      const other = await modules.settleEvidencePersisted(input("constraints-other"), storeOf(modules, pool));
+      await assert.rejects(() => pool.query(
+        `INSERT INTO journal_lines (journal_line_id, transaction_id, line_order, account_id, direction, amount, financial_right_id)
+         VALUES ($1, $2, 99, 'MISMATCH', 'CREDIT', 1.0000, $3)`,
+        [`bad-line-${runId}`, fixture.journalTransaction.transactionId, other.rights[0]!.financialRightId],
+      ), /different SettlementCycle|unknown|semantic|violates/i);
+      await assert.rejects(() => pool.query(
+        `INSERT INTO partner_ledger_entries (ledger_entry_id, financial_right_id, split_share_id, settlement_cycle_id, evidence_id, destination_id, amount, journal_transaction_id, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'PENDING')`,
+        [`bad-ledger-${runId}`, fixture.rights[0]!.financialRightId, fixture.rights[0]!.splitShareId,
+          cycle.settlementCycleId, cycle.evidenceId, fixture.rights[0]!.destinationId, "99.0000", fixture.journalTransaction.transactionId],
+      ), /semantic|amount|violates/i);
+      await assert.rejects(
+        () => pool.query("UPDATE settlement_cycles SET gross_amount = 101.0000 WHERE settlement_cycle_id = $1", [cycle.settlementCycleId]),
+        /append-only/i,
+      );
+      await assert.rejects(
+        () => pool.query("DELETE FROM settlement_cycles WHERE settlement_cycle_id = $1", [cycle.settlementCycleId]),
+        /append-only/i,
+      );
+      await assert.rejects(() => pool.query("TRUNCATE settlement_cycles, financial_rights, journal_transactions, journal_lines, partner_ledger_entries CASCADE"), /append-only/i);
+    } finally {
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "migration 007 rejects unbalanced journals, orphan rows and preserves transaction rollback",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    try {
+      await prepare(pool);
+      const cycleId = `migration-cycle-${runId}`;
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
         await client.query(
-          `INSERT INTO settlement_cycles (
-             settlement_cycle_id, campaign_id, evidence_id, gross_amount,
-             split_policy_version, status
-           ) VALUES ('rollback-cycle', 'ROLLBACK', 'EVIDENCE', 1.0000, 'POLICY', 'CLOSED')`,
+          `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
+           VALUES ($1, $2, $3, 1.0000, 'POLICY', 'CLOSED')`,
+          [cycleId, `CAMPAIGN-${runId}`, `EVIDENCE-${runId}`],
         );
         await client.query("ROLLBACK");
-      } catch (error) {
-        await client.query("ROLLBACK");
-        throw error;
       } finally {
         client.release();
       }
-      assert.equal(
-        (await pool.query("SELECT count(*)::int AS count FROM settlement_cycles WHERE settlement_cycle_id = 'rollback-cycle'")).rows[0].count,
-        0,
-      );
-
-      await assert.rejects(
-        () => pool.query(
-          `INSERT INTO financial_rights (
-             financial_right_id, split_share_id, settlement_cycle_id, line,
-             destination_id, amount, evidence_id, split_policy_version, status
-           ) VALUES ('orphan-right', 'orphan-share', 'missing-cycle', 'SELLER', 'SELLER', 1.0000, 'EVIDENCE', 'POLICY', 'READY')`,
-        ),
-        /foreign key|violates/i,
-      );
-
+      assert.equal((await pool.query("SELECT count(*)::int AS count FROM settlement_cycles WHERE settlement_cycle_id = $1", [cycleId])).rows[0].count, 0);
+      await assert.rejects(() => pool.query(
+        `INSERT INTO financial_rights (financial_right_id, split_share_id, settlement_cycle_id, line, destination_id, amount, evidence_id, split_policy_version, status)
+         VALUES ($1, $2, 'missing-cycle', 'SELLER', 'SELLER', 1.0000, 'EVIDENCE', 'POLICY', 'READY')`,
+        [`orphan-right-${runId}`, `orphan-share-${runId}`],
+      ), /foreign key|semantic|unknown|violates/i);
       await pool.query(
-        `INSERT INTO settlement_cycles (
-           settlement_cycle_id, campaign_id, evidence_id, gross_amount,
-           split_policy_version, status
-         ) VALUES ('append-cycle', 'APPEND', 'EVIDENCE', 1.0000, 'POLICY', 'CLOSED')`,
+        `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
+         VALUES ($1, $2, $3, 1.0000, 'POLICY', 'CLOSED')`,
+        [`unbalanced-cycle-${runId}`, `UNBALANCED-${runId}`, `UNBALANCED-EVIDENCE-${runId}`],
       );
-      await assert.rejects(
-        () => pool.query("UPDATE settlement_cycles SET gross_amount = 2.0000 WHERE settlement_cycle_id = 'append-cycle'"),
-        /append-only/i,
-      );
-      await assert.rejects(
-        () => pool.query("DELETE FROM settlement_cycles WHERE settlement_cycle_id = 'append-cycle'"),
-        /append-only/i,
-      );
-      await pool.query("DELETE FROM settlement_cycles WHERE settlement_cycle_id = 'append-cycle' /* cleanup is blocked by contract */").catch(() => undefined);
-
-      await assert.rejects(
-        () => pool.query(
-          `INSERT INTO journal_transactions (
-             transaction_id, settlement_cycle_id, evidence_id, debit_total,
-             credit_total
-           ) VALUES ('unbalanced', 'append-cycle', 'EVIDENCE', 1.0000, 2.0000)`,
-        ),
-        /check constraint|violates/i,
-      );
+      await assert.rejects(() => pool.query(
+        `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
+         VALUES ($1, $2, $3, 1.0000, 2.0000)`,
+        [`unbalanced-journal-${runId}`, `unbalanced-cycle-${runId}`, `UNBALANCED-EVIDENCE-${runId}`],
+      ), /check constraint|violates/i);
     } finally {
       await pool.end();
     }

@@ -1,17 +1,26 @@
 import {
   SettlementMemoryStore,
+  SettlementEligibilityError,
   settleEvidence,
+  type SettlementEvidence,
   type SettlementInput,
   type SettlementResult,
 } from "./financial-slice.ts";
 
+/**
+ * Persistent Settlement accepts the Evidence boundary's dispute assertion.
+ * The Evidence bounded context remains the source of truth; this adapter does
+ * not create a second Evidence state machine.
+ */
+export type PersistentSettlementInput = Omit<SettlementInput, "evidence"> & {
+  /** `true` is the Evidence owner's DISPUTED assertion at this boundary. */
+  readonly evidence: SettlementEvidence & { readonly disputed: boolean };
+};
+
 /** Persistence port owned by the Settlement materialization boundary. */
 export interface PersistentSettlementStore {
   findByEvidence(campaignId: string, evidenceId: string): Promise<SettlementResult | undefined>;
-  save(
-    result: SettlementResult,
-    validateExisting?: (existing: SettlementResult, candidate: SettlementResult) => void,
-  ): Promise<SettlementResult>;
+  save(result: SettlementResult): Promise<SettlementResult>;
 }
 
 export type { SettlementResult } from "./financial-slice.ts";
@@ -22,9 +31,12 @@ export type { SettlementResult } from "./financial-slice.ts";
  * supplied by a separate adapter and does not change SplitPolicy semantics.
  */
 export async function settleEvidencePersisted(
-  input: SettlementInput,
+  input: PersistentSettlementInput,
   store: PersistentSettlementStore,
 ): Promise<SettlementResult> {
+  if (input.evidence.disputed) {
+    throw new SettlementEligibilityError("Disputed Evidence cannot create financial rights.");
+  }
   const memory = new SettlementMemoryStore();
   const result = settleEvidence(input, memory);
   const existing = await store.findByEvidence(input.campaignId, input.evidence.evidenceId);
@@ -32,7 +44,7 @@ export async function settleEvidencePersisted(
     assertSettlementReplayEquivalent(existing, result);
     return existing;
   }
-  return store.save(result, assertSettlementReplayEquivalent);
+  return store.save(result);
 }
 
 export function assertSettlementReplayEquivalent(
@@ -51,11 +63,20 @@ export function assertSettlementReplayEquivalent(
     "evidenceId", "settlementCycleId", "splitPolicyVersion", "status",
   ]);
   compareField("journalTransactionId", existing.journalTransaction.transactionId, candidate.journalTransaction.transactionId);
+  compareField("journalSettlementCycleId", existing.journalTransaction.settlementCycleId, candidate.journalTransaction.settlementCycleId);
+  compareField("journalEvidenceId", existing.journalTransaction.evidenceId, candidate.journalTransaction.evidenceId);
   compareField("journalDebitTotal", existing.journalTransaction.debitTotal, candidate.journalTransaction.debitTotal);
   compareField("journalCreditTotal", existing.journalTransaction.creditTotal, candidate.journalTransaction.creditTotal);
   compareCollection("journalLines", existing.journalTransaction.lines, candidate.journalTransaction.lines, (line) => line.journalLineId, [
     "journalLineId", "accountId", "direction", "amount", "financialRightId",
   ]);
+  for (let index = 0; index < existing.journalTransaction.lines.length; index += 1) {
+    compareField(
+      `journalLines[${index}].journalLineId`,
+      existing.journalTransaction.lines[index]?.journalLineId,
+      candidate.journalTransaction.lines[index]?.journalLineId,
+    );
+  }
   compareCollection("ledgerEntries", existing.ledgerEntries, candidate.ledgerEntries, (entry) => entry.splitShareId, [
     "ledgerEntryId", "financialRightId", "splitShareId", "evidenceId",
     "settlementCycleId", "destinationId", "amount", "journalTransactionId", "status",
@@ -73,6 +94,10 @@ function compareCollection<T extends object>(
     throw new Error(`Settlement replay conflict: divergent ${name} cardinality.`);
   }
   const existingByKey = new Map(existing.map((value) => [key(value), value]));
+  const candidateByKey = new Map(candidate.map((value) => [key(value), value]));
+  if (existingByKey.size !== existing.length || candidateByKey.size !== candidate.length) {
+    throw new Error(`Settlement replay conflict: duplicate ${name} identity.`);
+  }
   for (const value of candidate) {
     const previous = existingByKey.get(key(value));
     if (previous === undefined) {
