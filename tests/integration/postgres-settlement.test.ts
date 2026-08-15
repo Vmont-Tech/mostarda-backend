@@ -57,6 +57,15 @@ function storeOf(modules: any, pool: any): any {
 }
 
 const directRightAmounts = ["20.0000", "20.0000", "5.0000", "15.0000", "3.0000", "7.0000", "30.0000"] as const;
+const directRightLines = [
+  "TV_OWNER",
+  "SPACE_OWNER",
+  "SELLER",
+  "SELLER_ACQUISITION_FUND",
+  "INFLUENCER",
+  "INFLUENCER_ACQUISITION_FUND",
+  "MOSTARDA",
+] as const;
 
 type DirectMaterializationOptions = {
   readonly rightIndexes?: readonly number[];
@@ -87,7 +96,7 @@ async function insertDirectMaterialization(
       `INSERT INTO financial_rights (financial_right_id, split_share_id, settlement_cycle_id, line, destination_id, amount, evidence_id, split_policy_version, status)
        VALUES ($1, $2, $3, $4, $5, $6::numeric, $7, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'READY')`,
       [`structural-right-${runId}-${label}-${index}`, `structural-share-${runId}-${label}-${index}`, cycleId,
-        `RIGHT_${index}`, `DESTINATION_${index}`, directRightAmounts[index], evidenceId],
+        directRightLines[index], `DESTINATION_${index}`, directRightAmounts[index], evidenceId],
     );
   }
   await client.query(
@@ -225,6 +234,104 @@ test(
     try {
       await prepare(pool);
       await assertDirectMaterializationRejected(pool, "missing-ledger", { ledgerIndexes: [0, 1, 2, 3, 4, 5] });
+    } finally {
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "PostgreSQL rejects a duplicate normative FinancialRight line in one SettlementCycle",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    const client = await pool.connect();
+    try {
+      await prepare(pool);
+      await client.query("BEGIN");
+      const cycleId = `duplicate-line-cycle-${runId}`;
+      const evidenceId = `duplicate-line-evidence-${runId}`;
+      await client.query(
+        `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
+         VALUES ($1, $2, $3, 100.0000, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'CLOSED')`,
+        [cycleId, `duplicate-line-campaign-${runId}`, evidenceId],
+      );
+      await client.query(
+        `INSERT INTO financial_rights (financial_right_id, split_share_id, settlement_cycle_id, line, destination_id, amount, evidence_id, split_policy_version, status)
+         VALUES ($1, $2, $3, 'TV_OWNER', 'TV_OWNER_A', 20.0000, $4, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'READY')`,
+        [`duplicate-line-right-a-${runId}`, `duplicate-line-share-a-${runId}`, cycleId, evidenceId],
+      );
+      await assert.rejects(
+        () => client.query(
+          `INSERT INTO financial_rights (financial_right_id, split_share_id, settlement_cycle_id, line, destination_id, amount, evidence_id, split_policy_version, status)
+           VALUES ($1, $2, $3, 'TV_OWNER', 'OTHER_TV', 1.0000, $4, $5, 'READY')`,
+          [`duplicate-line-right-b-${runId}`, `duplicate-line-share-b-${runId}`, cycleId, evidenceId,
+            'SPLIT-PERFORMANCE-RESIDUAL-V1'],
+        ),
+        /unique|duplicate|line|violates/i,
+      );
+    } finally {
+      await client.query("ROLLBACK").catch(() => undefined);
+      client.release();
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "PostgreSQL rejects a substituted non-normative FinancialRight line",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    const client = await pool.connect();
+    try {
+      await prepare(pool);
+      await client.query("BEGIN");
+      const cycleId = `substituted-line-cycle-${runId}`;
+      const evidenceId = `substituted-line-evidence-${runId}`;
+      await client.query(
+        `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
+         VALUES ($1, $2, $3, 100.0000, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'CLOSED')`,
+        [cycleId, `substituted-line-campaign-${runId}`, evidenceId],
+      );
+      await assert.rejects(
+        () => client.query(
+          `INSERT INTO financial_rights (financial_right_id, split_share_id, settlement_cycle_id, line, destination_id, amount, evidence_id, split_policy_version, status)
+           VALUES ($1, $2, $3, 'UNAUTHORIZED_LINE', 'OTHER', 1.0000, $4, $5, 'READY')`,
+          [`substituted-line-right-${runId}`, `substituted-line-share-${runId}`, cycleId, evidenceId,
+            'SPLIT-PERFORMANCE-RESIDUAL-V1'],
+        ),
+        /check|normative|line|violates/i,
+      );
+    } finally {
+      await client.query("ROLLBACK").catch(() => undefined);
+      client.release();
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "PostgreSQL persists exactly the seven normative FinancialRight lines once each",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    try {
+      const modules = await prepare(pool);
+      const fixture = await modules.settleEvidencePersisted(input("exact-normative-lines"), storeOf(modules, pool));
+      const rows = await pool.query<{ line: string; count: number }>(
+        `SELECT line, count(*)::int AS count
+           FROM financial_rights
+          WHERE settlement_cycle_id = $1
+          GROUP BY line
+          ORDER BY line`,
+        [fixture.settlementCycle.settlementCycleId],
+      );
+      assert.deepEqual(rows.rows, directRightLines.slice().sort().map((line) => ({ line, count: 1 })));
+      assert.equal(rows.rows.length, 7);
     } finally {
       await pool.end();
     }

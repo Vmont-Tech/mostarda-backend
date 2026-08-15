@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS financial_rights (
     financial_right_id TEXT PRIMARY KEY CHECK (financial_right_id <> ''),
     split_share_id TEXT NOT NULL UNIQUE CHECK (split_share_id <> ''),
     settlement_cycle_id TEXT NOT NULL REFERENCES settlement_cycles(settlement_cycle_id),
-    line TEXT NOT NULL CHECK (line <> ''),
+    line TEXT NOT NULL,
     destination_id TEXT NOT NULL CHECK (destination_id <> ''),
     amount NUMERIC(20,4) NOT NULL CHECK (amount >= 0),
     currency TEXT NOT NULL DEFAULT 'BRL' CHECK (currency = 'BRL'),
@@ -25,8 +25,44 @@ CREATE TABLE IF NOT EXISTS financial_rights (
     status TEXT NOT NULL CHECK (status = 'READY'),
     created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
     CONSTRAINT financial_right_cycle_evidence_fk
-      FOREIGN KEY (settlement_cycle_id) REFERENCES settlement_cycles(settlement_cycle_id)
+      FOREIGN KEY (settlement_cycle_id) REFERENCES settlement_cycles(settlement_cycle_id),
+    CONSTRAINT financial_right_line_normative_check
+      CHECK (line IN (
+        'TV_OWNER',
+        'SPACE_OWNER',
+        'SELLER',
+        'SELLER_ACQUISITION_FUND',
+        'INFLUENCER',
+        'INFLUENCER_ACQUISITION_FUND',
+        'MOSTARDA'
+      ))
 );
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+          FROM pg_constraint
+         WHERE conname = 'financial_right_line_normative_check'
+           AND conrelid = 'financial_rights'::regclass
+    ) THEN
+        ALTER TABLE financial_rights
+          ADD CONSTRAINT financial_right_line_normative_check
+          CHECK (line IN (
+            'TV_OWNER',
+            'SPACE_OWNER',
+            'SELLER',
+            'SELLER_ACQUISITION_FUND',
+            'INFLUENCER',
+            'INFLUENCER_ACQUISITION_FUND',
+            'MOSTARDA'
+          ));
+    END IF;
+END;
+$$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS financial_right_cycle_line_unique
+    ON financial_rights (settlement_cycle_id, line);
 
 CREATE TABLE IF NOT EXISTS journal_transactions (
     transaction_id TEXT PRIMARY KEY CHECK (transaction_id <> ''),
