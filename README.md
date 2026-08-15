@@ -29,6 +29,24 @@ Toda a documentação vive em [`/docs`](./docs). Comece por:
 - O sistema é orientado a eventos.
 - Evidence Ledger é pré-requisito para liquidação financeira.
 
+## Real Edge Runtime (software/Linux)
+
+O marco seguinte substitui o `SimulatedEdge` por `RealEdgeRuntime`. Ele usa identidade persistente, armazenamento JSON atômico configurável, cache de manifesto/asset, fila persistente de telemetria/evidência, retomada offline após reinício e entrega idempotente para a superfície HTTP Edge do `apps/cloud-api` (`/v1/edge/*`).
+
+```bash
+npm run edge:e2e
+npm run edge:diagnostics
+npm run edge:hardware:validate
+```
+
+Esses comandos validam software em Linux/Windows, não homologam o MXQ. O diagnóstico marca GPU, display, codecs, bootloader, Secure Boot e recovery como `UNKNOWN` quando não há evidência física. A validação permanece `SOFTWARE_VERIFIED`, com `compatibility: UNKNOWN` e `provisioning: BLOCKED`.
+
+`DeterministicPlayer` continua reservado ao teste E2E determinístico. O `Browser Player`, servido em `/player`, é o artefato visual executável; eles não são a mesma implementação e compartilham somente os contratos do slice.
+
+O bootstrap configurável usa `loadEdgeRuntimeSettings`/`createEdgeRuntimeFromSettings` com um JSON externo contendo `edgeId`, `environment`, `cloudEndpoint`, `syncIntervalSeconds`, `cacheDirectory`, `telemetryRetry` e `player`. O Runtime recebe o transporte HTTP por injeção; nenhum endpoint de produção é codificado no processo.
+
+O Runtime depende de `EdgeCloudClient` e dos contratos `edge-cloud-v1`; o adapter HTTP traduz esses contratos para `/v1/edge/*`. As rotas `/v1/demo/*`, `DemoCloudStore` e `DEMO_*` permanecem exclusivas do walking skeleton do PR #7.
+
 ## E2E Minimum Functional Slice
 
 O repositório possui um walking skeleton local para validar a primeira cadeia executável sem tocar em hardware físico:

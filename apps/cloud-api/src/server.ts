@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import { DemoCloudStore } from "../../../packages/e2e-slice/src/cloud.ts";
 import { demoPlayerHtml, demoPlayerScript } from "./player-assets.ts";
+import type { EdgeRuntimeStore } from "./edge-runtime-store.ts";
 
 export interface ServerOptions {
   readonly eventStoreProbe?: (signal: AbortSignal) => Promise<boolean>;
@@ -8,6 +9,7 @@ export interface ServerOptions {
   readonly logger?: boolean;
   readonly demoMode?: boolean;
   readonly demoStore?: DemoCloudStore;
+  readonly edgeRuntimeStore?: EdgeRuntimeStore;
 }
 
 export function buildServer(options: ServerOptions = {}): FastifyInstance {
@@ -82,6 +84,42 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     });
     server.get("/v1/demo/telemetry", async () => ({ events: demoStore.telemetryEvents() }));
     server.get("/v1/demo/evidence", async () => ({ evidence: demoStore.evidenceRecords() }));
+  }
+
+  if (options.edgeRuntimeStore !== undefined) {
+    const edgeStore = options.edgeRuntimeStore;
+    server.get("/v1/edge/campaigns/:campaignId/manifest", async (request, reply) => {
+      const { campaignId } = request.params as { campaignId: string };
+      const manifest = edgeStore.manifest(campaignId);
+      return manifest === undefined
+        ? reply.code(404).send({ error: "campaign_manifest_not_found" })
+        : reply.send(manifest);
+    });
+    server.get("/v1/edge/assets/:assetId", async (request, reply) => {
+      const { assetId } = request.params as { assetId: string };
+      const asset = edgeStore.asset(assetId);
+      return asset === undefined
+        ? reply.code(404).send({ error: "edge_asset_not_found" })
+        : reply.send(asset);
+    });
+    server.post("/v1/edge/telemetry", async (request, reply) => {
+      try {
+        edgeStore.acceptTelemetry(request.body);
+        return reply.code(202).send({ accepted: true });
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "edge_telemetry_rejected" });
+      }
+    });
+    server.post("/v1/edge/evidence", async (request, reply) => {
+      try {
+        edgeStore.acceptEvidence(request.body);
+        return reply.code(202).send({ accepted: true });
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "edge_evidence_rejected" });
+      }
+    });
+    server.get("/v1/edge/telemetry", async () => ({ events: edgeStore.telemetryEvents() }));
+    server.get("/v1/edge/evidence", async () => ({ evidence: edgeStore.evidenceRecords() }));
   }
 
   const readinessSchema = {
