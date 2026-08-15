@@ -192,7 +192,7 @@ test(
       const cycle = fixture.settlementCycle;
       await assert.rejects(() => pool.query(
         `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
-         VALUES ($1, $2, $3, 1.0000, 1.0000)`,
+         VALUES ($1, $2, $3, 100.0000, 100.0000)`,
         [`duplicate-journal-${runId}`, cycle.settlementCycleId, cycle.evidenceId],
       ), /unique|duplicate/i);
       await assert.rejects(() => pool.query(
@@ -202,7 +202,7 @@ test(
       ), /semantic|evidence|violates/i);
       await assert.rejects(() => pool.query(
         `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
-         VALUES ($1, $2, 'WRONG-EVIDENCE', 1.0000, 1.0000)`,
+         VALUES ($1, $2, 'WRONG-EVIDENCE', 100.0000, 100.0000)`,
         [`bad-journal-${runId}`, cycle.settlementCycleId],
       ), /semantic|evidence|violates/i);
       const other = await modules.settleEvidencePersisted(input("constraints-other"), storeOf(modules, pool));
@@ -268,7 +268,126 @@ test(
         `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
          VALUES ($1, $2, $3, 1.0000, 2.0000)`,
         [`unbalanced-journal-${runId}`, `unbalanced-cycle-${runId}`, `UNBALANCED-EVIDENCE-${runId}`],
-      ), /check constraint|violates/i);
+      ), /check constraint|semantic|gross|violates/i);
+    } finally {
+      await pool.end();
+    }
+  },
+);
+
+test(
+  "PostgreSQL enforces Journal gross equality and FinancialRight line amounts",
+  { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false },
+  async () => {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: databaseUrl });
+    try {
+      await prepare(pool);
+
+      const grossCycle = input("gross-invariant");
+      await pool.query(
+        `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
+         VALUES ($1, $2, $3, 100.0000, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'CLOSED')`,
+        [`gross-cycle-${runId}`, grossCycle.campaignId, grossCycle.evidence.evidenceId],
+      );
+      await assert.rejects(() => pool.query(
+        `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
+         VALUES ($1, $2, $3, 1.0000, 1.0000)`,
+        [`gross-balanced-wrong-${runId}`, `gross-cycle-${runId}`, grossCycle.evidence.evidenceId],
+      ), /gross|SettlementCycle|semantic|violates/i);
+      await assert.rejects(() => pool.query(
+        `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
+         VALUES ($1, $2, $3, 1.0000, 2.0000)`,
+        [`gross-unbalanced-wrong-${runId}`, `gross-cycle-${runId}`, grossCycle.evidence.evidenceId],
+      ), /gross|balance|check|violates|semantic/i);
+
+      const mismatch = input("line-invariant");
+      const mismatchCycle = `line-cycle-${runId}`;
+      const mismatchJournal = `line-journal-${runId}`;
+      const mismatchRight = `line-right-${runId}`;
+      await pool.query(
+        `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
+         VALUES ($1, $2, $3, 100.0000, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'CLOSED')`,
+        [mismatchCycle, mismatch.campaignId, mismatch.evidence.evidenceId],
+      );
+      await pool.query(
+        `INSERT INTO financial_rights (financial_right_id, split_share_id, settlement_cycle_id, line, destination_id, amount, evidence_id, split_policy_version, status)
+         VALUES ($1, $2, $3, 'SELLER', 'SELLER', 20.0000, $4, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'READY')`,
+        [mismatchRight, `line-share-${runId}`, mismatchCycle, mismatch.evidence.evidenceId],
+      );
+      await pool.query(
+        `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
+         VALUES ($1, $2, $3, 100.0000, 100.0000)`,
+        [mismatchJournal, mismatchCycle, mismatch.evidence.evidenceId],
+      );
+      const debitWithRightClient = await pool.connect();
+      try {
+        await debitWithRightClient.query("BEGIN");
+        await assert.rejects(
+          () => debitWithRightClient.query(
+            `INSERT INTO journal_lines (journal_line_id, transaction_id, line_order, account_id, direction, amount, financial_right_id)
+             VALUES ($1, $2, 0, 'CAMPAIGN', 'DEBIT', 20.0000, $3)`,
+            [`line-debit-linked-${runId}`, mismatchJournal, mismatchRight],
+          ),
+          /CREDIT|FinancialRight|semantic|violates/i,
+        );
+        await debitWithRightClient.query("ROLLBACK");
+      } finally {
+        debitWithRightClient.release();
+      }
+      const mismatchClient = await pool.connect();
+      try {
+        await mismatchClient.query("BEGIN");
+        await assert.rejects(
+          () => mismatchClient.query(
+            `INSERT INTO journal_lines (journal_line_id, transaction_id, line_order, account_id, direction, amount, financial_right_id)
+             VALUES ($1, $2, 0, 'CAMPAIGN', 'DEBIT', 100.0000, NULL),
+                    ($3, $2, 1, 'SELLER', 'CREDIT', 19.0000, $4),
+                    ($5, $2, 2, 'OTHER', 'CREDIT', 81.0000, NULL)`,
+            [`line-debit-${runId}`, mismatchJournal, `line-credit-wrong-${runId}`, mismatchRight, `line-credit-extra-${runId}`],
+          ),
+          /amount|FinancialRight|semantic|violates/i,
+        );
+        await mismatchClient.query("ROLLBACK");
+      } finally {
+        mismatchClient.release();
+      }
+
+      const accepted = input("line-invariant-accepted");
+      const acceptedCycle = `line-cycle-accepted-${runId}`;
+      const acceptedJournal = `line-journal-accepted-${runId}`;
+      const acceptedRight = `line-right-accepted-${runId}`;
+      await pool.query(
+        `INSERT INTO settlement_cycles (settlement_cycle_id, campaign_id, evidence_id, gross_amount, split_policy_version, status)
+         VALUES ($1, $2, $3, 100.0000, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'CLOSED')`,
+        [acceptedCycle, accepted.campaignId, accepted.evidence.evidenceId],
+      );
+      await pool.query(
+        `INSERT INTO financial_rights (financial_right_id, split_share_id, settlement_cycle_id, line, destination_id, amount, evidence_id, split_policy_version, status)
+         VALUES ($1, $2, $3, 'SELLER', 'SELLER', 20.0000, $4, 'SPLIT-PERFORMANCE-RESIDUAL-V1', 'READY')`,
+        [acceptedRight, `line-share-accepted-${runId}`, acceptedCycle, accepted.evidence.evidenceId],
+      );
+      await pool.query(
+        `INSERT INTO journal_transactions (transaction_id, settlement_cycle_id, evidence_id, debit_total, credit_total)
+         VALUES ($1, $2, $3, 100.0000, 100.0000)`,
+        [acceptedJournal, acceptedCycle, accepted.evidence.evidenceId],
+      );
+      const acceptedClient = await pool.connect();
+      try {
+        await acceptedClient.query("BEGIN");
+        await acceptedClient.query(
+          `INSERT INTO journal_lines (journal_line_id, transaction_id, line_order, account_id, direction, amount, financial_right_id)
+           VALUES ($1, $2, 0, 'CAMPAIGN', 'DEBIT', 100.0000, NULL),
+                  ($3, $2, 1, 'SELLER', 'CREDIT', 20.0000, $4),
+                  ($5, $2, 2, 'OTHER', 'CREDIT', 80.0000, NULL)`,
+          [`line-debit-accepted-${runId}`, acceptedJournal, `line-credit-accepted-${runId}`, acceptedRight, `line-credit-extra-accepted-${runId}`],
+        );
+        await acceptedClient.query("SET CONSTRAINTS journal_transaction_lines_balanced IMMEDIATE");
+        await acceptedClient.query("COMMIT");
+      } finally {
+        acceptedClient.release();
+      }
+      assert.equal((await pool.query("SELECT count(*)::int AS count FROM journal_lines WHERE transaction_id = $1", [acceptedJournal])).rows[0].count, 3);
     } finally {
       await pool.end();
     }

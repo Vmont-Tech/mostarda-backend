@@ -141,17 +141,20 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     cycle_evidence TEXT;
+    cycle_gross NUMERIC(20,4);
 BEGIN
-    SELECT evidence_id
-      INTO cycle_evidence
+    SELECT evidence_id, gross_amount
+      INTO cycle_evidence, cycle_gross
       FROM settlement_cycles
      WHERE settlement_cycle_id = NEW.settlement_cycle_id;
     IF cycle_evidence IS NULL THEN
         RAISE EXCEPTION 'JournalTransaction references an unknown SettlementCycle'
             USING ERRCODE = '23503';
     END IF;
-    IF NEW.evidence_id IS DISTINCT FROM cycle_evidence THEN
-        RAISE EXCEPTION 'JournalTransaction semantic identity does not match SettlementCycle'
+    IF NEW.evidence_id IS DISTINCT FROM cycle_evidence
+       OR NEW.debit_total IS DISTINCT FROM cycle_gross
+       OR NEW.credit_total IS DISTINCT FROM cycle_gross THEN
+        RAISE EXCEPTION 'JournalTransaction gross totals and evidence must match SettlementCycle gross_amount'
             USING ERRCODE = '23514';
     END IF;
     RETURN NEW;
@@ -165,6 +168,7 @@ AS $$
 DECLARE
     transaction_cycle TEXT;
     right_cycle TEXT;
+    right_amount NUMERIC(20,4);
 BEGIN
     IF NEW.financial_right_id IS NULL THEN
         RETURN NEW;
@@ -173,8 +177,8 @@ BEGIN
       INTO transaction_cycle
       FROM journal_transactions
      WHERE transaction_id = NEW.transaction_id;
-    SELECT settlement_cycle_id
-      INTO right_cycle
+    SELECT settlement_cycle_id, amount
+      INTO right_cycle, right_amount
       FROM financial_rights
      WHERE financial_right_id = NEW.financial_right_id;
     IF transaction_cycle IS NULL OR right_cycle IS NULL THEN
@@ -183,6 +187,14 @@ BEGIN
     END IF;
     IF transaction_cycle IS DISTINCT FROM right_cycle THEN
         RAISE EXCEPTION 'JournalLine FinancialRight belongs to a different SettlementCycle'
+            USING ERRCODE = '23514';
+    END IF;
+    IF NEW.direction <> 'CREDIT' THEN
+        RAISE EXCEPTION 'JournalLine FinancialRight is only valid on a CREDIT line'
+            USING ERRCODE = '23514';
+    END IF;
+    IF NEW.amount IS DISTINCT FROM right_amount THEN
+        RAISE EXCEPTION 'JournalLine amount must match FinancialRight amount'
             USING ERRCODE = '23514';
     END IF;
     RETURN NEW;
