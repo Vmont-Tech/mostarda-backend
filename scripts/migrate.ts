@@ -35,7 +35,15 @@ try {
       import.meta.url,
     ),
   );
-  process.stdout.write("Applied migrations 001 through 006\n");
+  await applySqlMigration(
+    pool,
+    new URL("../migrations/007_settlement_financial_slice.sql", import.meta.url),
+  );
+  await applySqlMigration(
+    pool,
+    new URL("../migrations/008_settlement_integrity_hardening.sql", import.meta.url),
+  );
+  process.stdout.write("Applied migrations 001 through 008\n");
 } finally {
   await pool.end();
 }

@@ -18,6 +18,7 @@
     "edge:e2e": "node --experimental-strip-types scripts/run-real-edge-e2e.ts",
     "edge:diagnostics": "node --experimental-strip-types scripts/edge-runtime-diagnostics.ts",
     "edge:hardware:validate": "node --experimental-strip-types scripts/edge-hardware-validate.ts",
+    "test:settlement-slice": "node --experimental-strip-types --test tests/settlement/settlement-flow.test.ts",
     "test": "node --experimental-strip-types --test \"tests/**/*.test.ts\"",
     "test:all": "npm run test && npm run test:architecture && npm run test:docs",
     "test:architecture": "node --test \"tests/architecture/*.test.mjs\"",
