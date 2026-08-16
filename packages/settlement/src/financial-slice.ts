@@ -132,9 +132,7 @@ export class SettlementMemoryStore {
     const key = `${result.settlementCycle.campaignId}:${result.settlementCycle.evidenceId}`;
     const existing = this.cycleByEvidence.get(key);
     if (existing) {
-      if (existing.settlementCycle.grossAmount !== result.settlementCycle.grossAmount) {
-        throw new Error("Settlement cycle conflict: same EvidenceId has divergent gross amount.");
-      }
+      assertSettlementReplayEquivalent(existing, result);
       return;
     }
     this.cycleByEvidence.set(key, result);
@@ -154,6 +152,87 @@ export class SettlementMemoryStore {
   public cycles(): readonly SettlementResult[] { return [...this.cycleByEvidence.values()]; }
   public rights(): readonly FinancialRight[] { return this.cycles().flatMap((result) => result.rights); }
   public ledgerEntries(): readonly LedgerEntry[] { return [...this.ledgerByRight.values()]; }
+}
+
+/**
+ * Compares every materialized part of a settlement replay. This comparator is
+ * shared by the in-memory and persistent adapters so test-only replays cannot
+ * silently accept a result the production path would reject.
+ */
+export function assertSettlementReplayEquivalent(
+  existing: SettlementResult,
+  candidate: SettlementResult,
+): void {
+  compareField("grossAmount", existing.settlementCycle.grossAmount, candidate.settlementCycle.grossAmount);
+  compareField("splitPolicyVersion", existing.settlementCycle.splitPolicyVersion, candidate.settlementCycle.splitPolicyVersion);
+  compareField("settlementCycleId", existing.settlementCycle.settlementCycleId, candidate.settlementCycle.settlementCycleId);
+  compareField("campaignId", existing.settlementCycle.campaignId, candidate.settlementCycle.campaignId);
+  compareField("evidenceId", existing.settlementCycle.evidenceId, candidate.settlementCycle.evidenceId);
+  compareField("status", existing.settlementCycle.status, candidate.settlementCycle.status);
+
+  compareCollection("splitShares", existing.splitShares, candidate.splitShares, (share) => share.splitShareId, [
+    "splitShareId", "line", "destinationId", "basisPoints", "amount",
+    "evidenceId", "settlementCycleId", "splitPolicyVersion",
+  ]);
+  compareCollection("rights", existing.rights, candidate.rights, (right) => right.splitShareId, [
+    "financialRightId", "splitShareId", "line", "destinationId", "amount",
+    "evidenceId", "settlementCycleId", "splitPolicyVersion", "status",
+  ]);
+  compareField("journalTransactionId", existing.journalTransaction.transactionId, candidate.journalTransaction.transactionId);
+  compareField("journalSettlementCycleId", existing.journalTransaction.settlementCycleId, candidate.journalTransaction.settlementCycleId);
+  compareField("journalEvidenceId", existing.journalTransaction.evidenceId, candidate.journalTransaction.evidenceId);
+  compareField("journalDebitTotal", existing.journalTransaction.debitTotal, candidate.journalTransaction.debitTotal);
+  compareField("journalCreditTotal", existing.journalTransaction.creditTotal, candidate.journalTransaction.creditTotal);
+  compareCollection("journalLines", existing.journalTransaction.lines, candidate.journalTransaction.lines, (line) => line.journalLineId, [
+    "journalLineId", "accountId", "direction", "amount", "financialRightId",
+  ]);
+  for (let index = 0; index < existing.journalTransaction.lines.length; index += 1) {
+    compareField(
+      `journalLines[${index}].journalLineId`,
+      existing.journalTransaction.lines[index]?.journalLineId,
+      candidate.journalTransaction.lines[index]?.journalLineId,
+    );
+  }
+  compareCollection("ledgerEntries", existing.ledgerEntries, candidate.ledgerEntries, (entry) => entry.splitShareId, [
+    "ledgerEntryId", "financialRightId", "splitShareId", "evidenceId",
+    "settlementCycleId", "destinationId", "amount", "journalTransactionId", "status",
+  ]);
+}
+
+function compareCollection<T extends object>(
+  name: string,
+  existing: readonly T[],
+  candidate: readonly T[],
+  key: (value: T) => string,
+  fields: readonly string[],
+): void {
+  if (existing.length !== candidate.length) {
+    throw new Error(`Settlement replay conflict: divergent ${name} cardinality.`);
+  }
+  const existingByKey = new Map(existing.map((value) => [key(value), value]));
+  const candidateByKey = new Map(candidate.map((value) => [key(value), value]));
+  if (existingByKey.size !== existing.length || candidateByKey.size !== candidate.length) {
+    throw new Error(`Settlement replay conflict: duplicate ${name} identity.`);
+  }
+  for (const value of candidate) {
+    const previous = existingByKey.get(key(value));
+    if (previous === undefined) {
+      throw new Error(`Settlement replay conflict: divergent ${name} identity.`);
+    }
+    for (const field of fields) {
+      compareField(
+        `${name}.${field}`,
+        (previous as Record<string, unknown>)[field],
+        (value as Record<string, unknown>)[field],
+      );
+    }
+  }
+}
+
+function compareField(name: string, existing: unknown, candidate: unknown): void {
+  if (existing !== candidate) {
+    throw new Error(`Settlement replay conflict: divergent ${name}.`);
+  }
 }
 
 type AllocationAmountKey = Exclude<keyof ReturnType<typeof calculateSplit>, "policyVersion">;
@@ -184,13 +263,6 @@ export function settleEvidence(input: SettlementInput, store: SettlementMemorySt
   const grossUnits = parseMoney(input.grossAmount);
   if (grossUnits === 0n) {
     throw new SettlementEligibilityError("Gross settlement amount must be greater than zero.");
-  }
-  const existing = store.findByEvidence(input.campaignId, input.evidence.evidenceId);
-  if (existing) {
-    if (existing.settlementCycle.grossAmount !== formatMoney(grossUnits)) {
-      throw new Error("Settlement cycle conflict: same EvidenceId has divergent gross amount.");
-    }
-    return existing;
   }
 
   const allocation = calculateSplit(input);
@@ -265,6 +337,11 @@ export function settleEvidence(input: SettlementInput, store: SettlementMemorySt
     status: "PENDING" as const,
   }));
   const result = Object.freeze({ settlementCycle: cycle, splitShares: Object.freeze(splitShares), rights: Object.freeze(rights), journalTransaction: journal, ledgerEntries: Object.freeze(ledgerEntries) });
+  const existing = store.findByEvidence(input.campaignId, input.evidence.evidenceId);
+  if (existing) {
+    assertSettlementReplayEquivalent(existing, result);
+    return existing;
+  }
   store.save(result);
   return result;
 }

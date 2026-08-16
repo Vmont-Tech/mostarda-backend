@@ -13,13 +13,16 @@ policy; it does not redefine or modify it.
 
 `persistent-settlement.ts` defines the persistence port for this materialization boundary.
 `PostgresSettlementStore` implements that port in `@mostarda/persistence-postgres` using
-the historical `007_settlement_financial_slice.sql` plus the corrective
-`008_settlement_integrity_hardening.sql`. The corrective migration fixes persisted
-monetary columns at `DECIMAL(18,4)` and closes the database-level materialization
-invariants. It persists SettlementCycle, FinancialRights,
-JournalTransaction/JournalLines and PartnerLedger entries with append-only and idempotency
-constraints. PostgreSQL integration tests run only when `DATABASE_URL` is available; otherwise
-the conditional tests remain explicitly skipped.
+the historical `007_settlement_financial_slice.sql`, the corrective
+`008_settlement_integrity_hardening.sql`, `009_settlement_split_results.sql`, and
+`010_b002_split_result_hardening.sql`. Migrations 009 and 010 preserve the seven
+`SplitShare`/result positions separately from `FinancialRight` materialization.
+The B-002 zero rule rejects a zero gross Settlement; only quantized-positive
+parcels create financial materialization, while zero/BPS-zero/quantized-zero
+results remain SplitShares without Journal or PartnerLedger postings. The
+persisted monetary columns use `DECIMAL(18,4)` and database constraints enforce
+the materialization invariants. PostgreSQL integration tests run only when
+`DATABASE_URL` is available; otherwise the conditional tests remain explicitly skipped.
 
 ## Integrity boundary of this slice
 

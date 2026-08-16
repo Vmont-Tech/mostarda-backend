@@ -214,8 +214,44 @@ test("rejects a divergent reprocessing of the same Evidence identity", () => {
   settleEvidence(partialInput(), store);
   assert.throws(
     () => settleEvidence({ ...partialInput(), grossAmount: "101.0000" }, store),
-    /divergent gross amount/,
+    /divergent grossAmount/,
   );
+});
+
+test("MemoryStore rejects replay with destination divergence", () => {
+  const store = new SettlementMemoryStore();
+  const first = settleEvidence(partialInput(), store);
+  const divergent = structuredClone(first) as any;
+  divergent.splitShares[0].destinationId = "DIFFERENT_DESTINATION";
+
+  assert.throws(() => store.save(divergent), /divergent splitShares/);
+});
+
+test("MemoryStore rejects replay with amount divergence", () => {
+  const store = new SettlementMemoryStore();
+  const first = settleEvidence(partialInput(), store);
+  const divergent = structuredClone(first) as any;
+  divergent.rights[0].amount = "19.0000";
+
+  assert.throws(() => store.save(divergent), /divergent rights/);
+});
+
+test("MemoryStore rejects replay with SplitShare result divergence", () => {
+  const store = new SettlementMemoryStore();
+  const first = settleEvidence(partialInput(), store);
+  const divergent = structuredClone(first) as any;
+  divergent.splitShares[0].basisPoints = 1_999;
+
+  assert.throws(() => store.save(divergent), /divergent splitShares/);
+});
+
+test("MemoryStore accepts an identical replay", () => {
+  const store = new SettlementMemoryStore();
+  const first = settleEvidence(partialInput(), store);
+
+  assert.doesNotThrow(() => store.save(structuredClone(first)));
+  assert.equal(store.cycles().length, 1);
+  assert.equal(store.ledgerEntries().length, first.ledgerEntries.length);
 });
 
 test("allocates a fractional gross remainder by deterministic largest remainder order", () => {
