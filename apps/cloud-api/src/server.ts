@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { DemoCloudStore } from "../../../packages/e2e-slice/src/cloud.ts";
 import { demoPlayerHtml, demoPlayerScript } from "./player-assets.ts";
 import type { EdgeRuntimeStore } from "./edge-runtime-store.ts";
+import type { E2ESingleSlotStore } from "./e2e-single-slot-store.ts";
 
 export interface ServerOptions {
   readonly eventStoreProbe?: (signal: AbortSignal) => Promise<boolean>;
@@ -10,6 +11,7 @@ export interface ServerOptions {
   readonly demoMode?: boolean;
   readonly demoStore?: DemoCloudStore;
   readonly edgeRuntimeStore?: EdgeRuntimeStore;
+  readonly singleSlotStore?: E2ESingleSlotStore;
 }
 
 export function buildServer(options: ServerOptions = {}): FastifyInstance {
@@ -120,6 +122,115 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     });
     server.get("/v1/edge/telemetry", async () => ({ events: edgeStore.telemetryEvents() }));
     server.get("/v1/edge/evidence", async () => ({ evidence: edgeStore.evidenceRecords() }));
+    server.post("/v1/edge/playback-events", async (request, reply) => {
+      try {
+        edgeStore.acceptPlaybackEvent(request.body);
+        return reply.code(202).send({ accepted: true });
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "playback_event_rejected" });
+      }
+    });
+    server.get("/v1/edge/playback-events", async () => ({ events: edgeStore.playbackEvents() }));
+  }
+
+  if (options.singleSlotStore !== undefined) {
+    // This is the explicitly bounded single-slot laboratory surface. It is
+    // not the production Campaign/Slot API and has no authentication yet.
+    const store = options.singleSlotStore;
+    server.post("/v1/e2e/campaigns", async (request, reply) => {
+      try {
+        const body = request.body as { campaignId?: unknown; name?: unknown };
+        if (typeof body?.campaignId !== "string" || typeof body.name !== "string") {
+          return reply.code(400).send({ error: "invalid_campaign" });
+        }
+        return reply.code(201).send(await store.createCampaign({ campaignId: body.campaignId, name: body.name }));
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "campaign_rejected" });
+      }
+    });
+    server.get("/v1/e2e/campaigns/:campaignId", async (request, reply) => {
+      const { campaignId } = request.params as { campaignId: string };
+      const campaign = await store.campaign(campaignId);
+      return campaign === undefined ? reply.code(404).send({ error: "campaign_not_found" }) : reply.send(campaign);
+    });
+    server.post("/v1/e2e/campaigns/:campaignId/slots", async (request, reply) => {
+      try {
+        const { campaignId } = request.params as { campaignId: string };
+        const body = request.body as { slotId?: unknown; durationSeconds?: unknown };
+        if (typeof body?.slotId !== "string" || typeof body.durationSeconds !== "number") {
+          return reply.code(400).send({ error: "invalid_slot" });
+        }
+        return reply.code(201).send(await store.createSlot({
+          slotId: body.slotId,
+          campaignId,
+          durationSeconds: body.durationSeconds,
+        }));
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "slot_rejected" });
+      }
+    });
+    server.get("/v1/e2e/slots/:slotId", async (request, reply) => {
+      const { slotId } = request.params as { slotId: string };
+      const slot = await store.slot(slotId);
+      return slot === undefined ? reply.code(404).send({ error: "slot_not_found" }) : reply.send(slot);
+    });
+    server.post("/v1/e2e/creatives", async (request, reply) => {
+      try {
+        const body = request.body as { creativeId?: unknown; mediaType?: unknown; content?: unknown };
+        if (typeof body?.creativeId !== "string" || body.mediaType !== "text/html" || typeof body.content !== "string") {
+          return reply.code(400).send({ error: "invalid_creative" });
+        }
+        return reply.code(201).send(await store.publishCreative({
+          creativeId: body.creativeId,
+          mediaType: "text/html",
+          content: body.content,
+        }));
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "creative_rejected" });
+      }
+    });
+    server.post("/v1/e2e/slots/:slotId/creative", async (request, reply) => {
+      try {
+        const { slotId } = request.params as { slotId: string };
+        const body = request.body as { creativeId?: unknown };
+        if (typeof body?.creativeId !== "string") return reply.code(400).send({ error: "invalid_assignment" });
+        return reply.send(await store.assignCreative(slotId, body.creativeId));
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "assignment_rejected" });
+      }
+    });
+    server.get("/v1/edge/campaigns/:campaignId/manifest", async (request, reply) => {
+      const { campaignId } = request.params as { campaignId: string };
+      const manifest = await store.manifest(campaignId);
+      return manifest === undefined
+        ? reply.code(404).send({ error: "campaign_manifest_not_found" })
+        : reply.send(manifest);
+    });
+    server.get("/v1/edge/assets/:assetId", async (request, reply) => {
+      const { assetId } = request.params as { assetId: string };
+      const asset = await store.asset(assetId);
+      return asset === undefined
+        ? reply.code(404).send({ error: "edge_asset_not_found" })
+        : reply.send(asset);
+    });
+    server.post("/v1/edge/telemetry", async (request, reply) => {
+      try {
+        await store.acceptTelemetry(request.body);
+        return reply.code(202).send({ accepted: true });
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "edge_telemetry_rejected" });
+      }
+    });
+    server.get("/v1/edge/telemetry", async () => ({ events: await store.telemetryEvents() }));
+    server.post("/v1/edge/playback-events", async (request, reply) => {
+      try {
+        await store.acceptPlaybackEvent(request.body);
+        return reply.code(202).send({ accepted: true });
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "playback_event_rejected" });
+      }
+    });
+    server.get("/v1/edge/playback-events", async () => ({ events: await store.playbackEvents() }));
   }
 
   const readinessSchema = {

@@ -15,12 +15,14 @@ export type EdgeTelemetryType =
 export interface EdgeManifest {
   readonly contractVersion: typeof EDGE_CLOUD_CONTRACT_VERSION;
   readonly campaignId: string;
+  readonly slotId: string;
   readonly creativeId: string;
   readonly version: string;
   readonly durationSeconds: number;
   readonly assetId: string;
   readonly playbackIdentity: {
     readonly campaignId: string;
+    readonly slotId: string;
     readonly creativeId: string;
   };
 }
@@ -40,7 +42,28 @@ export interface EdgePlayback {
   readonly edgeId: string;
   readonly environment: EdgeEnvironment;
   readonly campaignId: string;
+  readonly slotId: string;
   readonly creativeId: string;
+  readonly manifestVersion: string;
+  readonly startedAt: string;
+  readonly completedAt: string;
+  readonly durationSeconds: number;
+  readonly status: "COMPLETED";
+}
+
+/**
+ * A PlaybackEvent is an operational fact emitted by the Edge. It is not an
+ * EvidenceRecord and cannot authorize Settlement by itself.
+ */
+export interface EdgePlaybackEvent {
+  readonly contractVersion: typeof EDGE_CLOUD_CONTRACT_VERSION;
+  readonly playbackEventId: string;
+  readonly campaignId: string;
+  readonly slotId: string;
+  readonly creativeId: string;
+  readonly edgeId: string;
+  readonly sessionId: string;
+  readonly playbackId: string;
   readonly manifestVersion: string;
   readonly startedAt: string;
   readonly completedAt: string;
@@ -84,6 +107,8 @@ export interface EdgeCloudClient {
   fetchManifest(campaignId: string): Promise<EdgeManifest>;
   fetchAsset(assetId: string): Promise<EdgeAsset>;
   sendTelemetry(event: EdgeTelemetryEvent): Promise<void>;
+  sendPlaybackEvent(event: EdgePlaybackEvent): Promise<void>;
+  /** @deprecated Evidence is not produced by the Edge E2E slice. Kept for the demo boundary only. */
   sendEvidence(evidence: EdgeEvidence): Promise<void>;
   health(): Promise<boolean>;
 }

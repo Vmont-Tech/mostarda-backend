@@ -1,4 +1,5 @@
 import { buildServer } from "./server.ts";
+import { PostgresE2ESingleSlotStore } from "./e2e-single-slot-store.ts";
 import { Pool } from "pg";
 
 const port = Number.parseInt(process.env.PORT ?? "3333", 10);
@@ -27,6 +28,7 @@ const server = buildServer({
   logger: true,
   readinessTimeoutMs,
   demoMode: process.env.MOSTARDA_DEMO_MODE === "1",
+  singleSlotStore: pool === null ? undefined : new PostgresE2ESingleSlotStore(pool),
 });
 
 await server.listen({ host, port });

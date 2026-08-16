@@ -51,7 +51,11 @@ try {
     pool,
     new URL("../migrations/010_b002_split_result_hardening.sql", import.meta.url),
   );
-  process.stdout.write("Applied migrations 001 through 010\n");
+  await applySqlMigration(
+    pool,
+    new URL("../migrations/011_e2e_single_slot.sql", import.meta.url),
+  );
+  process.stdout.write("Applied migrations 001 through 011\n");
 } finally {
   await pool.end();
 }

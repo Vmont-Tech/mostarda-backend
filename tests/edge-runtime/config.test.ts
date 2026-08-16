@@ -92,6 +92,7 @@ test("builds a runtime from external settings with a transport supplied by the e
         fetchManifest: async () => { throw new Error("offline"); },
         fetchAsset: async () => { throw new Error("offline"); },
         sendTelemetry: async () => { throw new Error("offline"); },
+        sendPlaybackEvent: async () => { throw new Error("offline"); },
         sendEvidence: async () => { throw new Error("offline"); },
         health: async () => false,
       },

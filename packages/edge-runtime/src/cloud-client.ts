@@ -10,6 +10,7 @@ export function createHttpEdgeCloudClient(baseUrl: string): EdgeCloudClient {
     fetchManifest: async (campaignId) => expectJson<EdgeManifest>(await request(normalizedBaseUrl, "GET", `/v1/edge/campaigns/${encodeURIComponent(campaignId)}/manifest`), "manifest"),
     fetchAsset: async (assetId) => expectJson<EdgeAsset>(await request(normalizedBaseUrl, "GET", `/v1/edge/assets/${encodeURIComponent(assetId)}`), "asset"),
     sendTelemetry: async (event) => { await expectAccepted(await request(normalizedBaseUrl, "POST", "/v1/edge/telemetry", event), "telemetry"); },
+    sendPlaybackEvent: async (event) => { await expectAccepted(await request(normalizedBaseUrl, "POST", "/v1/edge/playback-events", event), "PlaybackEvent"); },
     sendEvidence: async (evidence) => { await expectAccepted(await request(normalizedBaseUrl, "POST", "/v1/edge/evidence", evidence), "evidence"); },
     health: async () => (await request(normalizedBaseUrl, "GET", "/health")).statusCode === 200,
   };

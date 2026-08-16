@@ -5,3 +5,4 @@ export * from "./config.ts";
 export * from "./cloud-client.ts";
 export * from "./bootstrap.ts";
 export * from "./cloud-contracts.ts";
+export * from "./local-content-server.ts";
