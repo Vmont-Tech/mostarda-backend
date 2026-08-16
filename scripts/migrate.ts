@@ -43,7 +43,15 @@ try {
     pool,
     new URL("../migrations/008_settlement_integrity_hardening.sql", import.meta.url),
   );
-  process.stdout.write("Applied migrations 001 through 008\n");
+  await applySqlMigration(
+    pool,
+    new URL("../migrations/009_settlement_split_results.sql", import.meta.url),
+  );
+  await applySqlMigration(
+    pool,
+    new URL("../migrations/010_b002_split_result_hardening.sql", import.meta.url),
+  );
+  process.stdout.write("Applied migrations 001 through 010\n");
 } finally {
   await pool.end();
 }

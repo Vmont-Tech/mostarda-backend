@@ -71,7 +71,7 @@ Este documento é normativo. Ele especializa a [Especificação Oficial](../spec
 47. `EXE-INV-047` — A separação entre reserva e consumo de CampaignBudget permanece `OPEN-013`; nenhum fluxo pode escolher o instante por conveniência.
 48. `EXE-INV-048` — `EvidenceRecord` segue `BUILDING → PENDING_VALIDATION → VALID` ou `INVALID/DISPUTED`; Edge nunca atribui esses estados.
 49. `EXE-INV-049` — Nenhum direito financeiro derivado de exibição existe sem Evidence `VALID`, não revertida e com ancoragem confirmada.
-50. `EXE-INV-050` — Settlement aplica `SPLIT-PERFORMANCE-RESIDUAL-V1` e cria sete direitos: TV 20%, Espaço 20%, Seller/Seller Acquisition Fund 20%, Influencer/Influencer Acquisition Fund 10% e Mostarda 30%. Financial Platform materializa créditos; Withdrawal é o único fluxo que instrui saída ao Asaas (`DEC-004/066`).
+50. `EXE-INV-050` — Settlement aplica `SPLIT-PERFORMANCE-RESIDUAL-V1` e produz sete resultados `SplitShare`: TV 20%, Espaço 20%, Seller/Seller Acquisition Fund 20%, Influencer/Influencer Acquisition Fund 10% e Mostarda 30%. Somente resultados quantizados positivos geram direitos e créditos; Withdrawal é o único fluxo que instrui saída ao Asaas (`DEC-004/066`).
 51. `EXE-INV-051` — Cada SplitShare tem ciclo próprio. Falha, ausência ou inelegibilidade de uma parcela não bloqueia nem redistribui as demais.
 52. `EXE-INV-052` — `CREDITED` significa direito materializado no Partner Ledger, não pagamento ao parceiro.
 53. `EXE-INV-053` — Settlement fechado é imutável. Chargeback, reversão tardia ou erro geram linhas/Aggregates compensatórios; `CLOSED → COMPENSATING` é proibido.

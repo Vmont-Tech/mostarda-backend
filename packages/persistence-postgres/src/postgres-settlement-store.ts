@@ -21,6 +21,17 @@ interface RightRow {
   status: "READY";
 }
 
+interface SplitShareRow {
+  split_share_id: string;
+  settlement_cycle_id: string;
+  line: string;
+  destination_id: string;
+  basis_points: number;
+  amount: string;
+  evidence_id: string;
+  split_policy_version: string;
+}
+
 interface JournalRow {
   transaction_id: string;
   settlement_cycle_id: string;
@@ -117,6 +128,18 @@ export class PostgresSettlementStore<TSettlement extends object> {
         return replay;
       }
 
+      for (const share of value.splitShares) {
+        await client.query(
+          `INSERT INTO settlement_split_results (
+             split_share_id, settlement_cycle_id, line, destination_id,
+             basis_points, amount, evidence_id, split_policy_version
+           ) VALUES ($1, $2, $3, $4, $5, $6::numeric, $7, $8)`,
+          [share.splitShareId, share.settlementCycleId, share.line,
+            share.destinationId, share.basisPoints, share.amount,
+            share.evidenceId, share.splitPolicyVersion],
+        );
+      }
+
       for (const right of value.rights) {
         await client.query(
           `INSERT INTO financial_rights (
@@ -170,6 +193,23 @@ export class PostgresSettlementStore<TSettlement extends object> {
   }
 
   async #loadResult(client: Pool | PoolClient, cycle: SettlementRow): Promise<TSettlement> {
+    const splitShares = await client.query<SplitShareRow>(
+      `SELECT split_share_id, settlement_cycle_id, line, destination_id,
+              basis_points, amount::text, evidence_id, split_policy_version
+         FROM settlement_split_results
+        WHERE settlement_cycle_id = $1
+        ORDER BY CASE line
+          WHEN 'TV_OWNER' THEN 0
+          WHEN 'SPACE_OWNER' THEN 1
+          WHEN 'SELLER' THEN 2
+          WHEN 'SELLER_ACQUISITION_FUND' THEN 3
+          WHEN 'INFLUENCER' THEN 4
+          WHEN 'INFLUENCER_ACQUISITION_FUND' THEN 5
+          WHEN 'MOSTARDA' THEN 6
+          ELSE 7
+        END, split_share_id`,
+      [cycle.settlement_cycle_id],
+    );
     const rights = await client.query<RightRow>(
       `SELECT financial_right_id, split_share_id, line, destination_id,
               amount::text, evidence_id, settlement_cycle_id,
@@ -239,6 +279,16 @@ export class PostgresSettlementStore<TSettlement extends object> {
         splitPolicyVersion: cycle.split_policy_version,
         status: cycle.status,
       }),
+      splitShares: Object.freeze(splitShares.rows.map((share) => Object.freeze({
+        splitShareId: share.split_share_id,
+        settlementCycleId: share.settlement_cycle_id,
+        line: share.line,
+        destinationId: share.destination_id,
+        basisPoints: share.basis_points,
+        amount: share.amount,
+        evidenceId: share.evidence_id,
+        splitPolicyVersion: share.split_policy_version,
+      }))),
       rights: Object.freeze(rights.rows.map((right) => Object.freeze({
         financialRightId: right.financial_right_id,
         splitShareId: right.split_share_id,

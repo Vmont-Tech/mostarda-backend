@@ -40,6 +40,16 @@ PartnerLedger é a fonte financeira do Partner. PartnerWallet é projeção e nu
 
 PartnerLedger, usando revisão e política, é a autoridade que reserva valor sacável. Wallet não autoriza Withdrawal.
 
+### FIN-B002-001 — Cardinalidade do resultado e materializacao
+
+As sete linhas da SplitPolicy sao preservadas como resultados `SplitShare`.
+Somente resultados quantizados positivos sao direitos financeiros materializados.
+Valores zero nunca entram no Journal ou no PartnerLedger e nunca sao redistribuidos.
+
+Um Settlement com gross zero e rejeitado antes de produzir qualquer artefato
+financeiro. Em um Settlement aceito, a soma das sete parcelas quantizadas e a
+soma dos `FinancialRight` positivos materializados sao ambas iguais ao gross.
+
 ### FIN-OWN-007
 
 Withdrawal é owner de sua intenção e tentativas. Asaas executa instruções, mas não aprova e não altera o Aggregate.

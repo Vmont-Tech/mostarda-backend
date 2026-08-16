@@ -70,6 +70,14 @@ Especificação integral: [`CAMPAIGN_MANAGEMENT.md`](./CAMPAIGN_MANAGEMENT.md).
 - **Invariantes:** consome apenas Evidences `VALID` e ancoradas; após taxas, impostos e retenções explícitas, aplica `SPLIT-PERFORMANCE-RESIDUAL-V1`; TV e Espaço recebem 20% fixos, Seller mais Seller Acquisition Fund totaliza 20%, Influencer mais Influencer Acquisition Fund totaliza 10% e Mostarda recebe 30%; soma das sete `SplitShare` = valor líquido distribuível; cada parcela possui status próprio `READY`/`BLOCKED`/`UNCLAIMED`/`CREDITED`; componente não conquistado vai somente ao fundo correspondente; `CREDITED` cria direito para Financial Platform, não pagamento; ciclo fechado é imutável; falha de ancoragem ou disputa da Evidence bloqueia as parcelas afetadas; nenhuma trilha de valor em blockchain. Ver [`REVENUE_ARCHITECTURE.md`](./REVENUE_ARCHITECTURE.md).
 - **Eventos:** `SettlementCycleOpened`, `SettlementCycleClosed`, `SettlementAuthorized`, `SettlementBlocked`, `SplitCalculated`, `SettlementExecuted`, `PartnerCreditRequested`, `InfluencerFundCreditRequested` (somente o mecanismo separado de `DEC-049`), `InvoiceIssued`, `ChargeRegistered`, `ChargePaid`, `ChargeOverdue`, `SettlementDisputeOpened`, `SettlementDisputeResolved`.
 
+### B-002 — sete resultados, direitos positivos
+
+As sete linhas da `SPLIT-PERFORMANCE-RESIDUAL-V1` sao sete resultados
+`SplitShare`. Uma parcela zero por basis points ou por quantizacao continua no
+resultado e nao e redistribuida. Somente parcelas quantizadas positivas geram
+`FinancialRight`, `JournalLine` e `PartnerLedgerEntry`. Gross zero e rejeitado
+antes da materializacao financeira.
+
 ## Financial Platform Aggregates — contexto Financial Platform
 
 - **Roots:** `Payment`, `PartnerAccount`, `PartnerLedger`, `PartnerWallet`, `Withdrawal`, `WithdrawalBatch`, `CampaignBudget`, `PaymentLedger`, `FinancialPolicy`, `WithdrawalPolicy`.
