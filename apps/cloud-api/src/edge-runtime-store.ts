@@ -101,6 +101,7 @@ export function createEdgeRuntimeFixtureStore(campaignId: string): InMemoryEdgeR
     campaignId,
     slotId: `${campaignId}:slot`,
     creativeId,
+    mediaType: "text/html",
     version: "manifest-edge-v1",
     durationSeconds: 1,
     assetId,

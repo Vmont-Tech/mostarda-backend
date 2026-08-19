@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import test from "node:test";
 import { Pool } from "pg";
 
@@ -60,6 +62,40 @@ test("PostgreSQL persists the single-slot Campaign/Slot/Creative and idempotent 
     } finally {
       client.release();
     }
+  } finally {
+    await server.close();
+    await pool.end();
+  }
+});
+
+test("PostgreSQL persists and serves a verified video/mp4 creative", { skip: databaseUrl === undefined ? "DATABASE_URL is not available" : false }, async () => {
+  const pool = new Pool({ connectionString: databaseUrl });
+  const store = new PostgresE2ESingleSlotStore(pool);
+  const server = buildServer({ singleSlotStore: store });
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const campaignId = `campaign-video-pg-${suffix}`;
+  const slotId = `slot-video-pg-${suffix}`;
+  const creativeId = `creative-video-pg-${suffix}`;
+  const content = (await readFile(path.resolve("tests/fixtures/media/mostarda-e2e-720p-h264.mp4"))).toString("base64");
+
+  try {
+    await server.ready();
+    assert.equal((await server.inject({ method: "POST", url: "/v1/e2e/campaigns", payload: { campaignId, name: "Postgres video lab" } })).statusCode, 201);
+    assert.equal((await server.inject({ method: "POST", url: `/v1/e2e/campaigns/${campaignId}/slots`, payload: { slotId, durationSeconds: 8 } })).statusCode, 201);
+    const creative = await server.inject({
+      method: "POST",
+      url: "/v1/e2e/creatives",
+      payload: { creativeId, mediaType: "video/mp4", content },
+    });
+    assert.equal(creative.statusCode, 201);
+    assert.equal((await server.inject({ method: "POST", url: `/v1/e2e/slots/${slotId}/creative`, payload: { creativeId } })).statusCode, 200);
+    const manifestResponse = await server.inject({ method: "GET", url: `/v1/edge/campaigns/${campaignId}/manifest` });
+    assert.equal(manifestResponse.statusCode, 200);
+    assert.equal((manifestResponse.json() as { mediaType: string }).mediaType, "video/mp4");
+    const assetResponse = await server.inject({ method: "GET", url: `/v1/edge/assets/${creativeId}:asset` });
+    assert.equal(assetResponse.statusCode, 200);
+    assert.equal((assetResponse.json() as { mediaType: string; content: string }).mediaType, "video/mp4");
+    assert.equal((assetResponse.json() as { content: string }).content, content);
   } finally {
     await server.close();
     await pool.end();

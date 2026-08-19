@@ -2,8 +2,10 @@ import type { Pool } from "pg";
 
 import {
   EDGE_CLOUD_CONTRACT_VERSION,
-  sha256,
+  assetBytes,
+  assetDigest,
   type EdgeAsset,
+  type EdgeMediaType,
   type EdgeManifest,
   type EdgePlaybackEvent,
   type EdgeTelemetryEvent,
@@ -25,7 +27,7 @@ export interface E2ESlot {
 
 export interface E2ECreative {
   readonly creativeId: string;
-  readonly mediaType: "text/html";
+  readonly mediaType: EdgeMediaType;
   readonly content: string;
   readonly digest: string;
   readonly status: "PUBLISHED";
@@ -36,9 +38,10 @@ export interface E2ESingleSlotStore {
   campaign(campaignId: string): E2ECampaign | undefined | Promise<E2ECampaign | undefined>;
   createSlot(input: { slotId: string; campaignId: string; durationSeconds: number }): E2ESlot | Promise<E2ESlot>;
   slot(slotId: string): E2ESlot | undefined | Promise<E2ESlot | undefined>;
-  publishCreative(input: { creativeId: string; mediaType: "text/html"; content: string }): E2ECreative | Promise<E2ECreative>;
+  publishCreative(input: { creativeId: string; mediaType: EdgeMediaType; content: string }): E2ECreative | Promise<E2ECreative>;
   assignCreative(slotId: string, creativeId: string): EdgeManifest | Promise<EdgeManifest>;
-  manifest(campaignId: string): EdgeManifest | undefined | Promise<EdgeManifest | undefined>;
+  manifest(campaignId: string, slotId?: string): EdgeManifest | undefined | Promise<EdgeManifest | undefined>;
+  manifests(campaignId: string): readonly EdgeManifest[] | Promise<readonly EdgeManifest[]>;
   asset(assetId: string): EdgeAsset | undefined | Promise<EdgeAsset | undefined>;
   acceptPlaybackEvent(value: unknown): void | Promise<void>;
   playbackEvents(): readonly EdgePlaybackEvent[] | Promise<readonly EdgePlaybackEvent[]>;
@@ -102,14 +105,14 @@ export class InMemoryE2ESingleSlotStore implements E2ESingleSlotStore {
     return this.#slots.get(slotId);
   }
 
-  publishCreative(input: { creativeId: string; mediaType: "text/html"; content: string }): E2ECreative {
+  publishCreative(input: { creativeId: string; mediaType: EdgeMediaType; content: string }): E2ECreative {
     requireIdentity(input.creativeId, "creativeId");
-    if (input.mediaType !== "text/html") throw new Error("only text/html is supported by the lab slice");
+    validateMedia(input.mediaType, input.content);
     const creative: E2ECreative = {
       creativeId: input.creativeId,
       mediaType: input.mediaType,
       content: input.content,
-      digest: sha256(input.content),
+      digest: assetDigest(input.mediaType, input.content),
       status: "PUBLISHED",
     };
     const existing = this.#creatives.get(creative.creativeId);
@@ -140,14 +143,25 @@ export class InMemoryE2ESingleSlotStore implements E2ESingleSlotStore {
     return this.#manifestFor(slot, creative, assignment);
   }
 
-  manifest(campaignId: string): EdgeManifest | undefined {
-    const slot = [...this.#slots.values()].find((candidate) => candidate.campaignId === campaignId);
+  manifest(campaignId: string, slotId?: string): EdgeManifest | undefined {
+    const slot = [...this.#slots.values()].find((candidate) => candidate.campaignId === campaignId && (slotId === undefined || candidate.slotId === slotId));
     if (slot === undefined) return undefined;
     const assignment = this.#assignments.get(slot.slotId);
     if (assignment === undefined) return undefined;
     const creative = this.#creatives.get(assignment.creativeId);
     if (creative === undefined) return undefined;
     return this.#manifestFor(slot, creative, assignment);
+  }
+
+  manifests(campaignId: string): readonly EdgeManifest[] {
+    return [...this.#slots.values()]
+      .filter((slot) => slot.campaignId === campaignId)
+      .sort((left, right) => left.slotId.localeCompare(right.slotId))
+      .flatMap((slot) => {
+        const assignment = this.#assignments.get(slot.slotId);
+        const creative = assignment === undefined ? undefined : this.#creatives.get(assignment.creativeId);
+        return assignment === undefined || creative === undefined ? [] : [this.#manifestFor(slot, creative, assignment)];
+      });
   }
 
   asset(assetId: string): EdgeAsset | undefined {
@@ -197,6 +211,7 @@ export class InMemoryE2ESingleSlotStore implements E2ESingleSlotStore {
       campaignId: slot.campaignId,
       slotId: slot.slotId,
       creativeId: creative.creativeId,
+      mediaType: creative.mediaType,
       version: assignment.manifestVersion,
       durationSeconds: slot.durationSeconds,
       assetId: `${creative.creativeId}:asset`,
@@ -257,8 +272,9 @@ export class PostgresE2ESingleSlotStore implements E2ESingleSlotStore {
     return result.rows[0];
   }
 
-  async publishCreative(input: { creativeId: string; mediaType: "text/html"; content: string }): Promise<E2ECreative> {
-    const digest = sha256(input.content);
+  async publishCreative(input: { creativeId: string; mediaType: EdgeMediaType; content: string }): Promise<E2ECreative> {
+    validateMedia(input.mediaType, input.content);
+    const digest = assetDigest(input.mediaType, input.content);
     const result = await this.#pool.query<E2ECreative>(
       `INSERT INTO e2e_creatives (creative_id, media_type, content, digest, status)
        VALUES ($1, $2, $3, $4, 'PUBLISHED')
@@ -267,7 +283,9 @@ export class PostgresE2ESingleSlotStore implements E2ESingleSlotStore {
       [input.creativeId, input.mediaType, input.content, digest],
     );
     const row = result.rows[0];
-    if (row === undefined || row.content !== input.content || row.digest !== digest) throw new Error("creative identity conflict");
+    if (row === undefined || row.mediaType !== input.mediaType || row.content !== input.content || row.digest !== digest) {
+      throw new Error("creative identity conflict");
+    }
     return row;
   }
 
@@ -297,27 +315,30 @@ export class PostgresE2ESingleSlotStore implements E2ESingleSlotStore {
              manifest_version = e2e_slot_creatives.manifest_version`,
       [slot.slotId, slot.campaignId, creative.creativeId, manifestVersion],
     );
-    const result = await this.manifest(slot.campaignId);
+    const result = await this.manifest(slot.campaignId, slot.slotId);
     if (result === undefined) throw new Error("manifest was not materialized");
     return result;
   }
 
-  async manifest(campaignId: string): Promise<EdgeManifest | undefined> {
+  async manifest(campaignId: string, slotId?: string): Promise<EdgeManifest | undefined> {
     const result = await this.#pool.query<{
       campaign_id: string;
       slot_id: string;
       creative_id: string;
       manifest_version: string;
       duration_seconds: number;
+      media_type: EdgeMediaType;
     }>(
       `SELECT assignment.campaign_id, assignment.slot_id, assignment.creative_id,
-              assignment.manifest_version, slot.duration_seconds
+              assignment.manifest_version, slot.duration_seconds, creative.media_type
          FROM e2e_slot_creatives AS assignment
          JOIN e2e_slots AS slot ON slot.slot_id = assignment.slot_id
+         JOIN e2e_creatives AS creative ON creative.creative_id = assignment.creative_id
         WHERE assignment.campaign_id = $1
+          AND ($2::text IS NULL OR assignment.slot_id = $2)
         ORDER BY assignment.slot_id
         LIMIT 1`,
-      [campaignId],
+      [campaignId, slotId ?? null],
     );
     const row = result.rows[0];
     if (row === undefined) return undefined;
@@ -326,11 +347,43 @@ export class PostgresE2ESingleSlotStore implements E2ESingleSlotStore {
       campaignId: row.campaign_id,
       slotId: row.slot_id,
       creativeId: row.creative_id,
+      mediaType: row.media_type,
       version: row.manifest_version,
       durationSeconds: row.duration_seconds,
       assetId: `${row.creative_id}:asset`,
       playbackIdentity: { campaignId: row.campaign_id, slotId: row.slot_id, creativeId: row.creative_id },
     };
+  }
+
+  async manifests(campaignId: string): Promise<readonly EdgeManifest[]> {
+    const result = await this.#pool.query<{
+      campaign_id: string;
+      slot_id: string;
+      creative_id: string;
+      manifest_version: string;
+      duration_seconds: number;
+      media_type: EdgeMediaType;
+    }>(
+      `SELECT assignment.campaign_id, assignment.slot_id, assignment.creative_id,
+              assignment.manifest_version, slot.duration_seconds, creative.media_type
+         FROM e2e_slot_creatives AS assignment
+         JOIN e2e_slots AS slot ON slot.slot_id = assignment.slot_id
+         JOIN e2e_creatives AS creative ON creative.creative_id = assignment.creative_id
+        WHERE assignment.campaign_id = $1
+        ORDER BY assignment.slot_id`,
+      [campaignId],
+    );
+    return result.rows.map((row) => ({
+      contractVersion: EDGE_CLOUD_CONTRACT_VERSION,
+      campaignId: row.campaign_id,
+      slotId: row.slot_id,
+      creativeId: row.creative_id,
+      mediaType: row.media_type,
+      version: row.manifest_version,
+      durationSeconds: row.duration_seconds,
+      assetId: `${row.creative_id}:asset`,
+      playbackIdentity: { campaignId: row.campaign_id, slotId: row.slot_id, creativeId: row.creative_id },
+    }));
   }
 
   async asset(assetId: string): Promise<EdgeAsset | undefined> {
@@ -426,6 +479,14 @@ interface PlaybackEventRow {
   completed_at: string;
   duration_seconds: number;
   status: "COMPLETED";
+}
+
+function validateMedia(mediaType: EdgeMediaType, content: string): void {
+  if (mediaType !== "text/html" && mediaType !== "video/mp4") {
+    throw new Error("unsupported creative media type");
+  }
+  if (content.length === 0) throw new Error("creative content is required");
+  assetBytes(mediaType, content);
 }
 
 function toPlaybackEvent(row: PlaybackEventRow): EdgePlaybackEvent {

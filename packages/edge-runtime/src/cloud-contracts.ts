@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 
 export const EDGE_CLOUD_CONTRACT_VERSION = "edge-cloud-v1" as const;
 
+export type EdgeMediaType = "text/html" | "video/mp4";
+
 export type EdgeEnvironment = "development" | "test" | "production";
 
 export type EdgeTelemetryType =
@@ -17,6 +19,7 @@ export interface EdgeManifest {
   readonly campaignId: string;
   readonly slotId: string;
   readonly creativeId: string;
+  readonly mediaType: EdgeMediaType;
   readonly version: string;
   readonly durationSeconds: number;
   readonly assetId: string;
@@ -31,7 +34,8 @@ export interface EdgeAsset {
   readonly contractVersion: typeof EDGE_CLOUD_CONTRACT_VERSION;
   readonly assetId: string;
   readonly creativeId: string;
-  readonly mediaType: "text/html";
+  readonly mediaType: EdgeMediaType;
+  /** UTF-8 HTML or Base64-encoded bytes for video/mp4. */
   readonly content: string;
   readonly digest: string;
 }
@@ -104,7 +108,9 @@ export interface EdgeEvidence {
 }
 
 export interface EdgeCloudClient {
-  fetchManifest(campaignId: string): Promise<EdgeManifest>;
+  fetchManifest(campaignId: string, slotId?: string): Promise<EdgeManifest>;
+  /** Optional playlist surface; single-manifest clients remain valid. */
+  fetchManifests?(campaignId: string): Promise<readonly EdgeManifest[]>;
   fetchAsset(assetId: string): Promise<EdgeAsset>;
   sendTelemetry(event: EdgeTelemetryEvent): Promise<void>;
   sendPlaybackEvent(event: EdgePlaybackEvent): Promise<void>;
@@ -123,8 +129,23 @@ export function canonicalEdgeJson(value: unknown): string {
     .join(",")}}`;
 }
 
-export function sha256(value: string): string {
-  return createHash("sha256").update(value, "utf8").digest("hex");
+export function sha256(value: string | Uint8Array): string {
+  return typeof value === "string"
+    ? createHash("sha256").update(value, "utf8").digest("hex")
+    : createHash("sha256").update(value).digest("hex");
+}
+
+export function assetBytes(mediaType: EdgeMediaType, content: string): Uint8Array {
+  if (mediaType === "text/html") return Buffer.from(content, "utf8");
+  const bytes = Buffer.from(content, "base64");
+  if (bytes.length === 0 || bytes.toString("base64") !== content) {
+    throw new Error("video/mp4 content must be canonical Base64");
+  }
+  return bytes;
+}
+
+export function assetDigest(mediaType: EdgeMediaType, content: string): string {
+  return sha256(assetBytes(mediaType, content));
 }
 
 export function createEdgeEvidence(playback: EdgePlayback): EdgeEvidence {

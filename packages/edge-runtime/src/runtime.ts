@@ -1,6 +1,5 @@
 import {
   EDGE_CLOUD_CONTRACT_VERSION,
-  sha256,
   type EdgeCloudClient,
   type EdgeEnvironment,
   type EdgeAsset,
@@ -15,6 +14,7 @@ import {
   type EdgeRuntimeIdentity,
   type EdgeRuntimeState,
 } from "./storage.ts";
+import { assetDigest } from "./cloud-contracts.ts";
 
 export type EdgeHealth =
   | "BOOTING"
@@ -45,6 +45,8 @@ export interface EdgeRuntimeConfig {
   readonly clock?: EdgeRuntimeClock;
   readonly runtimeVersion?: string;
   readonly maxAttempts?: number;
+  /** Playlist coordinators emit one edge.started event for the physical Edge. */
+  readonly suppressStartedEvent?: boolean;
 }
 
 export interface EdgeRuntimeDiagnostics {
@@ -98,7 +100,7 @@ export class RealEdgeRuntime {
     this.#state = { ...state, identity };
     this.#started = true;
     this.#health = "READY";
-    if (identityCreated) {
+    if (identityCreated && this.#config.suppressStartedEvent !== true) {
       this.#enqueue({
         contractVersion: EDGE_CLOUD_CONTRACT_VERSION,
         eventId: `${this.#config.edgeId}:edge.started`,
@@ -119,8 +121,10 @@ export class RealEdgeRuntime {
     try {
       const manifest = await this.#withRetry(() => this.#config.cloud.fetchManifest(campaignId));
       const asset = await this.#withRetry(() => this.#config.cloud.fetchAsset(manifest.assetId));
-      if (sha256(asset.content) !== asset.digest) throw new Error("asset integrity check failed");
-      if (asset.creativeId !== manifest.creativeId) throw new Error("asset identity does not match manifest");
+      if (assetDigest(asset.mediaType, asset.content) !== asset.digest) throw new Error("asset integrity check failed");
+      if (asset.creativeId !== manifest.creativeId || asset.mediaType !== manifest.mediaType) {
+        throw new Error("asset identity does not match manifest");
+      }
       if (manifest.playbackIdentity.campaignId !== manifest.campaignId
         || manifest.playbackIdentity.slotId !== manifest.slotId
         || manifest.playbackIdentity.creativeId !== manifest.creativeId) {
@@ -155,7 +159,7 @@ export class RealEdgeRuntime {
       this.#health = "DEGRADED";
       throw new Error("no validated local content is available");
     }
-    if (sha256(state.asset.content) !== state.asset.digest) {
+    if (assetDigest(state.asset.mediaType, state.asset.content) !== state.asset.digest) {
       this.#health = "ERROR";
       throw new Error("cached asset integrity check failed");
     }

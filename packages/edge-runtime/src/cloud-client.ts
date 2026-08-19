@@ -7,7 +7,12 @@ import type {
 export function createHttpEdgeCloudClient(baseUrl: string): EdgeCloudClient {
   const normalizedBaseUrl = normalizeBaseUrl(baseUrl);
   return {
-    fetchManifest: async (campaignId) => expectJson<EdgeManifest>(await request(normalizedBaseUrl, "GET", `/v1/edge/campaigns/${encodeURIComponent(campaignId)}/manifest`), "manifest"),
+    fetchManifest: async (campaignId, slotId) => expectJson<EdgeManifest>(await request(normalizedBaseUrl, "GET", `/v1/edge/campaigns/${encodeURIComponent(campaignId)}/manifest${slotId === undefined ? "" : `?slotId=${encodeURIComponent(slotId)}`}`), "manifest"),
+    fetchManifests: async (campaignId) => {
+      const response = await request(normalizedBaseUrl, "GET", `/v1/edge/campaigns/${encodeURIComponent(campaignId)}/manifests`);
+      const body = expectJson<{ manifests: readonly EdgeManifest[] }>(response, "manifests");
+      return body.manifests;
+    },
     fetchAsset: async (assetId) => expectJson<EdgeAsset>(await request(normalizedBaseUrl, "GET", `/v1/edge/assets/${encodeURIComponent(assetId)}`), "asset"),
     sendTelemetry: async (event) => { await expectAccepted(await request(normalizedBaseUrl, "POST", "/v1/edge/telemetry", event), "telemetry"); },
     sendPlaybackEvent: async (event) => { await expectAccepted(await request(normalizedBaseUrl, "POST", "/v1/edge/playback-events", event), "PlaybackEvent"); },

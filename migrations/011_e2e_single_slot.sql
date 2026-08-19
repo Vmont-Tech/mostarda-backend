@@ -17,12 +17,17 @@ CREATE TABLE IF NOT EXISTS e2e_slots (
 
 CREATE TABLE IF NOT EXISTS e2e_creatives (
     creative_id TEXT PRIMARY KEY CHECK (creative_id <> ''),
-    media_type TEXT NOT NULL CHECK (media_type = 'text/html'),
+    media_type TEXT NOT NULL CHECK (media_type IN ('text/html', 'video/mp4')),
     content TEXT NOT NULL,
     digest TEXT NOT NULL CHECK (digest <> ''),
     status TEXT NOT NULL CHECK (status = 'PUBLISHED'),
     created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
 );
+
+ALTER TABLE e2e_creatives DROP CONSTRAINT IF EXISTS e2e_creatives_media_type_check;
+ALTER TABLE e2e_creatives
+    ADD CONSTRAINT e2e_creatives_media_type_check
+    CHECK (media_type IN ('text/html', 'video/mp4'));
 
 CREATE TABLE IF NOT EXISTS e2e_slot_creatives (
     slot_id TEXT PRIMARY KEY REFERENCES e2e_slots(slot_id),

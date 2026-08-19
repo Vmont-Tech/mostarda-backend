@@ -177,12 +177,14 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     server.post("/v1/e2e/creatives", async (request, reply) => {
       try {
         const body = request.body as { creativeId?: unknown; mediaType?: unknown; content?: unknown };
-        if (typeof body?.creativeId !== "string" || body.mediaType !== "text/html" || typeof body.content !== "string") {
+        if (typeof body?.creativeId !== "string"
+          || (body.mediaType !== "text/html" && body.mediaType !== "video/mp4")
+          || typeof body.content !== "string") {
           return reply.code(400).send({ error: "invalid_creative" });
         }
         return reply.code(201).send(await store.publishCreative({
           creativeId: body.creativeId,
-          mediaType: "text/html",
+          mediaType: body.mediaType,
           content: body.content,
         }));
       } catch (error) {
@@ -201,10 +203,20 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     });
     server.get("/v1/edge/campaigns/:campaignId/manifest", async (request, reply) => {
       const { campaignId } = request.params as { campaignId: string };
-      const manifest = await store.manifest(campaignId);
+      const slotId = typeof (request.query as { slotId?: unknown }).slotId === "string"
+        ? (request.query as { slotId: string }).slotId
+        : undefined;
+      const manifest = await store.manifest(campaignId, slotId);
       return manifest === undefined
         ? reply.code(404).send({ error: "campaign_manifest_not_found" })
         : reply.send(manifest);
+    });
+    server.get("/v1/edge/campaigns/:campaignId/manifests", async (request, reply) => {
+      const { campaignId } = request.params as { campaignId: string };
+      const manifests = await store.manifests(campaignId);
+      return manifests.length === 0
+        ? reply.code(404).send({ error: "campaign_manifests_not_found" })
+        : reply.send({ campaignId, manifests });
     });
     server.get("/v1/edge/assets/:assetId", async (request, reply) => {
       const { assetId } = request.params as { assetId: string };

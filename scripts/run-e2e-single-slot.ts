@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -24,6 +25,14 @@ const edgePort = Number(process.env.EDGE_PLAYER_PORT ?? "4444");
 const edgeId = process.env.EDGE_ID ?? "edge-lab-001";
 const storageRoot = process.env.EDGE_STORAGE ?? path.join(os.tmpdir(), "mostarda-edge-e2e-lab");
 const cloudEndpoint = process.env.CLOUD_ENDPOINT ?? `http://127.0.0.1:${cloudPort}`;
+const videoPath = process.env.E2E_VIDEO_PATH;
+const mediaType = videoPath === undefined ? "text/html" as const : "video/mp4" as const;
+if (videoPath !== undefined && !videoPath.toLowerCase().endsWith(".mp4")) {
+  throw new Error("E2E_VIDEO_PATH must point to an .mp4 file");
+}
+const creativeContent = videoPath === undefined
+  ? `<main data-mostarda-creative="${creativeId}"><h1>Mostarda</h1><p>Physical lab creative</p></main>`
+  : (await readFile(videoPath)).toString("base64");
 
 const pool = new Pool({ connectionString: databaseUrl });
 const cloud = buildServer({
@@ -37,7 +46,7 @@ await cloud.inject({ method: "POST", url: `/v1/e2e/campaigns/${campaignId}/slots
 await cloud.inject({
   method: "POST",
   url: "/v1/e2e/creatives",
-  payload: { creativeId, mediaType: "text/html", content: `<main data-mostarda-creative="${creativeId}"><h1>Mostarda</h1><p>Physical lab creative</p></main>` },
+  payload: { creativeId, mediaType, content: creativeContent },
 });
 await cloud.inject({ method: "POST", url: `/v1/e2e/slots/${slotId}/creative`, payload: { creativeId } });
 
@@ -57,6 +66,7 @@ console.log(JSON.stringify({
   campaignId,
   slotId,
   creativeId,
+  mediaType,
   cloudEndpoint,
   playerUrl: `http://${advertisedHost}:${edgePort}/player`,
   offlineProcedure: "Stop Cloud connectivity after the first cache, keep the Player open, restore connectivity, then POST /flush on the local Edge.",
