@@ -23,6 +23,11 @@ test("keeps native video chrome hidden until playback is actually running", () =
   assert.match(PLAYER_HTML, /video\.style\.visibility='hidden'/);
   assert.match(PLAYER_HTML, /video\.removeAttribute\('controls'\)/);
   assert.match(PLAYER_HTML, /video\.addEventListener\('playing'/);
+  assert.match(PLAYER_HTML, /video::\-webkit-media-controls-overlay-play-button/);
+});
+
+test("keeps one Player document across slot boundaries", () => {
+  assert.doesNotMatch(PLAYER_HTML, /window\.location\.reload\(\)/);
 });
 
 test("builds all 5760 local-time slots and fills empty inventory with equal institutional fallback", () => {

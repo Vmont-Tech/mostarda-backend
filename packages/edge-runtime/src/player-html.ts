@@ -1,7 +1,7 @@
 /** Shared Browser Player shell for single-manifest and playlist Edge surfaces. */
 export const PLAYER_HTML = `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mostarda Player</title>
-<style>html,body,main,#creative,#video{margin:0;width:100vw;height:100vh;overflow:hidden;background:#000}body{touch-action:none;user-select:none}#creative,#video{position:fixed;inset:0;border:0;display:block;object-fit:contain;pointer-events:none}#video::-webkit-media-controls{display:none!important}#player-status{position:fixed;left:-10000px;top:-10000px}</style></head>
+<style>html,body,main,#creative,#video{margin:0;width:100vw;height:100vh;overflow:hidden;background:#000}body{touch-action:none;user-select:none}#creative,#video{position:fixed;inset:0;border:0;display:block;object-fit:contain;pointer-events:none}#video::-webkit-media-controls,#video::-webkit-media-controls-enclosure,#video::-webkit-media-controls-overlay-play-button,#video::-webkit-media-controls-panel{display:none!important}#player-status{position:fixed;left:-10000px;top:-10000px}</style></head>
 <body><main id="player-status">LOADING</main><iframe id="creative" title="Mostarda Creative" sandbox=""></iframe><video id="video" muted playsinline hidden></video>
 <script>
 (async () => {
@@ -36,7 +36,7 @@ export const PLAYER_HTML = `<!doctype html>
   let scheduled;
   try{scheduled=await json('/schedule/current');}catch{scheduled=undefined;}
   if(scheduled){
-    try{await play({...scheduled.content,playbackSlotId:scheduled.slotId,playbackKey:scheduled.playbackKey,assetUrl:scheduled.assetUrl});const remaining=Math.max(0,(Number(scheduled.slotEndsAt||Date.now())-Date.now())/1000);await sleep(remaining);window.location.reload();return;}
+    try{while(true){const current=await json('/schedule/current');await play({...current.content,playbackSlotId:current.slotId,playbackKey:current.playbackKey,assetUrl:current.assetUrl});const remaining=Math.max(0,(Number(current.slotEndsAt||Date.now())-Date.now())/1000);await sleep(remaining);}}
     catch(error){status.textContent='ERROR '+String(error);return;}
   }
   try{let entries;try{entries=(await json('/playlist')).manifests;}catch{entries=[await json('/manifest')];}if(!Array.isArray(entries)||entries.length===0)throw new Error('playlist is empty');for(const entry of entries)await play(entry);status.textContent='COMPLETED · PlaybackEvent queued';}catch(error){status.textContent='ERROR · '+String(error);}
