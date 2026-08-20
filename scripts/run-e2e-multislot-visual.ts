@@ -5,7 +5,7 @@ import path from "node:path";
 
 import { PostgresE2ESingleSlotStore } from "../apps/cloud-api/src/e2e-single-slot-store.ts";
 import { buildServer } from "../apps/cloud-api/src/server.ts";
-import { assetDigest, buildDailySlotSchedule, createDailyScheduleContentServer, createHttpEdgeCloudClient, EdgePlaylistRuntime, EDGE_CLOUD_CONTRACT_VERSION, InMemoryDailyScheduleStore, JsonEdgeStorage, allocateAtomicSlots, parseDailySlotIndices, readMp4DurationSeconds, type EdgeAsset, type EdgeMediaType } from "../packages/edge-runtime/src/index.ts";
+import { assetDigest, buildDailySlotSchedule, createDailyScheduleContentServer, createHttpEdgeCloudClient, EdgePlaylistRuntime, EDGE_CLOUD_CONTRACT_VERSION, InMemoryDailyScheduleStore, JsonEdgeStorage, allocateAtomicSlots, parseDailySlotIndices, publishDailySchedule, readMp4DurationSeconds, type EdgeAsset, type EdgeMediaType } from "../packages/edge-runtime/src/index.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (databaseUrl === undefined) throw new Error("DATABASE_URL is required");
@@ -31,7 +31,10 @@ const availableSlotIds = Array.from({ length: 5760 }, (_, index) => `${slotPrefi
 const allocation = allocateAtomicSlots({ availableSlotIds, items: media.map((item) => ({ creativeId: item.creativeId, durationSeconds: item.durationSeconds })) });
 const pool = new Pool({ connectionString: databaseUrl });
 const store = new PostgresE2ESingleSlotStore(pool);
-const cloud = buildServer({ logger: true, singleSlotStore: store });
+const cloud = buildServer({ logger: true, singleSlotStore: store, dailySchedulePublisher: (targetEdgeId, update) => {
+  if (targetEdgeId !== edgeId) throw new Error("schedule edge identity mismatch");
+  return publishDailySchedule(`http://127.0.0.1:${edgePort}`, update);
+} });
 await cloud.listen({ host: "0.0.0.0", port: cloudPort });
 await store.createCampaign({ campaignId, name: "Mostarda multi-slot visual lab" });
 for (const [index, item] of media.entries()) {

@@ -3,6 +3,7 @@ import { DemoCloudStore } from "../../../packages/e2e-slice/src/cloud.ts";
 import { demoPlayerHtml, demoPlayerScript } from "./player-assets.ts";
 import type { EdgeRuntimeStore } from "./edge-runtime-store.ts";
 import type { E2ESingleSlotStore } from "./e2e-single-slot-store.ts";
+import type { DailyScheduleReplaceResult, DailyScheduleUpdate } from "../../../packages/edge-runtime/src/daily-schedule-store.ts";
 
 export interface ServerOptions {
   readonly eventStoreProbe?: (signal: AbortSignal) => Promise<boolean>;
@@ -12,16 +13,38 @@ export interface ServerOptions {
   readonly demoStore?: DemoCloudStore;
   readonly edgeRuntimeStore?: EdgeRuntimeStore;
   readonly singleSlotStore?: E2ESingleSlotStore;
+  /** Optional lab adapter that forwards a committed Cloud schedule to an Edge. */
+  readonly dailySchedulePublisher?: (edgeId: string, update: DailyScheduleUpdate) => Promise<DailyScheduleReplaceResult>;
 }
 
 export function buildServer(options: ServerOptions = {}): FastifyInstance {
   const server = Fastify({
     logger: options.logger ?? false,
+    // A full 24-hour schedule contains 5760 slot records and is intentionally
+    // published atomically as one command in this walking skeleton.
+    bodyLimit: 8 * 1024 * 1024,
   });
   const demoStore = options.demoStore ?? new DemoCloudStore();
   const eventStoreProbe = options.eventStoreProbe ?? (async () => false);
   const readinessTimeoutMs = options.readinessTimeoutMs ?? 1000;
   let activeProbe: Promise<boolean> | null = null;
+
+  const dailySchedulePublisher = options.dailySchedulePublisher;
+  if (dailySchedulePublisher !== undefined) {
+    server.post("/v1/edge/:edgeId/commands/schedule", async (request, reply) => {
+      const { edgeId } = request.params as { edgeId: string };
+      const update = request.body as DailyScheduleUpdate;
+      if (update === null || typeof update !== "object" || update.edgeId !== edgeId) {
+        return reply.code(400).send({ error: "schedule_edge_identity_mismatch" });
+      }
+      try {
+        const result = await dailySchedulePublisher(edgeId, update);
+        return reply.code(result.status === "applied" ? 202 : 200).send(result);
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "schedule_publish_rejected" });
+      }
+    });
+  }
 
   server.get(
     "/health",

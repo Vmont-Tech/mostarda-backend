@@ -14,6 +14,7 @@ import { createDailyScheduleContentServer } from "../../packages/edge-runtime/sr
 import { InMemoryDailyScheduleStore, publishDailySchedule, type DailyScheduleUpdate } from "../../packages/edge-runtime/src/daily-schedule-store.ts";
 import { assetDigest, EDGE_CLOUD_CONTRACT_VERSION, type EdgeAsset } from "../../packages/edge-runtime/src/cloud-contracts.ts";
 import { PLAYER_HTML } from "../../packages/edge-runtime/src/player-html.ts";
+import { buildServer } from "../../apps/cloud-api/src/server.ts";
 
 const fallbacks: readonly InstitutionalFallback[] = [
   { actor: "MOSTARDA", contentId: "institutional-mostarda", durationSeconds: 15 },
@@ -76,6 +77,40 @@ test("applies a newer Cloud schedule command without replacing the Player server
     await assert.rejects(() => publishDailySchedule(`http://127.0.0.1:${address.port}`, { ...command, revision: 1 }), /SCHEDULE_REVISION_STALE/);
   } finally {
     await server.close();
+  }
+});
+
+test("Cloud forwards a schedule command to the Edge without a Player restart", async () => {
+  const schedule = buildDailySlotSchedule({ advertiser: [], fallbacks, timezone: "America/Sao_Paulo" });
+  const command: DailyScheduleUpdate = {
+    contractVersion: "edge-schedule-v1",
+    edgeId: "edge-cloud-route",
+    revision: 7,
+    schedule,
+    assets: [],
+  };
+  let forwarded: DailyScheduleUpdate | undefined;
+  const cloud = buildServer({
+    dailySchedulePublisher: async (edgeId, update) => {
+      assert.equal(edgeId, "edge-cloud-route");
+      forwarded = update;
+      return { status: "applied", revision: update.revision };
+    },
+  });
+  await cloud.listen({ host: "127.0.0.1", port: 0 });
+  const address = cloud.server.address();
+  if (address === null || typeof address === "string") throw new Error("cloud server did not expose a TCP address");
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}/v1/edge/edge-cloud-route/commands/schedule`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(command),
+    });
+    assert.equal(response.status, 202);
+    assert.deepEqual(await response.json(), { status: "applied", revision: 7 });
+    assert.deepEqual(forwarded, command);
+  } finally {
+    await cloud.close();
   }
 });
 
