@@ -5,7 +5,7 @@ import path from "node:path";
 
 import { PostgresE2ESingleSlotStore } from "../apps/cloud-api/src/e2e-single-slot-store.ts";
 import { buildServer } from "../apps/cloud-api/src/server.ts";
-import { assetDigest, buildDailySlotSchedule, createDailyScheduleContentServer, createHttpEdgeCloudClient, EdgePlaylistRuntime, EDGE_CLOUD_CONTRACT_VERSION, JsonEdgeStorage, allocateAtomicSlots, parseDailySlotIndices, readMp4DurationSeconds, type EdgeAsset, type EdgeMediaType } from "../packages/edge-runtime/src/index.ts";
+import { assetDigest, buildDailySlotSchedule, createDailyScheduleContentServer, createHttpEdgeCloudClient, EdgePlaylistRuntime, EDGE_CLOUD_CONTRACT_VERSION, InMemoryDailyScheduleStore, JsonEdgeStorage, allocateAtomicSlots, parseDailySlotIndices, readMp4DurationSeconds, type EdgeAsset, type EdgeMediaType } from "../packages/edge-runtime/src/index.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (databaseUrl === undefined) throw new Error("DATABASE_URL is required");
@@ -84,9 +84,22 @@ const schedule = buildDailySlotSchedule({
   })),
   fallbacks: fallbackDefinitions.map((fallback) => ({ actor: fallback.actor, contentId: fallback.contentId, durationSeconds: 15, mediaType: assets.get(`${fallback.contentId}:asset`)!.mediaType, assetId: `${fallback.contentId}:asset` })),
 });
-const player = createDailyScheduleContentServer({
+const scheduleStore = new InMemoryDailyScheduleStore({
+  contractVersion: "edge-schedule-v1",
+  edgeId,
+  revision: 1,
   schedule,
-  assets,
+  assets: [...assets.values()],
+});
+const player = createDailyScheduleContentServer({
+  scheduleStore,
+  edgeId,
+  beforeScheduleReplace: async (update) => {
+    const campaigns = new Set(update.schedule.slots
+      .filter((slot) => slot.content.actor === "ADVERTISER" && slot.content.campaignId !== undefined)
+      .map((slot) => slot.content.campaignId!));
+    for (const scheduledCampaignId of campaigns) await runtime.sync(scheduledCampaignId);
+  },
   diagnostics: () => runtime.diagnostics(),
   flush: () => runtime.flush(),
   onPlayback: async (slot) => {

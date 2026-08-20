@@ -11,6 +11,7 @@ import {
   type InstitutionalFallback,
 } from "../../packages/edge-runtime/src/daily-slot-schedule.ts";
 import { createDailyScheduleContentServer } from "../../packages/edge-runtime/src/daily-schedule-content-server.ts";
+import { InMemoryDailyScheduleStore, publishDailySchedule, type DailyScheduleUpdate } from "../../packages/edge-runtime/src/daily-schedule-store.ts";
 import { assetDigest, EDGE_CLOUD_CONTRACT_VERSION, type EdgeAsset } from "../../packages/edge-runtime/src/cloud-contracts.ts";
 import { PLAYER_HTML } from "../../packages/edge-runtime/src/player-html.ts";
 
@@ -25,10 +26,57 @@ test("keeps native video chrome hidden until playback is actually running", () =
   assert.match(PLAYER_HTML, /video\.removeAttribute\('controls'\)/);
   assert.match(PLAYER_HTML, /video\.addEventListener\('playing'/);
   assert.match(PLAYER_HTML, /video::\-webkit-media-controls-overlay-play-button/);
+  assert.match(PLAYER_HTML, /slotBudget/);
+  assert.match(PLAYER_HTML, /playbackDuration/);
 });
 
 test("keeps one Player document across slot boundaries", () => {
   assert.doesNotMatch(PLAYER_HTML, /window\.location\.reload\(\)/);
+  assert.match(PLAYER_HTML, /slotEndsAt/);
+});
+
+test("applies a newer Cloud schedule command without replacing the Player server", async () => {
+  const initial = buildDailySlotSchedule({ advertiser: [], fallbacks, timezone: "America/Sao_Paulo" });
+  const replacement = buildDailySlotSchedule({
+    advertiser: [{ campaignId: "campaign-live", slotId: "ad-live", creativeId: "creative-live", durationSeconds: 15, startSlotIndex: 2296 }],
+    fallbacks,
+    timezone: "America/Sao_Paulo",
+  });
+  const content = "<main>live ad</main>";
+  const asset: EdgeAsset = {
+    contractVersion: EDGE_CLOUD_CONTRACT_VERSION,
+    assetId: "creative-live:asset",
+    creativeId: "creative-live",
+    mediaType: "text/html",
+    content,
+    digest: assetDigest("text/html", content),
+  };
+  const store = new InMemoryDailyScheduleStore({ contractVersion: "edge-schedule-v1", edgeId: "edge-live", revision: 1, schedule: initial, assets: [] });
+  const preparedCampaigns: string[] = [];
+  const server = createDailyScheduleContentServer({
+    scheduleStore: store,
+    assets: new Map(),
+    beforeScheduleReplace: async (update) => {
+      preparedCampaigns.push(...new Set(update.schedule.slots
+        .filter((slot) => slot.content.actor === "ADVERTISER" && slot.content.campaignId !== undefined)
+        .map((slot) => slot.content.campaignId!)));
+    },
+  });
+  await new Promise<void>((resolve) => server.listen({ host: "127.0.0.1", port: 0 }, () => resolve()));
+  const address = server.address();
+  if (address === null || typeof address === "string") throw new Error("schedule server did not expose a TCP address");
+  const command: DailyScheduleUpdate = { contractVersion: "edge-schedule-v1", edgeId: "edge-live", revision: 2, schedule: replacement, assets: [asset] };
+  try {
+    assert.deepEqual(await publishDailySchedule(`http://127.0.0.1:${address.port}`, command), { status: "applied", revision: 2 });
+    assert.deepEqual(preparedCampaigns, ["campaign-live"]);
+    const current = await fetch(`http://127.0.0.1:${address.port}/schedule/current?at=2026-08-19T12:34:07.000Z`);
+    assert.equal((await current.json() as { content: { creativeId?: string } }).content.creativeId, "creative-live");
+    assert.deepEqual(await publishDailySchedule(`http://127.0.0.1:${address.port}`, command), { status: "replayed", revision: 2 });
+    await assert.rejects(() => publishDailySchedule(`http://127.0.0.1:${address.port}`, { ...command, assets: [{ ...asset, content: "<main>divergent</main>" }] }), /SCHEDULE_REVISION_CONFLICT/);
+    await assert.rejects(() => publishDailySchedule(`http://127.0.0.1:${address.port}`, { ...command, revision: 1 }), /SCHEDULE_REVISION_STALE/);
+  } finally {
+    await server.close();
+  }
 });
 
 test("builds all 5760 local-time slots and fills empty inventory with equal institutional fallback", () => {

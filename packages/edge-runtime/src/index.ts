@@ -29,3 +29,4 @@ export type {
   DailySlotSchedule,
 } from "./daily-slot-schedule.ts";
 export * from "./daily-schedule-content-server.ts";
+export * from "./daily-schedule-store.ts";
