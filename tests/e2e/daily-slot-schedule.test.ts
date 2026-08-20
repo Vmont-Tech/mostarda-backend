@@ -23,17 +23,29 @@ const fallbacks: readonly InstitutionalFallback[] = [
 ];
 
 test("keeps native video chrome hidden until playback is actually running", () => {
-  assert.match(PLAYER_HTML, /video\.style\.visibility='hidden'/);
-  assert.match(PLAYER_HTML, /video\.removeAttribute\('controls'\)/);
-  assert.match(PLAYER_HTML, /video\.addEventListener\('playing'/);
+  assert.match(PLAYER_HTML, /style\.visibility='hidden'/);
+  assert.match(PLAYER_HTML, /removeAttribute\('controls'\)/);
+  assert.match(PLAYER_HTML, /addEventListener\('playing'/);
   assert.match(PLAYER_HTML, /video::\-webkit-media-controls-overlay-play-button/);
   assert.match(PLAYER_HTML, /slotBudget/);
   assert.match(PLAYER_HTML, /playbackDuration/);
+  assert.doesNotMatch(PLAYER_HTML, /video\.loop=true/);
 });
 
 test("keeps one Player document across slot boundaries", () => {
   assert.doesNotMatch(PLAYER_HTML, /window\.location\.reload\(\)/);
   assert.match(PLAYER_HTML, /slotEndsAt/);
+});
+
+test("keeps the current slot visible while recovering and tears down native video surfaces", () => {
+  assert.match(PLAYER_HTML, /const teardownVideoSurface/);
+  assert.match(PLAYER_HTML, /\.replaceWith\(replacement\)/);
+  assert.match(PLAYER_HTML, /async function retryUntilSlotBoundary/);
+  assert.match(PLAYER_HTML, /frame\.hidden=false/);
+  assert.match(PLAYER_HTML, /const markup=await text\(assetUrl\);teardownVideoSurface\(\);frame\.hidden=false/);
+  assert.match(PLAYER_HTML, /async function acknowledgePlayback/);
+  assert.match(PLAYER_HTML, /await retryUntilSlotBoundary/);
+  assert.doesNotMatch(PLAYER_HTML, /catch\(error\)\{status\.textContent='ERROR '\+String\(error\);return;\}/);
 });
 
 test("applies a newer Cloud schedule command without replacing the Player server", async () => {
