@@ -5,7 +5,7 @@ import path from "node:path";
 
 import { PostgresE2ESingleSlotStore } from "../apps/cloud-api/src/e2e-single-slot-store.ts";
 import { buildServer } from "../apps/cloud-api/src/server.ts";
-import { assetDigest, buildDailySlotSchedule, createDailyScheduleContentServer, createHttpEdgeCloudClient, EdgePlaylistRuntime, EDGE_CLOUD_CONTRACT_VERSION, JsonEdgeStorage, allocateAtomicSlots, readMp4DurationSeconds, type EdgeAsset, type EdgeMediaType } from "../packages/edge-runtime/src/index.ts";
+import { assetDigest, buildDailySlotSchedule, createDailyScheduleContentServer, createHttpEdgeCloudClient, EdgePlaylistRuntime, EDGE_CLOUD_CONTRACT_VERSION, JsonEdgeStorage, allocateAtomicSlots, parseDailySlotIndices, readMp4DurationSeconds, type EdgeAsset, type EdgeMediaType } from "../packages/edge-runtime/src/index.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (databaseUrl === undefined) throw new Error("DATABASE_URL is required");
@@ -20,8 +20,8 @@ const advertisedHost = process.env.EDGE_ADVERTISED_HOST ?? os.hostname();
 const edgeId = process.env.EDGE_ID ?? "edge-lab-001";
 const storageRoot = process.env.EDGE_STORAGE ?? path.join(os.tmpdir(), "mostarda-edge-multislot-lab");
 const slotPrefix = process.env.E2E_SLOT_PREFIX ?? `slot-multislot-${Date.now()}`;
-const configuredAdStart = process.env.E2E_AD_START_SLOT === undefined ? undefined : Number(process.env.E2E_AD_START_SLOT);
-if (configuredAdStart !== undefined && (!Number.isInteger(configuredAdStart) || configuredAdStart < 0 || configuredAdStart >= 5760)) throw new Error("E2E_AD_START_SLOT must be an integer from 0 through 5759");
+const configuredAdStarts = parseDailySlotIndices(process.env.E2E_AD_START_SLOTS);
+const configuredAdStart = process.env.E2E_AD_START_SLOT === undefined ? undefined : parseDailySlotIndices(process.env.E2E_AD_START_SLOT)[0];
 const media = await Promise.all(paths.map(async (filePath, index) => {
   const bytes = await readFile(filePath);
   if (!filePath.toLowerCase().endsWith(".mp4")) throw new Error(`Only .mp4 is supported: ${filePath}`);
@@ -76,7 +76,7 @@ const schedule = buildDailySlotSchedule({
     campaignId,
     slotId: allocation.items[index]!.slotIds[0]!,
     segmentSlotIds: allocation.items[index]!.slotIds,
-    ...(index === 0 && configuredAdStart !== undefined ? { startSlotIndex: configuredAdStart } : {}),
+    ...((configuredAdStarts[index] ?? (index === 0 ? configuredAdStart : undefined)) === undefined ? {} : { startSlotIndex: configuredAdStarts[index] ?? configuredAdStart }),
     creativeId: item.creativeId,
     durationSeconds: item.durationSeconds,
     mediaType: "video/mp4",

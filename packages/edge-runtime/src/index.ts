@@ -16,6 +16,7 @@ export {
   DAILY_SLOT_COUNT,
   MAX_ADVERTISER_SLOT_RATIO,
   MAX_ADVERTISER_SLOT_COUNT,
+  parseDailySlotIndices,
   buildDailySlotSchedule,
   currentDailySlot,
 } from "./daily-slot-schedule.ts";

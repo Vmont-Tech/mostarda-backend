@@ -7,6 +7,17 @@ export const MAX_ADVERTISER_SLOT_RATIO = 0.7 as const;
 // Keep the 70% ceiling exact instead of relying on binary floating-point 0.7.
 export const MAX_ADVERTISER_SLOT_COUNT = DAILY_SLOT_COUNT * 7 / 10;
 
+/** Parses lab-only selected slot indices without guessing invalid values. */
+export function parseDailySlotIndices(raw: string | undefined): readonly number[] {
+  if (raw === undefined || raw.trim() === "") return [];
+  const values = raw.split(/[;,]/).map((value) => Number(value.trim()));
+  if (values.some((value) => !Number.isInteger(value) || value < 0 || value >= DAILY_SLOT_COUNT)) {
+    throw new Error(`E2E_AD_START_SLOT_INVALID:${raw}`);
+  }
+  if (new Set(values).size !== values.length) throw new Error(`E2E_AD_START_SLOT_DUPLICATE:${raw}`);
+  return values;
+}
+
 export type ScheduleActor = "ADVERTISER" | "MOSTARDA" | "SPACE_OWNER" | "INFLUENCER";
 
 export interface AdvertiserScheduleInput {

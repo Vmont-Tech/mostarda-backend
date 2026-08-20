@@ -6,6 +6,7 @@ import {
   MAX_ADVERTISER_SLOT_RATIO,
   buildDailySlotSchedule,
   currentDailySlot,
+  parseDailySlotIndices,
   requiredAtomicSlots,
   type InstitutionalFallback,
 } from "../../packages/edge-runtime/src/daily-slot-schedule.ts";
@@ -77,6 +78,10 @@ test("places a campaign creative in its selected time-of-day slots", () => {
   assert.notEqual(schedule.slots[119]?.content.actor, "ADVERTISER");
   assert.equal(schedule.slots[120]?.content.creativeId, "creative-selected");
   assert.notEqual(schedule.slots[121]?.content.actor, "ADVERTISER");
+});
+
+test("parses multiple configured local-time ad slots deterministically", () => {
+  assert.deepEqual(parseDailySlotIndices("5102;5104"), [5102, 5104]);
 });
 
 test("selects the slot using the configured local timezone", () => {
