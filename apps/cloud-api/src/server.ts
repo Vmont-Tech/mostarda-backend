@@ -2,6 +2,8 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { DemoCloudStore } from "../../../packages/e2e-slice/src/cloud.ts";
 import { demoPlayerHtml, demoPlayerScript } from "./player-assets.ts";
 import type { EdgeRuntimeStore } from "./edge-runtime-store.ts";
+import type { E2ESingleSlotStore } from "./e2e-single-slot-store.ts";
+import type { DailyScheduleReplaceResult, DailyScheduleUpdate } from "../../../packages/edge-runtime/src/daily-schedule-store.ts";
 
 export interface ServerOptions {
   readonly eventStoreProbe?: (signal: AbortSignal) => Promise<boolean>;
@@ -10,16 +12,39 @@ export interface ServerOptions {
   readonly demoMode?: boolean;
   readonly demoStore?: DemoCloudStore;
   readonly edgeRuntimeStore?: EdgeRuntimeStore;
+  readonly singleSlotStore?: E2ESingleSlotStore;
+  /** Optional lab adapter that forwards a committed Cloud schedule to an Edge. */
+  readonly dailySchedulePublisher?: (edgeId: string, update: DailyScheduleUpdate) => Promise<DailyScheduleReplaceResult>;
 }
 
 export function buildServer(options: ServerOptions = {}): FastifyInstance {
   const server = Fastify({
     logger: options.logger ?? false,
+    // A full 24-hour schedule contains 5760 slot records and is intentionally
+    // published atomically as one command in this walking skeleton.
+    bodyLimit: 8 * 1024 * 1024,
   });
   const demoStore = options.demoStore ?? new DemoCloudStore();
   const eventStoreProbe = options.eventStoreProbe ?? (async () => false);
   const readinessTimeoutMs = options.readinessTimeoutMs ?? 1000;
   let activeProbe: Promise<boolean> | null = null;
+
+  const dailySchedulePublisher = options.dailySchedulePublisher;
+  if (dailySchedulePublisher !== undefined) {
+    server.post("/v1/edge/:edgeId/commands/schedule", async (request, reply) => {
+      const { edgeId } = request.params as { edgeId: string };
+      const update = request.body as DailyScheduleUpdate;
+      if (update === null || typeof update !== "object" || update.edgeId !== edgeId) {
+        return reply.code(400).send({ error: "schedule_edge_identity_mismatch" });
+      }
+      try {
+        const result = await dailySchedulePublisher(edgeId, update);
+        return reply.code(result.status === "applied" ? 202 : 200).send(result);
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "schedule_publish_rejected" });
+      }
+    });
+  }
 
   server.get(
     "/health",
@@ -120,6 +145,127 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     });
     server.get("/v1/edge/telemetry", async () => ({ events: edgeStore.telemetryEvents() }));
     server.get("/v1/edge/evidence", async () => ({ evidence: edgeStore.evidenceRecords() }));
+    server.post("/v1/edge/playback-events", async (request, reply) => {
+      try {
+        edgeStore.acceptPlaybackEvent(request.body);
+        return reply.code(202).send({ accepted: true });
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "playback_event_rejected" });
+      }
+    });
+    server.get("/v1/edge/playback-events", async () => ({ events: edgeStore.playbackEvents() }));
+  }
+
+  if (options.singleSlotStore !== undefined) {
+    // This is the explicitly bounded single-slot laboratory surface. It is
+    // not the production Campaign/Slot API and has no authentication yet.
+    const store = options.singleSlotStore;
+    server.post("/v1/e2e/campaigns", async (request, reply) => {
+      try {
+        const body = request.body as { campaignId?: unknown; name?: unknown };
+        if (typeof body?.campaignId !== "string" || typeof body.name !== "string") {
+          return reply.code(400).send({ error: "invalid_campaign" });
+        }
+        return reply.code(201).send(await store.createCampaign({ campaignId: body.campaignId, name: body.name }));
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "campaign_rejected" });
+      }
+    });
+    server.get("/v1/e2e/campaigns/:campaignId", async (request, reply) => {
+      const { campaignId } = request.params as { campaignId: string };
+      const campaign = await store.campaign(campaignId);
+      return campaign === undefined ? reply.code(404).send({ error: "campaign_not_found" }) : reply.send(campaign);
+    });
+    server.post("/v1/e2e/campaigns/:campaignId/slots", async (request, reply) => {
+      try {
+        const { campaignId } = request.params as { campaignId: string };
+        const body = request.body as { slotId?: unknown; durationSeconds?: unknown };
+        if (typeof body?.slotId !== "string" || typeof body.durationSeconds !== "number") {
+          return reply.code(400).send({ error: "invalid_slot" });
+        }
+        return reply.code(201).send(await store.createSlot({
+          slotId: body.slotId,
+          campaignId,
+          durationSeconds: body.durationSeconds,
+        }));
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "slot_rejected" });
+      }
+    });
+    server.get("/v1/e2e/slots/:slotId", async (request, reply) => {
+      const { slotId } = request.params as { slotId: string };
+      const slot = await store.slot(slotId);
+      return slot === undefined ? reply.code(404).send({ error: "slot_not_found" }) : reply.send(slot);
+    });
+    server.post("/v1/e2e/creatives", async (request, reply) => {
+      try {
+        const body = request.body as { creativeId?: unknown; mediaType?: unknown; content?: unknown };
+        if (typeof body?.creativeId !== "string"
+          || (body.mediaType !== "text/html" && body.mediaType !== "video/mp4")
+          || typeof body.content !== "string") {
+          return reply.code(400).send({ error: "invalid_creative" });
+        }
+        return reply.code(201).send(await store.publishCreative({
+          creativeId: body.creativeId,
+          mediaType: body.mediaType,
+          content: body.content,
+        }));
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "creative_rejected" });
+      }
+    });
+    server.post("/v1/e2e/slots/:slotId/creative", async (request, reply) => {
+      try {
+        const { slotId } = request.params as { slotId: string };
+        const body = request.body as { creativeId?: unknown };
+        if (typeof body?.creativeId !== "string") return reply.code(400).send({ error: "invalid_assignment" });
+        return reply.send(await store.assignCreative(slotId, body.creativeId));
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "assignment_rejected" });
+      }
+    });
+    server.get("/v1/edge/campaigns/:campaignId/manifest", async (request, reply) => {
+      const { campaignId } = request.params as { campaignId: string };
+      const slotId = typeof (request.query as { slotId?: unknown }).slotId === "string"
+        ? (request.query as { slotId: string }).slotId
+        : undefined;
+      const manifest = await store.manifest(campaignId, slotId);
+      return manifest === undefined
+        ? reply.code(404).send({ error: "campaign_manifest_not_found" })
+        : reply.send(manifest);
+    });
+    server.get("/v1/edge/campaigns/:campaignId/manifests", async (request, reply) => {
+      const { campaignId } = request.params as { campaignId: string };
+      const manifests = await store.manifests(campaignId);
+      return manifests.length === 0
+        ? reply.code(404).send({ error: "campaign_manifests_not_found" })
+        : reply.send({ campaignId, manifests });
+    });
+    server.get("/v1/edge/assets/:assetId", async (request, reply) => {
+      const { assetId } = request.params as { assetId: string };
+      const asset = await store.asset(assetId);
+      return asset === undefined
+        ? reply.code(404).send({ error: "edge_asset_not_found" })
+        : reply.send(asset);
+    });
+    server.post("/v1/edge/telemetry", async (request, reply) => {
+      try {
+        await store.acceptTelemetry(request.body);
+        return reply.code(202).send({ accepted: true });
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "edge_telemetry_rejected" });
+      }
+    });
+    server.get("/v1/edge/telemetry", async () => ({ events: await store.telemetryEvents() }));
+    server.post("/v1/edge/playback-events", async (request, reply) => {
+      try {
+        await store.acceptPlaybackEvent(request.body);
+        return reply.code(202).send({ accepted: true });
+      } catch (error) {
+        return reply.code(409).send({ error: error instanceof Error ? error.message : "playback_event_rejected" });
+      }
+    });
+    server.get("/v1/edge/playback-events", async () => ({ events: await store.playbackEvents() }));
   }
 
   const readinessSchema = {

@@ -1,10 +1,11 @@
 import {
   EDGE_CLOUD_CONTRACT_VERSION,
-  createEdgeEvidence,
-  sha256,
   type EdgeCloudClient,
   type EdgeEnvironment,
+  type EdgeAsset,
+  type EdgeManifest,
   type EdgePlayback,
+  type EdgePlaybackEvent,
   type EdgeTelemetryEvent,
 } from "./cloud-contracts.ts";
 import type { EdgeRuntimeSettings } from "./config.ts";
@@ -13,6 +14,7 @@ import {
   type EdgeRuntimeIdentity,
   type EdgeRuntimeState,
 } from "./storage.ts";
+import { assetDigest } from "./cloud-contracts.ts";
 
 export type EdgeHealth =
   | "BOOTING"
@@ -43,6 +45,8 @@ export interface EdgeRuntimeConfig {
   readonly clock?: EdgeRuntimeClock;
   readonly runtimeVersion?: string;
   readonly maxAttempts?: number;
+  /** Playlist coordinators emit one edge.started event for the physical Edge. */
+  readonly suppressStartedEvent?: boolean;
 }
 
 export interface EdgeRuntimeDiagnostics {
@@ -52,6 +56,7 @@ export interface EdgeRuntimeDiagnostics {
   readonly manifestCached: boolean;
   readonly assetCached: boolean;
   readonly queueSize: number;
+  readonly playbackEventQueueSize: number;
   readonly evidenceQueueSize: number;
   readonly cloudStatus: "AVAILABLE" | "UNAVAILABLE" | "UNKNOWN";
   readonly playerStatus: "IDLE" | "PLAYING" | "COMPLETED" | "UNKNOWN";
@@ -95,7 +100,7 @@ export class RealEdgeRuntime {
     this.#state = { ...state, identity };
     this.#started = true;
     this.#health = "READY";
-    if (identityCreated) {
+    if (identityCreated && this.#config.suppressStartedEvent !== true) {
       this.#enqueue({
         contractVersion: EDGE_CLOUD_CONTRACT_VERSION,
         eventId: `${this.#config.edgeId}:edge.started`,
@@ -116,9 +121,13 @@ export class RealEdgeRuntime {
     try {
       const manifest = await this.#withRetry(() => this.#config.cloud.fetchManifest(campaignId));
       const asset = await this.#withRetry(() => this.#config.cloud.fetchAsset(manifest.assetId));
-      if (sha256(asset.content) !== asset.digest) throw new Error("asset integrity check failed");
-      if (asset.creativeId !== manifest.creativeId) throw new Error("asset identity does not match manifest");
-      if (manifest.playbackIdentity.campaignId !== manifest.campaignId || manifest.playbackIdentity.creativeId !== manifest.creativeId) {
+      if (assetDigest(asset.mediaType, asset.content) !== asset.digest) throw new Error("asset integrity check failed");
+      if (asset.creativeId !== manifest.creativeId || asset.mediaType !== manifest.mediaType) {
+        throw new Error("asset identity does not match manifest");
+      }
+      if (manifest.playbackIdentity.campaignId !== manifest.campaignId
+        || manifest.playbackIdentity.slotId !== manifest.slotId
+        || manifest.playbackIdentity.creativeId !== manifest.creativeId) {
         throw new Error("manifest playback identity does not match manifest");
       }
       this.#state = { ...this.#state, manifest, asset } as EdgeRuntimeState;
@@ -150,7 +159,7 @@ export class RealEdgeRuntime {
       this.#health = "DEGRADED";
       throw new Error("no validated local content is available");
     }
-    if (sha256(state.asset.content) !== state.asset.digest) {
+    if (assetDigest(state.asset.mediaType, state.asset.content) !== state.asset.digest) {
       this.#health = "ERROR";
       throw new Error("cached asset integrity check failed");
     }
@@ -165,12 +174,29 @@ export class RealEdgeRuntime {
       edgeId: this.#config.edgeId,
       environment: this.#config.environment,
       campaignId: state.manifest.campaignId,
+      slotId: state.manifest.slotId,
       creativeId: state.manifest.creativeId,
       manifestVersion: state.manifest.version,
       startedAt,
       completedAt,
       durationSeconds: state.manifest.durationSeconds,
       status: "COMPLETED",
+    };
+    const sessionId = `${this.#config.edgeId}:session:${state.identity?.createdAt ?? startedAt}`;
+    const playbackEvent: EdgePlaybackEvent = {
+      contractVersion: EDGE_CLOUD_CONTRACT_VERSION,
+      playbackEventId: `playback-event-${playbackId}`,
+      campaignId: playback.campaignId,
+      slotId: playback.slotId,
+      creativeId: playback.creativeId,
+      edgeId: playback.edgeId,
+      sessionId,
+      playbackId: playback.playbackId,
+      manifestVersion: playback.manifestVersion,
+      startedAt: playback.startedAt,
+      completedAt: playback.completedAt,
+      durationSeconds: playback.durationSeconds,
+      status: playback.status,
     };
     const common = {
       contractVersion: EDGE_CLOUD_CONTRACT_VERSION,
@@ -191,7 +217,10 @@ export class RealEdgeRuntime {
         { ...common, eventId: `${playbackId}:playback.started`, type: "playback.started", occurredAt: startedAt, payload: { assetId: state.asset.assetId } },
         { ...common, eventId: `${playbackId}:playback.completed`, type: "playback.completed", occurredAt: completedAt, payload: { durationSeconds: state.manifest.durationSeconds } },
       ],
-      evidenceQueue: [...state.evidenceQueue, createEdgeEvidence(playback)],
+      // PlaybackEvent is the authoritative output of this slice. Evidence is
+      // intentionally not created by the runtime; the legacy evidence queue
+      // is retained only so older state files can be drained safely.
+      playbackEventQueue: [...state.playbackEventQueue, playbackEvent],
     };
     this.#lastPlayback = playback;
     await this.#save();
@@ -199,14 +228,25 @@ export class RealEdgeRuntime {
     return playback;
   }
 
+  async localManifest(): Promise<EdgeManifest | undefined> {
+    return (await this.#load()).manifest;
+  }
+
+  async localAsset(assetId: string): Promise<EdgeAsset | undefined> {
+    const asset = (await this.#load()).asset;
+    return asset?.assetId === assetId ? asset : undefined;
+  }
+
   async flush(): Promise<void> {
     await this.#requireStarted();
     const state = await this.#load();
     const telemetry = [...state.telemetryQueue];
+    const playbackEvents = [...state.playbackEventQueue];
     const evidence = [...state.evidenceQueue];
-    if (telemetry.length === 0 && evidence.length === 0) return;
+    if (telemetry.length === 0 && playbackEvents.length === 0 && evidence.length === 0) return;
     try {
       for (const event of telemetry) await this.#withRetry(() => this.#config.cloud.sendTelemetry(event));
+      for (const event of playbackEvents) await this.#withRetry(() => this.#config.cloud.sendPlaybackEvent(event));
       for (const record of evidence) await this.#withRetry(() => this.#config.cloud.sendEvidence(record));
       if (telemetry.length > 0) {
         const firstEvent = telemetry[0];
@@ -220,7 +260,7 @@ export class RealEdgeRuntime {
           payload: { count: telemetry.length },
         } satisfies EdgeTelemetryEvent));
       }
-      this.#state = { ...state, telemetryQueue: [], evidenceQueue: [] };
+      this.#state = { ...state, telemetryQueue: [], playbackEventQueue: [], evidenceQueue: [] };
       await this.#save();
       this.#health = "READY";
     } catch (error) {
@@ -244,6 +284,7 @@ export class RealEdgeRuntime {
       manifestCached: state.manifest !== undefined,
       assetCached: state.asset !== undefined,
       queueSize: state.telemetryQueue.length,
+      playbackEventQueueSize: state.playbackEventQueue.length,
       evidenceQueueSize: state.evidenceQueue.length,
       cloudStatus,
       playerStatus: this.#lastPlayback === undefined ? "IDLE" : "COMPLETED",

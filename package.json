@@ -16,6 +16,8 @@
     "start:api": "node --experimental-strip-types apps/cloud-api/src/main.ts",
     "mostarda:e2e": "node --experimental-strip-types scripts/run-mostarda-e2e.ts",
     "edge:e2e": "node --experimental-strip-types scripts/run-real-edge-e2e.ts",
+    "e2e:single-slot": "node --experimental-strip-types scripts/run-e2e-single-slot.ts",
+    "e2e:multislot-visual": "node --experimental-strip-types scripts/run-e2e-multislot-visual.ts",
     "edge:diagnostics": "node --experimental-strip-types scripts/edge-runtime-diagnostics.ts",
     "edge:hardware:validate": "node --experimental-strip-types scripts/edge-hardware-validate.ts",
     "test:settlement-slice": "node --experimental-strip-types --test tests/settlement/settlement-flow.test.ts",

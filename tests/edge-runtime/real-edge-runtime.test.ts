@@ -38,6 +38,10 @@ class AvailabilityClient implements EdgeCloudClient {
     return this.#run(() => this.delegate.sendTelemetry(event));
   }
 
+  sendPlaybackEvent(event: Parameters<EdgeCloudClient["sendPlaybackEvent"]>[0]) {
+    return this.#run(() => this.delegate.sendPlaybackEvent(event));
+  }
+
   sendEvidence(evidence: Parameters<EdgeCloudClient["sendEvidence"]>[0]) {
     return this.#run(() => this.delegate.sendEvidence(evidence));
   }
@@ -104,7 +108,7 @@ test("RealEdgeRuntime persists identity/content/queue and resumes offline after 
     client.setAvailable(true);
     await restarted.flush();
     assert.equal((await restarted.diagnostics()).queueSize, 0);
-    assert.equal(store.evidenceRecords().length, 2);
+    assert.equal(store.playbackEvents().length, 2);
   } finally {
     await server.close();
     await rm(root, { recursive: true, force: true });

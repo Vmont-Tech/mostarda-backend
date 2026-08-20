@@ -6,6 +6,7 @@ import type {
   EdgeEvidence,
   EdgeManifest,
   EdgePlayback,
+  EdgePlaybackEvent,
   EdgeTelemetryEvent,
 } from "./cloud-contracts.ts";
 
@@ -25,6 +26,7 @@ export interface EdgeRuntimeState {
   readonly playback?: EdgePlayback;
   readonly playbackSequence: number;
   readonly telemetryQueue: readonly EdgeTelemetryEvent[];
+  readonly playbackEventQueue: readonly EdgePlaybackEvent[];
   readonly evidenceQueue: readonly EdgeEvidence[];
 }
 
@@ -33,6 +35,7 @@ function emptyState(): EdgeRuntimeState {
     schemaVersion: EDGE_RUNTIME_STATE_VERSION,
     playbackSequence: 0,
     telemetryQueue: [],
+    playbackEventQueue: [],
     evidenceQueue: [],
   };
 }
@@ -77,7 +80,10 @@ export class JsonEdgeStorage {
     if (state.schemaVersion !== EDGE_RUNTIME_STATE_VERSION || typeof state.playbackSequence !== "number" || !Array.isArray(state.telemetryQueue) || !Array.isArray(state.evidenceQueue)) {
       throw new Error("invalid Edge runtime state schema");
     }
-    return state as unknown as EdgeRuntimeState;
+    return {
+      ...state,
+      playbackEventQueue: Array.isArray(state.playbackEventQueue) ? state.playbackEventQueue : [],
+    } as unknown as EdgeRuntimeState;
   }
 }
 

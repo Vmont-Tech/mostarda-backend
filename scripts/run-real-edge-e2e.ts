@@ -30,7 +30,7 @@ try {
     runtime: await runtime.diagnostics(),
     playback,
     cloudTelemetry: cloud.telemetryEvents().length,
-    cloudEvidence: cloud.evidenceRecords().length,
+    cloudPlaybackEvents: cloud.playbackEvents().length,
   }, null, 2));
 } finally {
   await server.close();

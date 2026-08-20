@@ -3,6 +3,7 @@ import {
   type EdgeAsset,
   type EdgeEvidence,
   type EdgeManifest,
+  type EdgePlaybackEvent,
   type EdgeTelemetryEvent,
   canonicalEdgeJson,
   sha256,
@@ -13,8 +14,10 @@ export interface EdgeRuntimeStore {
   asset(assetId: string): EdgeAsset | undefined;
   acceptTelemetry(value: unknown): void;
   acceptEvidence(value: unknown): void;
+  acceptPlaybackEvent(value: unknown): void;
   telemetryEvents(): readonly EdgeTelemetryEvent[];
   evidenceRecords(): readonly EdgeEvidence[];
+  playbackEvents(): readonly EdgePlaybackEvent[];
 }
 
 export class InMemoryEdgeRuntimeStore implements EdgeRuntimeStore {
@@ -22,6 +25,7 @@ export class InMemoryEdgeRuntimeStore implements EdgeRuntimeStore {
   readonly #asset: EdgeAsset;
   readonly #telemetry = new Map<string, EdgeTelemetryEvent>();
   readonly #evidence = new Map<string, EdgeEvidence>();
+  readonly #playbackEvents = new Map<string, EdgePlaybackEvent>();
 
   constructor(manifest: EdgeManifest, asset: EdgeAsset) {
     if (manifest.assetId !== asset.assetId || manifest.creativeId !== asset.creativeId) {
@@ -64,6 +68,19 @@ export class InMemoryEdgeRuntimeStore implements EdgeRuntimeStore {
   evidenceRecords(): readonly EdgeEvidence[] {
     return [...this.#evidence.values()];
   }
+
+  acceptPlaybackEvent(value: unknown): void {
+    const event = parsePlaybackEvent(value);
+    const previous = this.#playbackEvents.get(event.playbackEventId);
+    if (previous !== undefined && JSON.stringify(previous) !== JSON.stringify(event)) {
+      throw new Error("playback event identity conflict");
+    }
+    this.#playbackEvents.set(event.playbackEventId, event);
+  }
+
+  playbackEvents(): readonly EdgePlaybackEvent[] {
+    return [...this.#playbackEvents.values()];
+  }
 }
 
 export function createEdgeRuntimeFixtureStore(campaignId: string): InMemoryEdgeRuntimeStore {
@@ -82,11 +99,13 @@ export function createEdgeRuntimeFixtureStore(campaignId: string): InMemoryEdgeR
   const manifest: EdgeManifest = {
     contractVersion: EDGE_CLOUD_CONTRACT_VERSION,
     campaignId,
+    slotId: `${campaignId}:slot`,
     creativeId,
+    mediaType: "text/html",
     version: "manifest-edge-v1",
     durationSeconds: 1,
     assetId,
-    playbackIdentity: { campaignId, creativeId },
+    playbackIdentity: { campaignId, slotId: `${campaignId}:slot`, creativeId },
   };
   return new InMemoryEdgeRuntimeStore(manifest, asset);
 }
@@ -113,4 +132,25 @@ function parseEvidence(value: unknown): EdgeEvidence {
     throw new Error("Edge evidence integrity check failed");
   }
   return evidence as EdgeEvidence;
+}
+
+function parsePlaybackEvent(value: unknown): EdgePlaybackEvent {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) throw new Error("invalid PlaybackEvent");
+  const event = value as Partial<EdgePlaybackEvent>;
+  if (event.contractVersion !== EDGE_CLOUD_CONTRACT_VERSION
+    || typeof event.playbackEventId !== "string"
+    || typeof event.campaignId !== "string"
+    || typeof event.slotId !== "string"
+    || typeof event.creativeId !== "string"
+    || typeof event.edgeId !== "string"
+    || typeof event.sessionId !== "string"
+    || typeof event.playbackId !== "string"
+    || typeof event.manifestVersion !== "string"
+    || typeof event.startedAt !== "string"
+    || typeof event.completedAt !== "string"
+    || typeof event.durationSeconds !== "number"
+    || event.status !== "COMPLETED") {
+    throw new Error("invalid PlaybackEvent");
+  }
+  return event as EdgePlaybackEvent;
 }
